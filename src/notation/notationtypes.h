@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #ifndef MU_NOTATION_NOTATIONTYPES_H
 #define MU_NOTATION_NOTATIONTYPES_H
 
@@ -88,6 +91,8 @@ using HairpinType = Ms::HairpinType;
 using TextType = Ms::Tid;
 using TupletNumberType = Ms::TupletNumberType;
 using TupletBracketType = Ms::TupletBracketType;
+using GraceNoteType = Ms::NoteType;
+using BeamMode = Ms::Beam::Mode;
 
 using PageList = std::vector<const Page*>;
 using StaffList = QList<const Staff*>;
@@ -97,7 +102,8 @@ enum class DragMode
 {
     BothXY = 0,
     OnlyX,
-    OnlyY
+    OnlyY,
+    LassoList
 };
 
 enum class MoveDirection
@@ -154,10 +160,44 @@ enum class NoteAddingMode
 
 enum class SaveMode
 {
-    Unknown,
+    Save,
     SaveAs,
     SaveCopy,
-    SaveSelection
+    SaveSelection,
+    SaveOnline
+};
+
+enum class ResettableValueType
+{
+    Stretch,
+    BeamMode,
+    ShapesAndPosition,
+    TextStyleOverriders
+};
+
+enum class IntervalType
+{
+    Above,
+    Below
+};
+
+enum class TupletType
+{
+    Duplet,
+    Triplet,
+    Quadruplet,
+    Quintuplet,
+    Sextuplet,
+    Septuplet,
+    Octuplet,
+    Nonuplet
+};
+
+enum class PastingType {
+    Default,
+    Half,
+    Double,
+    Special
 };
 
 struct NoteInputState
@@ -178,10 +218,17 @@ enum class NoteFilter
     WithSlur
 };
 
+enum class ZoomType {
+    Percentage,
+    PageWidth,
+    WholePage,
+    TwoPages
+};
+
 struct Meta
 {
-    QString fileName;
-    QString filePath;
+    io::path fileName;
+    io::path filePath;
     QString title;
     QString subtitle;
     QString composer;
@@ -347,6 +394,8 @@ struct LoopBoundaries
     QRect loopInRect;
     QRect loopOutRect;
 
+    bool visible = false;
+
     bool isNull() const
     {
         return loopInTick == 0 && loopOutTick == 0;
@@ -360,6 +409,7 @@ struct LoopBoundaries
         equals &= loopOutTick == boundaries.loopOutTick;
         equals &= loopInRect == boundaries.loopInRect;
         equals &= loopOutRect == boundaries.loopOutRect;
+        equals &= visible == boundaries.visible;
 
         return equals;
     }
@@ -368,6 +418,24 @@ struct LoopBoundaries
     {
         return !(*this == boundaries);
     }
+};
+
+enum class ScoreConfigType
+{
+    ShowInvisibleElements,
+    ShowUnprintableElements,
+    ShowFrames,
+    ShowPageMargins,
+    MarkIrregularMeasures
+};
+
+struct ScoreConfig
+{
+    bool isShowInvisibleElements = false;
+    bool isShowUnprintableElements = false;
+    bool isShowFrames = false;
+    bool isShowPageMargins = false;
+    bool isMarkIrregularMeasures = false;
 };
 
 inline QString staffTypeToString(StaffType type)
@@ -392,6 +460,13 @@ struct MeasureBeat
     int maxMeasureIndex = 0;
     int beatIndex = 0;
     int maxBeatIndex = 0;
+};
+
+enum class BracketsType
+{
+    Brackets,
+    Braces,
+    Parentheses
 };
 
 static constexpr int MIN_NOTES_INTERVAL = -9;

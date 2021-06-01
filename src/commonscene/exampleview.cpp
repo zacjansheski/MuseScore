@@ -1,14 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2013 Werner Schweer and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2
-//  as published by the Free Software Foundation and appearing in
-//  the file LICENSE.GPL
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #include "exampleview.h"
 
@@ -22,6 +32,8 @@
 #include "libmscore/icon.h"
 #include "libmscore/chord.h"
 #include "libmscore/xml.h"
+
+#include "engraving/draw/qpainterprovider.h"
 
 #include "commonscenetypes.h"
 
@@ -43,9 +55,11 @@ ExampleView::ExampleView(QWidget* parent)
     if (notationConfiguration()->foregroundUseColor()) {
         _fgColor = notationConfiguration()->foregroundColor();
     } else {
-        _fgPixmap = new QPixmap(notationConfiguration()->foregroundWallpaper().toQString());
+        QString wallpaperPath = notationConfiguration()->foregroundWallpaperPath().toQString();
+
+        _fgPixmap = new QPixmap(wallpaperPath);
         if (_fgPixmap == 0 || _fgPixmap->isNull()) {
-            qDebug("no valid pixmap %s", qPrintable(notationConfiguration()->foregroundWallpaper().toQString()));
+            qDebug("no valid pixmap %s", qPrintable(wallpaperPath));
         }
     }
     // setup drag canvas state
@@ -161,7 +175,7 @@ Element* ExampleView::elementNear(QPointF)
     return 0;
 }
 
-void ExampleView::drawBackground(QPainter* p, const QRectF& r) const
+void ExampleView::drawBackground(mu::draw::Painter* p, const QRectF& r) const
 {
     if (_fgPixmap == 0 || _fgPixmap->isNull()) {
         p->fillRect(r, _fgColor);
@@ -175,7 +189,7 @@ void ExampleView::drawBackground(QPainter* p, const QRectF& r) const
 //   drawElements
 //---------------------------------------------------------
 
-void ExampleView::drawElements(QPainter& painter, const QList<Element*>& el)
+void ExampleView::drawElements(mu::draw::Painter& painter, const QList<Element*>& el)
 {
     for (Element* e : el) {
         e->itemDiscovered = 0;
@@ -193,14 +207,13 @@ void ExampleView::drawElements(QPainter& painter, const QList<Element*>& el)
 void ExampleView::paintEvent(QPaintEvent* ev)
 {
     if (_score) {
-        QPainter p(this);
-        p.setRenderHint(QPainter::Antialiasing, true);
-        p.setRenderHint(QPainter::TextAntialiasing, true);
+        mu::draw::Painter p(this, "exampleview");
+        p.setAntialiasing(true);
         const QRect r(ev->rect());
 
         drawBackground(&p, r);
 
-        p.setTransform(_matrix);
+        p.setWorldTransform(_matrix);
         QRectF fr = imatrix.mapRect(QRectF(r));
 
         QRegion r1(r);

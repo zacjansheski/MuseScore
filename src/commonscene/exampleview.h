@@ -1,14 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2013 Werner Schweer and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2
-//  as published by the Free Software Foundation and appearing in
-//  the file LICENSE.GPL
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #ifndef __EXAMPLEVIEW_H__
 #define __EXAMPLEVIEW_H__
@@ -57,7 +67,7 @@ class ExampleView : public QFrame, public MuseScoreView
 
     double m_defaultScaling = 0;
 
-    void drawElements(QPainter& painter, const QList<Element*>& el);
+    void drawElements(mu::draw::Painter& painter, const QList<Element*>& el);
     void setDropTarget(const Element* el) override;
 
     virtual void paintEvent(QPaintEvent*) override;
@@ -91,7 +101,7 @@ public:
     virtual void setDropRectangle(const QRectF&) override;
     virtual void cmdAddSlur(Note* firstNote, Note* lastNote);
     virtual Element* elementNear(QPointF) override;
-    virtual void drawBackground(QPainter*, const QRectF&) const override;
+    virtual void drawBackground(mu::draw::Painter*, const QRectF&) const override;
     void dragExampleView(QMouseEvent* ev);
     virtual const QRect geometry() const override { return QFrame::geometry(); }
 };

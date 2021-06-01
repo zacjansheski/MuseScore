@@ -1,3 +1,24 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 import QtQuick 2.9
 import QtQuick.Layouts 1.3
 import QtQuick.Controls 2.2
@@ -42,6 +63,10 @@ InspectorSectionView {
                 StyledComboBox {
                     width: parent.width
 
+                    navigation.panel: root.navigationPanel
+                    navigation.name: "Page size"
+                    navigation.row: root.navigationRow(1)
+
                     textRoleName: "nameRole"
                     valueRoleName: "idRole"
 
@@ -80,9 +105,11 @@ InspectorSectionView {
 
                         ButtonGroup.group: orientationType.radioButtonGroup
 
-                        checked: root.model ? root.model.orientationType === modelData["typeRole"]
-                                            : false
+                        navigation.panel: root.navigationPanel
+                        navigation.name: "Orientation"+model.index
+                        navigation.row: root.navigationRow(model.index + 2)
 
+                        checked: root.model ? root.model.orientationType === modelData["typeRole"] : false
                         onToggled: {
                             root.model.orientationType = modelData["typeRole"]
                         }
@@ -106,6 +133,10 @@ InspectorSectionView {
 
                 IncrementalPropertyControl {
                     iconMode: iconModeEnum.hidden
+
+                    navigation.panel: root.navigationPanel
+                    navigation.name: "Staff spacing"
+                    navigation.row: root.navigationRow(4)
 
                     currentValue: root.model ? root.model.staffSpacing : 0
                     measureUnitsSymbol: qsTrc("inspector", "mm")
@@ -132,6 +163,10 @@ InspectorSectionView {
                 IncrementalPropertyControl {
                     iconMode: iconModeEnum.hidden
 
+                    navigation.panel: root.navigationPanel
+                    navigation.name: "Staff distance"
+                    navigation.row: root.navigationRow(5)
+
                     currentValue: root.model ? root.model.staffDistance : 0
 
                     step: 0.1
@@ -151,6 +186,10 @@ InspectorSectionView {
             FlatButton {
                 width: parent.width
 
+                navigation.panel: root.navigationPanel
+                navigation.name: "More page settings"
+                navigation.row: root.navigationRow(6)
+
                 text: qsTrc("inspector", "More page settings")
 
                 onClicked: {
@@ -162,6 +201,10 @@ InspectorSectionView {
 
             FlatButton {
                 width: parent.width
+
+                navigation.panel: root.navigationPanel
+                navigation.name: "Style settings"
+                navigation.row: root.navigationRow(7)
 
                 text: qsTrc("inspector", "Style settings")
 

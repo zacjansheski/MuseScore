@@ -1,21 +1,24 @@
-//=============================================================================
-//  MusE Score
-//  Linux Music Score Editor
-//
-//  Copyright (C) 2002-2011 Werner Schweer and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #include <QDir>
 
@@ -69,7 +72,7 @@ TimeDialog::TimeDialog(QWidget* parent)
     _dirty = false;
 
     if (configuration()->useFactorySettings() || !sp->read(configuration()->timeSignaturesDirPath().toQString())) {
-        Fraction sig(4,4);
+        Fraction sig(4, 4);
         groups->setSig(sig, Groups::endings(sig), zText->text(), nText->text());
     }
     for (int i = 0; i < sp->size(); ++i) {      // cells can be changed
@@ -87,7 +90,7 @@ TimeDialog::TimeDialog(QWidget* parent)
 
 void TimeDialog::addClicked()
 {
-    TimeSig* ts = new TimeSig(gscore);
+    auto ts = makeElement<TimeSig>(gscore);
     ts->setSig(Fraction(zNominal->value(), denominator()));
     ts->setGroups(groups->groups());
 
@@ -204,8 +207,10 @@ int TimeDialog::denominator() const
 
 void TimeDialog::paletteChanged(int idx)
 {
-    TimeSig* e = static_cast<TimeSig*>(sp->element(idx));
-    if (!e || e->type() != ElementType::TIMESIG) {
+    ElementPtr element = sp->element(idx);
+    const std::shared_ptr<TimeSig> timeSig = std::dynamic_pointer_cast<TimeSig>(element);
+
+    if (!timeSig || timeSig->type() != ElementType::TIMESIG) {
         zNominal->setEnabled(false);
         nNominal->setEnabled(false);
         zText->setEnabled(false);
@@ -214,6 +219,7 @@ void TimeDialog::paletteChanged(int idx)
         addButton->setEnabled(false);
         return;
     }
+
     zNominal->setEnabled(true);
     nNominal->setEnabled(true);
     zText->setEnabled(true);
@@ -221,15 +227,16 @@ void TimeDialog::paletteChanged(int idx)
     groups->setEnabled(true);
     addButton->setEnabled(true);
 
-    Fraction sig(e->sig());
-    Groups g = e->groups();
+    Fraction sig(timeSig->sig());
+    Groups g = timeSig->groups();
     if (g.empty()) {
         g = Groups::endings(sig);
     }
+
     zNominal->setValue(sig.numerator());
     nNominal->setCurrentIndex(denominator2Idx(sig.denominator()));
-    zText->setText(e->numeratorString());
-    nText->setText(e->denominatorString());
+    zText->setText(timeSig->numeratorString());
+    nText->setText(timeSig->denominatorString());
     groups->setSig(sig, g, zText->text(), nText->text());
 }
 

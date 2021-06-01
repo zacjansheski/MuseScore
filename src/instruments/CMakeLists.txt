@@ -1,21 +1,22 @@
-#=============================================================================
-#  MuseScore
-#  Music Composition & Notation
+# SPDX-License-Identifier: GPL-3.0-only
+# MuseScore-CLA-applies
 #
-#  Copyright (C) 2020 MuseScore BVBA and others
+# MuseScore
+# Music Composition & Notation
 #
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License version 2.
+# Copyright (C) 2021 MuseScore BVBA and others
 #
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as
+# published by the Free Software Foundation.
 #
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-#=============================================================================
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 set(MODULE instruments)
 
@@ -39,12 +40,12 @@ set(MODULE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/internal/instrumentsconfiguration.h
     ${CMAKE_CURRENT_LIST_DIR}/internal/selectinstrumentscenario.cpp
     ${CMAKE_CURRENT_LIST_DIR}/internal/selectinstrumentscenario.h
-    ${CMAKE_CURRENT_LIST_DIR}/internal/instrumentsactions.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/internal/instrumentsactions.h
+    ${CMAKE_CURRENT_LIST_DIR}/internal/instrumentsuiactions.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/internal/instrumentsuiactions.h
     ${CMAKE_CURRENT_LIST_DIR}/view/instrumentlistmodel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/view/instrumentlistmodel.h
-    ${CMAKE_CURRENT_LIST_DIR}/view/abstractinstrumentpaneltreeitem.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/view/abstractinstrumentpaneltreeitem.h
+    ${CMAKE_CURRENT_LIST_DIR}/view/abstractinstrumentspaneltreeitem.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/view/abstractinstrumentspaneltreeitem.h
     ${CMAKE_CURRENT_LIST_DIR}/view/roottreeitem.cpp
     ${CMAKE_CURRENT_LIST_DIR}/view/roottreeitem.h
     ${CMAKE_CURRENT_LIST_DIR}/view/parttreeitem.cpp
@@ -57,18 +58,16 @@ set(MODULE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/view/stafftreeitem.h
     ${CMAKE_CURRENT_LIST_DIR}/view/staffcontroltreeitem.cpp
     ${CMAKE_CURRENT_LIST_DIR}/view/staffcontroltreeitem.h
-    ${CMAKE_CURRENT_LIST_DIR}/view/instrumentpaneltreemodel.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/view/instrumentpaneltreemodel.h
+    ${CMAKE_CURRENT_LIST_DIR}/view/instrumentspaneltreemodel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/view/instrumentspaneltreemodel.h
     ${CMAKE_CURRENT_LIST_DIR}/view/staffsettingsmodel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/view/staffsettingsmodel.h
     ${CMAKE_CURRENT_LIST_DIR}/view/instrumentsettingsmodel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/view/instrumentsettingsmodel.h
-    ${CMAKE_CURRENT_LIST_DIR}/view/instrumentpaneltreemodel.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/view/instrumentpaneltreemodel.h
     )
 
 set(MODULE_LINK
-    libmscore
+    engraving
     )
 
 include(${PROJECT_SOURCE_DIR}/build/module.cmake)

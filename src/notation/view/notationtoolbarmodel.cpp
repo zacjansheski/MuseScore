@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #include "notationtoolbarmodel.h"
 
@@ -42,12 +45,15 @@ QVariant NotationToolBarModel::data(const QModelIndex& index, int role) const
         return QVariant();
     }
 
-    ToolbarItem item = m_items[index.row()];
+    MenuItem item = m_items[index.row()];
 
     switch (role) {
     case TitleRole: return item.title;
-    case IconRole: return item.icon;
-    case EnabledRole: return item.enabled;
+    case CodeRole: return QString::fromStdString(item.code);
+    case IconRole: return static_cast<int>(item.iconCode);
+    case EnabledRole: return item.state.enabled;
+    case DescriptionRole: return item.description;
+    case ShortcutRole: return QString::fromStdString(item.shortcut);
     }
 
     return QVariant();
@@ -57,8 +63,11 @@ QHash<int, QByteArray> NotationToolBarModel::roleNames() const
 {
     static const QHash<int, QByteArray> roles {
         { TitleRole, "title" },
+        { CodeRole, "code" },
         { IconRole, "icon" },
-        { EnabledRole, "enabled" }
+        { EnabledRole, "enabled" },
+        { DescriptionRole, "description" },
+        { ShortcutRole, "shortcut" }
     };
 
     return roles;
@@ -70,8 +79,8 @@ void NotationToolBarModel::load()
 
     m_items.clear();
 
-    m_items << makeItem("Parts", IconCode::Code::PAGE, "musescore://notation/parts", hasNotation());
-    m_items << makeItem("Mixer", IconCode::Code::MIXER, "musescore://notation/mixer");
+    m_items << makeItem("parts");
+    m_items << makeItem("toggle-mixer");
 
     endResetModel();
 
@@ -80,33 +89,15 @@ void NotationToolBarModel::load()
     });
 }
 
-void NotationToolBarModel::open(int index)
+void NotationToolBarModel::handleAction(const QString& actionCode)
 {
-    if (index < 0 || index >= m_items.size()) {
-        return;
-    }
-
-    Ret ret = interactive()->open(m_items[index].uri).ret;
-
-    if (!ret) {
-        LOGE() << ret.toString();
-    }
+    dispatcher()->dispatch(actions::codeFromQString(actionCode));
 }
 
-NotationToolBarModel::ToolbarItem NotationToolBarModel::makeItem(std::string_view title, IconCode::Code icon, std::string uri,
-                                                                 bool enabled) const
+MenuItem NotationToolBarModel::makeItem(const actions::ActionCode& actionCode) const
 {
-    ToolbarItem item;
-
-    item.title = qtrc("notation", title.data());
-    item.icon = static_cast<int>(icon);
-    item.uri = std::move(uri);
-    item.enabled = enabled;
+    MenuItem item = actionsRegister()->action(actionCode);
+    item.state.enabled = context()->currentNotation() != nullptr;
 
     return item;
-}
-
-bool NotationToolBarModel::hasNotation() const
-{
-    return context()->currentNotation() != nullptr;
 }

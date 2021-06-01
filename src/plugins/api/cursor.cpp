@@ -1,14 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2012 Werner Schweer
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2
-//  as published by the Free Software Foundation and appearing in
-//  the file LICENCE.GPL
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #include "cursor.h"
 #include "elements.h"
@@ -313,8 +323,14 @@ void Cursor::add(Element* wrapped)
             break;
         }
 
-        // To be added to a note
-        case ElementType::SYMBOL:
+        // To be added to a note (and in case of SYMBOL also to a rest)
+        case ElementType::SYMBOL: {
+            Ms::Element* curElement = currentElement();
+            if (curElement->isRest()) {
+                s->setParent(curElement);
+                _score->undoAddElement(s);
+            }
+        } // FALLTHROUGH
         case ElementType::FINGERING:
         case ElementType::BEND:
         case ElementType::NOTEHEAD: {

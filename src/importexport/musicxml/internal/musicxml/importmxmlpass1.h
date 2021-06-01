@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Linux Music Score Editor
-//
-//  Copyright (C) 2015 Werner Schweer and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #ifndef __IMPORTMXMLPASS1_H__
 #define __IMPORTMXMLPASS1_H__
@@ -43,7 +46,7 @@ struct PageFormat {
 };
 
 typedef QMap<QString, Part*> PartMap;
-typedef std::map<int,MusicXmlPartGroup*> MusicXmlPartGroupMap;
+typedef std::map<int, MusicXmlPartGroup*> MusicXmlPartGroupMap;
 
 //---------------------------------------------------------
 //   MxmlOctaveShiftDesc
@@ -83,8 +86,8 @@ typedef QFlags<MxmlTupletFlag> MxmlTupletFlags;
 
 struct MxmlTupletState {
     void addDurationToTuplet(const Fraction duration, const Fraction timeMod);
-    MxmlTupletFlags determineTupletAction(const Fraction noteDuration,const Fraction timeMod,const MxmlStartStop tupletStartStop,
-                                          const TDuration normalType,Fraction& missingPreviousDuration,Fraction& missingCurrentDuration);
+    MxmlTupletFlags determineTupletAction(const Fraction noteDuration, const Fraction timeMod, const MxmlStartStop tupletStartStop,
+                                          const TDuration normalType, Fraction& missingPreviousDuration, Fraction& missingCurrentDuration);
     bool m_inTuplet { false };
     bool m_implicit { false };
     int m_actualNotes { 1 };
@@ -151,7 +154,8 @@ public:
     void skipLogCurrElem();
     bool determineMeasureLength(QVector<Fraction>& ml) const;
     VoiceList getVoiceList(const QString id) const;
-    bool determineStaffMoveVoice(const QString& id, const int mxStaff, const QString& mxVoice,int& msMove, int& msTrack,int& msVoice) const;
+    bool determineStaffMoveVoice(const QString& id, const int mxStaff, const QString& mxVoice, int& msMove, int& msTrack,
+                                 int& msVoice) const;
     int trackForPart(const QString& id) const;
     bool hasPart(const QString& id) const;
     Part* getPart(const QString& id) const { return _partMap.value(id); }

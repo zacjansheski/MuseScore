@@ -1,18 +1,43 @@
-import QtQuick 2.5
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+import QtQuick 2.15
 
 import MuseScore.Ui 1.0
 
-Item {
+FocusableControl {
     id: root
 
     property string hint
 
     property bool isSelected: false
-    property alias radius: background.radius
+    property alias radius: root.background.radius
+
+    property color normalStateColor: "transparent"
+    property color hoveredStateColor: prv.defaultColor
+    property color pressedStateColor: prv.defaultColor
 
     signal clicked()
     signal doubleClicked()
-    signal hovered()
+    signal hovered(var isHovered, var mouseX, int mouseY)
 
     implicitHeight: 30
     implicitWidth: Boolean(ListView.view) ? ListView.view.width : 30
@@ -20,13 +45,33 @@ Item {
     Accessible.selectable: true
     Accessible.selected: isSelected
 
-    Rectangle {
-        id: background
+    background.color: normalStateColor
+    background.opacity: root.enabled ? 1 : ui.theme.itemOpacityDisabled
 
-        anchors.fill: parent
+    mouseArea.hoverEnabled: root.visible
+    mouseArea.onHoveredChanged: root.hovered(mouseArea.containsMouse, mouseArea.mouseX, mouseArea.mouseY)
 
-        color: "transparent"
-        opacity: root.enabled ? 1 : ui.theme.itemOpacityDisabled
+    mouseArea.onClicked: root.clicked()
+    mouseArea.onDoubleClicked: root.doubleClicked()
+
+    mouseArea.onContainsMouseChanged: {
+        if (!Boolean(root.hint)) {
+            return
+        }
+
+        if (mouseArea.containsMouse) {
+            ui.tooltip.show(this, root.hint)
+        } else {
+            ui.tooltip.hide(this)
+        }
+    }
+
+    onNavigationTriggered: root.clicked()
+
+    QtObject {
+        id: prv
+
+        property color defaultColor: ui.theme.buttonColor
     }
 
     states: [
@@ -35,9 +80,9 @@ Item {
             when: mouseArea.containsMouse && !mouseArea.pressed && !root.isSelected
 
             PropertyChanges {
-                target: background
+                target: root.background
                 opacity: ui.theme.buttonOpacityHover
-                color: ui.theme.buttonColor
+                color: root.hoveredStateColor
             }
         },
 
@@ -46,9 +91,9 @@ Item {
             when: mouseArea.pressed && !root.isSelected
 
             PropertyChanges {
-                target: background
+                target: root.background
                 opacity: ui.theme.buttonOpacityHit
-                color: ui.theme.buttonColor
+                color: root.pressedStateColor
             }
         },
 
@@ -57,38 +102,10 @@ Item {
             when: root.isSelected
 
             PropertyChanges {
-                target: background
+                target: root.background
                 opacity: ui.theme.accentOpacityHit
                 color: ui.theme.accentColor
             }
         }
     ]
-
-    MouseArea {
-        id: mouseArea
-
-        anchors.fill: parent
-
-        hoverEnabled: root.visible
-
-        onClicked: {
-            root.clicked()
-        }
-
-        onDoubleClicked: {
-            root.doubleClicked()
-        }
-
-        onContainsMouseChanged: {
-            if (!Boolean(root.hint)) {
-                return
-            }
-
-            if (containsMouse) {
-                ui.tooltip.show(this, root.hint)
-            } else {
-                ui.tooltip.hide(this)
-            }
-        }
-    }
 }

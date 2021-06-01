@@ -1,24 +1,26 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "notation.h"
 
-#include <QPainter>
 #include <QGuiApplication>
 #include <QScreen>
 
@@ -27,6 +29,7 @@
 #include "libmscore/score.h"
 #include "libmscore/page.h"
 #include "libmscore/rendermidi.h"
+#include "engraving/accessibility/accessibleelement.h"
 
 #include "notationinteraction.h"
 #include "notationplayback.h"
@@ -118,6 +121,17 @@ Notation::Notation(Ms::Score* score)
         notifyAboutNotationChanged();
     });
 
+    configuration()->selectionColorChanged().onReceive(this, [this](int) {
+        notifyAboutNotationChanged();
+    });
+
+    configuration()->canvasOrientation().ch.onReceive(this, [this](framework::Orientation) {
+        m_score->doLayout();
+        for (Ms::Score* score : m_score->scoreList()) {
+            score->doLayout();
+        }
+    });
+
     setScore(score);
 }
 
@@ -128,19 +142,20 @@ Notation::~Notation()
 
 void Notation::init()
 {
-    Ms::MScore::init(); // initialize libmscore
-
-    Ms::MScore::setNudgeStep(.1); // cursor key (default 0.1)
-    Ms::MScore::setNudgeStep10(1.0); // Ctrl + cursor key (default 1.0)
-    Ms::MScore::setNudgeStep50(0.01); // Alt  + cursor key (default 0.01)
-
-    bool isVertical = configuration()->navigatorOrientation().val == framework::Orientation::Vertical;
-    Ms::MScore::setVerticalOrientation(isVertical);
-
     Ms::MScore::pixelRatio = Ms::DPI / QGuiApplication::primaryScreen()->logicalDotsPerInch();
+
+    bool isVertical = configuration()->canvasOrientation().val == framework::Orientation::Vertical;
+    Ms::MScore::setVerticalOrientation(isVertical);
 
     Ms::MScore::panPlayback = configuration()->isAutomaticallyPanEnabled();
     Ms::MScore::playRepeats = configuration()->isPlayRepeatsEnabled();
+
+    for (int i = 0; i < VOICES; ++i) {
+        Ms::MScore::selectColor[i] = configuration()->selectionColor(i);
+    }
+
+    Ms::MScore::readDefaultStyle(configuration()->defaultStyleFilePath().toQString());
+    Ms::MScore::readPartStyle(configuration()->partStyleFilePath().toQString());
 }
 
 void Notation::setScore(Ms::Score* score)
@@ -239,7 +254,7 @@ ViewMode Notation::viewMode() const
     return score()->layoutMode();
 }
 
-void Notation::paint(QPainter* painter, const QRectF& frameRect)
+void Notation::paint(mu::draw::Painter* painter, const QRectF& frameRect)
 {
     const QList<Ms::Page*>& pages = score()->pages();
     if (pages.empty()) {
@@ -263,7 +278,7 @@ void Notation::paint(QPainter* painter, const QRectF& frameRect)
     static_cast<NotationInteraction*>(m_interaction.get())->paint(painter);
 }
 
-void Notation::paintPages(QPainter* painter, const QRectF& frameRect, const QList<Ms::Page*>& pages, bool paintBorders) const
+void Notation::paintPages(draw::Painter* painter, const QRectF& frameRect, const QList<Ms::Page*>& pages, bool paintBorders) const
 {
     for (Ms::Page* page : pages) {
         QRectF pageRect(page->abbox().translated(page->pos()));
@@ -282,7 +297,7 @@ void Notation::paintPages(QPainter* painter, const QRectF& frameRect, const QLis
 
         QPointF pagePosition(page->pos());
         painter->translate(pagePosition);
-        painter->fillRect(page->bbox(), configuration()->pageColor());
+        paintForeground(painter, page->bbox());
 
         QList<Element*> elements = page->items(frameRect.translated(-page->pos()));
         Ms::paintElements(*painter, elements);
@@ -291,7 +306,7 @@ void Notation::paintPages(QPainter* painter, const QRectF& frameRect, const QLis
     }
 }
 
-void Notation::paintPageBorder(QPainter* painter, const Ms::Page* page) const
+void Notation::paintPageBorder(draw::Painter* painter, const Ms::Page* page) const
 {
     QRectF boundingRect(page->canvasBoundingRect());
 
@@ -310,6 +325,23 @@ void Notation::paintPageBorder(QPainter* painter, const Ms::Page* page) const
 
     if (!page->isOdd()) {
         painter->drawLine(boundingRect.right(), 0.0, boundingRect.right(), boundingRect.bottom());
+    }
+}
+
+void Notation::paintForeground(mu::draw::Painter* painter, const QRectF& pageRect) const
+{
+    if (score()->printing()) {
+        painter->fillRect(pageRect, Qt::white);
+        return;
+    }
+
+    QString wallpaperPath = configuration()->foregroundWallpaperPath().toQString();
+
+    if (configuration()->foregroundUseColor() || wallpaperPath.isEmpty()) {
+        painter->fillRect(pageRect, configuration()->foregroundColor());
+    } else {
+        QPixmap pixmap(wallpaperPath);
+        painter->drawTiledPixmap(pageRect, pixmap);
     }
 }
 

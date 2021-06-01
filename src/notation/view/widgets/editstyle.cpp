@@ -1,26 +1,31 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2021 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #include "editstyle.h"
+#include "settings.h"
 
 #include <QButtonGroup>
 #include <QSignalMapper>
+#include <sstream>
 
 #include "alignSelect.h"
 #include "colorlabel.h"
@@ -29,6 +34,7 @@
 #include "libmscore/figuredbass.h"
 #include "libmscore/layout.h"
 #include "libmscore/sym.h"
+#include "libmscore/realizedharmony.h"
 #include "log.h"
 #include "offsetSelect.h"
 #include "translation.h"
@@ -36,11 +42,14 @@
 
 using namespace mu::notation;
 using namespace mu::ui;
+using namespace mu::framework;
 
 static const QChar GO_NEXT_ICON = iconCodeToChar(IconCode::Code::ARROW_RIGHT);
 static const QChar GO_PREV_ICON = iconCodeToChar(IconCode::Code::ARROW_LEFT);
 static const QChar OPEN_FILE_ICON = iconCodeToChar(IconCode::Code::OPEN_FILE);
 static const QChar RESET_ICON = iconCodeToChar(IconCode::Code::REDO);
+
+static const Settings::Key STYLE_MENU_ORDER("notation", "ui/styleMenuOrder");
 
 static const char* lineStyles[] = {
     QT_TRANSLATE_NOOP("notation", "Continuous"),
@@ -143,13 +152,12 @@ EditStyle::EditStyle(QWidget* parent)
         { StyleId::frameSystemDistance,     false, frameSystemDistance,     resetFrameSystemDistance },
         { StyleId::minMeasureWidth,         false, minMeasureWidth_2,       resetMinMeasureWidth },
         { StyleId::measureSpacing,          false, measureSpacing,          resetMeasureSpacing },
-        // TODO !!! See https://github.com/musescore/MuseScore/pull/6365
-//        { StyleId::measureRepeatNumberPos,  false, measureRepeatNumberPos,  resetMeasureRepeatNumberPos },
-//        { StyleId::mrNumberSeries,          false, mrNumberSeries,          0 },
-//        { StyleId::mrNumberEveryXMeasures,  false, mrNumberEveryXMeasures,  resetMRNumberEveryXMeasures },
-//        { StyleId::mrNumberSeriesWithParentheses, false, mrNumberSeriesWithParentheses, resetMRNumberSeriesWithParentheses },
-//        { StyleId::oneMeasureRepeatShow1,   false, oneMeasureRepeatShow1,   resetOneMeasureRepeatShow1 },
-//        { StyleId::fourMeasureRepeatShowExtenders, false, fourMeasureRepeatShowExtenders, resetFourMeasureRepeatShowExtenders },
+        { StyleId::measureRepeatNumberPos,  false, measureRepeatNumberPos,  resetMeasureRepeatNumberPos },
+        { StyleId::mrNumberSeries,          false, mrNumberSeries,          0 },
+        { StyleId::mrNumberEveryXMeasures,  false, mrNumberEveryXMeasures,  resetMRNumberEveryXMeasures },
+        { StyleId::mrNumberSeriesWithParentheses, false, mrNumberSeriesWithParentheses, resetMRNumberSeriesWithParentheses },
+        { StyleId::oneMeasureRepeatShow1,   false, oneMeasureRepeatShow1,   resetOneMeasureRepeatShow1 },
+        { StyleId::fourMeasureRepeatShowExtenders, false, fourMeasureRepeatShowExtenders, resetFourMeasureRepeatShowExtenders },
 
         { StyleId::barWidth,                false, barWidth,                resetBarWidth },
         { StyleId::endBarWidth,             false, endBarWidth,             resetEndBarWidth },
@@ -236,7 +244,7 @@ EditStyle::EditStyle(QWidget* parent)
         { StyleId::ArpeggioNoteDistance,    false, arpeggioNoteDistance,    0 },
         { StyleId::ArpeggioLineWidth,       false, arpeggioLineWidth,       0 },
         { StyleId::ArpeggioHookLen,         false, arpeggioHookLen,         0 },
-        { StyleId::ArpeggioHiddenInStdIfTab,false, arpeggioHiddenInStdIfTab,0 },
+        { StyleId::ArpeggioHiddenInStdIfTab, false, arpeggioHiddenInStdIfTab, 0 },
         { StyleId::SlurEndWidth,            false, slurEndLineWidth,        resetSlurEndLineWidth },
         { StyleId::SlurMidWidth,            false, slurMidLineWidth,        resetSlurMidLineWidth },
         { StyleId::SlurDottedWidth,         false, slurDottedLineWidth,     resetSlurDottedLineWidth },
@@ -484,6 +492,13 @@ EditStyle::EditStyle(QWidget* parent)
     tupletBracketType->addItem(tr("None", "no tuplet bracket type"), int(TupletBracketType::SHOW_NO_BRACKET));
 
     pageList->setCurrentRow(0);
+
+    numberOfPage = pageList->count();
+    settings()->setDefaultValue(STYLE_MENU_ORDER, Val(ConsecutiveStr(numberOfPage)));
+    stringToArray(settings()->value(STYLE_MENU_ORDER).toString(), pageListMap);
+    pageListResetOrder();
+    pageStack->setCurrentIndex(pageListMap[0]);
+
     accidentalsGroup->setVisible(false);   // disable, not yet implemented
 
     musicalSymbolFont->clear();
@@ -736,6 +751,10 @@ EditStyle::EditStyle(QWidget* parent)
     connect(textStyles, SIGNAL(currentRowChanged(int)), SLOT(textStyleChanged(int)));
     textStyles->setCurrentRow(0);
 
+    connect(pageList->model(), SIGNAL(rowsMoved(QModelIndex,int,int,QModelIndex,int)),
+            this, SLOT(pageListMoved(QModelIndex,int,int,QModelIndex,int)));
+    connect(pageList, SIGNAL(currentRowChanged(int)), this, SLOT(pageListRowChanged(int)));
+
     adjustPagesStackSize(0);
 
     WidgetStateStore::restoreGeometry(this);
@@ -951,7 +970,7 @@ void EditStyle::adjustPagesStackSize(int currentPageIndex)
 ///   menu for every possible element on the score.
 //---------------------------------------------------------
 
-EditStylePage EditStyle::pageForElement(Element* e)
+EditStyle::EditStylePage EditStyle::pageForElement(Element* e)
 {
     switch (e->type()) {
     case ElementType::SCORE:
@@ -988,9 +1007,8 @@ EditStylePage EditStyle::pageForElement(Element* e)
     case ElementType::REST:
     case ElementType::MMREST:
         return &EditStyle::PageRests;
-// TODO !!!
-//    case ElementType::MEASURE_REPEAT:
-//        return &EditStyle:PageMeasureRepeats;
+    case ElementType::MEASURE_REPEAT:
+        return &EditStyle::PageMeasureRepeats;
     case ElementType::BEAM:
         return &EditStyle::PageBeams;
     case ElementType::TUPLET:
@@ -1052,6 +1070,51 @@ EditStylePage EditStyle::pageForElement(Element* e)
     }
 }
 
+//--------------------------------------------------------
+//   arrayToString
+//--------------------------------------------------------
+
+std::string EditStyle::arrayToString(int* arr)
+{
+    std::string s;
+    for (int i = 0; i < numberOfPage; i++) {
+        s = s.append(std::to_string(arr[i]).append(","));
+    }
+    return s;
+}
+
+//--------------------------------------------------------
+//   stringToArray
+//--------------------------------------------------------
+
+void EditStyle::stringToArray(std::string s, int* arr)
+{
+    size_t j = 0;
+    std::string n = "";
+    for (size_t i = 0; i < s.length(); i++) {
+        if (s[i] == ',') {
+            arr[j] = stoi(n);
+            j++;
+            n = "";
+        } else {
+            n = n + s[i];
+        }
+    }
+}
+
+//---------------------------------------------------------
+//   consecutiveStr
+//---------------------------------------------------------
+
+std::string EditStyle::ConsecutiveStr(int D)
+{
+    std::string s;
+    for (int i = 0; i < D; i++) {
+        s = s.append(std::to_string(i).append(","));
+    }
+    return s;
+}
+
 //---------------------------------------------------------
 //   elementHasPage
 ///   check if the element `e` has a style page related to it
@@ -1088,6 +1151,51 @@ void EditStyle::setPage(int idx)
 }
 
 //---------------------------------------------------------
+//   pageListRowChanged
+//---------------------------------------------------------
+
+void EditStyle::pageListRowChanged(int row)
+{
+    pageStack->setCurrentIndex(pageListMap[row]);
+}
+
+//---------------------------------------------------------
+//   pageListMoved
+//---------------------------------------------------------
+
+void EditStyle::pageListMoved(QModelIndex, int Start, int, QModelIndex, int End)
+{
+    if (End > Start) {
+        int startPageIndex = pageListMap[Start];
+        for (int i = Start; i < (End - 1); i++) {
+            pageListMap[i] = pageListMap[i + 1];
+        }
+        pageListMap[End - 1] = startPageIndex;
+    } else {
+        int startPageIndex = pageListMap[Start];
+        for (int i = Start; i > End; i--) {
+            pageListMap[i] = pageListMap[i - 1];
+        }
+        pageListMap[End] = startPageIndex;
+    }
+}
+
+//---------------------------------------------------------
+//   pageListResetOrder
+//---------------------------------------------------------
+
+void EditStyle::pageListResetOrder()
+{
+    QList<QString> originalOrder;
+    for (int i = 0; i < numberOfPage; i++) {
+        originalOrder.append(pageList->item(i)->text());
+    }
+    for (int i = 0; i < numberOfPage; i++) {
+        pageList->item(i)->setText(originalOrder[pageListMap[i]]);
+    }
+}
+
+//---------------------------------------------------------
 //   buttonClicked
 //---------------------------------------------------------
 
@@ -1096,6 +1204,7 @@ void EditStyle::buttonClicked(QAbstractButton* b)
     switch (buttonBox->standardButton(b)) {
     case QDialogButtonBox::Ok:
         accept();
+        settings()->setValue(STYLE_MENU_ORDER, Val(arrayToString(pageListMap)));
         break;
     case QDialogButtonBox::Cancel:
         reject();
@@ -1106,6 +1215,8 @@ void EditStyle::buttonClicked(QAbstractButton* b)
         }
         break;
     }
+
+    globalContext()->currentNotation()->style()->styleChanged().notify();
 }
 
 //---------------------------------------------------------
@@ -1433,10 +1544,10 @@ void EditStyle::setValues()
 
 void EditStyle::selectChordDescriptionFile()
 {
-    io::path dir = configuration()->stylesDirPath();
-    QString filter = mu::qtrc("notation", "MuseScore Styles") + " (*.mss)";
+    io::path dir = configuration()->stylesPath().val;
+    QString filter = qtrc("notation", "MuseScore Styles") + " (*.mss)";
 
-    mu::io::path path = interactive()->selectOpeningFile(mu::qtrc("notation", "Load Style"), dir, filter);
+    mu::io::path path = interactive()->selectOpeningFile(qtrc("notation", "Load Style"), dir, filter);
     if (path.empty()) {
         return;
     }
@@ -1581,8 +1692,6 @@ void EditStyle::enableStyleWidget(const StyleId idx, bool enable)
 void EditStyle::enableVerticalSpreadClicked(bool checked)
 {
     disableVerticalSpread->setChecked(!checked);
-    NOT_IMPLEMENTED;
-//    cs->setLayoutAll(); // TODO
 }
 
 //---------------------------------------------------------
@@ -1592,9 +1701,7 @@ void EditStyle::enableVerticalSpreadClicked(bool checked)
 void EditStyle::disableVerticalSpreadClicked(bool checked)
 {
     setStyleValue(StyleId::enableVerticalSpread, !checked);
-    NOT_IMPLEMENTED;
     enableVerticalSpread->setChecked(!checked);
-//    cs->setLayoutAll(); // TODO
 }
 
 //---------------------------------------------------------
@@ -1666,7 +1773,7 @@ void EditStyle::systemMinDistanceValueChanged(double val)
 //   styleWidget
 //---------------------------------------------------------
 
-const StyleWidget& EditStyle::styleWidget(StyleId idx) const
+const EditStyle::StyleWidget& EditStyle::styleWidget(StyleId idx) const
 {
     for (const StyleWidget& sw : styleWidgets) {
         if (sw.idx == idx) {

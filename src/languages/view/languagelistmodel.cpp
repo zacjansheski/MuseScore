@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "languagelistmodel.h"
 
 #include "log.h"
@@ -94,6 +97,13 @@ bool defaultSort(const Language& l, const Language& r)
     return l.code < r.code;
 }
 
+void LanguageListModel::init()
+{
+    load();
+
+    setupConnections();
+}
+
 void LanguageListModel::load()
 {
     m_list.clear();
@@ -105,7 +115,10 @@ void LanguageListModel::load()
     std::sort(languageList.begin(), languageList.end(), defaultSort);
     m_list = languageList;
     endResetModel();
+}
 
+void LanguageListModel::setupConnections()
+{
     RetCh<Language> languageChanged = languagesService()->languageChanged();
     languageChanged.ch.onReceive(this, [this](const Language& newLanguage) {
         int index = itemIndexByCode(newLanguage.code);
@@ -117,6 +130,15 @@ void LanguageListModel::load()
         m_list[index] = newLanguage;
         QModelIndex _index = createIndex(index, 0);
         emit dataChanged(_index, _index);
+    });
+
+    ValCh<LanguagesHash> languages = languagesService()->languages();
+    languages.ch.onReceive(this, [this](const LanguagesHash&) {
+        load();
+    });
+
+    languagesService()->currentLanguage().ch.onReceive(this, [this](const Language&) {
+        load();
     });
 }
 
@@ -185,7 +207,7 @@ void LanguageListModel::uninstall(QString code)
 
 void LanguageListModel::openPreferences()
 {
-    interactive()->open("musescore://settings");
+    interactive()->open("musescore://preferences?currentPageId=general");
 }
 
 QVariantMap LanguageListModel::language(QString code)
@@ -198,7 +220,7 @@ QVariantMap LanguageListModel::language(QString code)
 
     QVariantMap result;
 
-    QHash<int,QByteArray> names = roleNames();
+    QHash<int, QByteArray> names = roleNames();
     QHashIterator<int, QByteArray> i(names);
     while (i.hasNext()) {
         i.next();

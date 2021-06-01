@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #ifndef MU_NOTATION_NOTATIONPAINTVIEW_H
 #define MU_NOTATION_NOTATIONPAINTVIEW_H
 
@@ -52,6 +55,8 @@ class NotationPaintView : public QQuickPaintedItem, public IControlledView, publ
     Q_PROPERTY(qreal horizontalScrollSize READ horizontalScrollSize NOTIFY horizontalScrollChanged)
     Q_PROPERTY(qreal startVerticalScrollPosition READ startVerticalScrollPosition NOTIFY verticalScrollChanged)
     Q_PROPERTY(qreal verticalScrollSize READ verticalScrollSize NOTIFY verticalScrollChanged)
+
+    Q_PROPERTY(QColor backgroundColor READ backgroundColor NOTIFY backgroundColorChanged)
     Q_PROPERTY(QRect viewport READ viewport NOTIFY viewportChanged)
 
 public:
@@ -62,7 +67,8 @@ public:
     Q_INVOKABLE void scrollHorizontal(qreal position);
     Q_INVOKABLE void scrollVertical(qreal position);
 
-    Q_INVOKABLE void handleAction(const QString& actionCode);
+    Q_INVOKABLE void zoomIn();
+    Q_INVOKABLE void zoomOut();
 
     qreal width() const override;
     qreal height() const override;
@@ -80,6 +86,7 @@ public:
     void showShadowNote(const QPointF& pos) override;
 
     void showContextMenu(const ElementType& elementType, const QPoint& pos) override;
+    Q_INVOKABLE void handleAction(const QString& actionCode);
 
     INotationInteractionPtr notationInteraction() const override;
     INotationPlaybackPtr notationPlayback() const override;
@@ -89,6 +96,7 @@ public:
     qreal startVerticalScrollPosition() const;
     qreal verticalScrollSize() const;
 
+    QColor backgroundColor() const;
     QRect viewport() const;
 
 signals:
@@ -98,7 +106,10 @@ signals:
     void horizontalScrollChanged();
     void verticalScrollChanged();
 
+    void backgroundColorChanged(QColor color);
     void viewportChanged(QRect viewport);
+
+    void activeFocusRequested();
 
 protected:
     void setNotation(INotationPtr notation);
@@ -167,7 +178,11 @@ private:
     const Page* pointToPage(const QPointF& point) const;
     QPointF alignToCurrentPageBorder(const QRectF& showRect, const QPointF& pos) const;
 
-    QColor m_backgroundColor;
+    void paintBackground(const QRect& rect, mu::draw::Painter* painter);
+
+    QPoint canvasCenter() const;
+    std::pair<int, int> constraintCanvas(int dx, int dy) const;
+
     notation::INotationPtr m_notation;
     QTransform m_matrix;
     std::unique_ptr<NotationViewInputController> m_inputController;

@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #ifndef MU_NOTATION_NOTEINPUTBARMODEL_H
 #define MU_NOTATION_NOTEINPUTBARMODEL_H
 
@@ -24,25 +27,22 @@
 #include "modularity/ioc.h"
 #include "async/asyncable.h"
 #include "context/iglobalcontext.h"
-#include "actions/iactionsregister.h"
+#include "ui/iuiactionsregister.h"
 #include "actions/iactionsdispatcher.h"
 #include "playback/iplaybackcontroller.h"
 #include "workspace/iworkspacemanager.h"
 #include "shortcuts/ishortcutsregister.h"
-
-#include "uicomponents/uicomponentstypes.h"
+#include "ui/view/abstractmenumodel.h"
 
 namespace mu::notation {
-class NoteInputBarModel : public QAbstractListModel, public async::Asyncable
+class NoteInputBarModel : public QAbstractListModel, public ui::AbstractMenuModel
 {
     Q_OBJECT
 
-    INJECT(notation, actions::IActionsRegister, actionsRegister)
     INJECT(notation, actions::IActionsDispatcher, dispatcher)
     INJECT(notation, context::IGlobalContext, context)
     INJECT(notation, playback::IPlaybackController, playbackController)
     INJECT(notation, workspace::IWorkspaceManager, workspaceManager)
-    INJECT(notation, shortcuts::IShortcutsRegister, shortcutsRegister)
 
     Q_PROPERTY(int count READ rowCount NOTIFY countChanged)
 
@@ -51,10 +51,10 @@ public:
 
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     QVariant data(const QModelIndex& index, int role) const override;
-    QHash<int,QByteArray> roleNames() const override;
+    QHash<int, QByteArray> roleNames() const override;
 
     Q_INVOKABLE void load();
-    Q_INVOKABLE void handleAction(const QString& action);
+    Q_INVOKABLE void handleAction(const QString& action, int actionIndex = -1);
 
     Q_INVOKABLE QVariantMap get(int index);
 
@@ -64,16 +64,25 @@ signals:
 private:
     enum Roles {
         CodeRole = Qt::UserRole + 1,
+        TitleRole,
         IconRole,
         SectionRole,
-        CheckedRole
+        CheckedRole,
+        DescriptionRole,
+        ShortcutRole,
+        SubitemsRole,
+        IsMenuSecondaryRole,
+        OrderRole
     };
+
+    void onActionsStateChanges(const actions::ActionCodeList& codes) override;
 
     INotationPtr notation() const;
 
     void onNotationChanged();
 
     void toggleNoteInput();
+    void toggleNoteInputMethod(const actions::ActionCode& actionCode);
 
     void updateState();
     void updateNoteInputState();
@@ -90,14 +99,32 @@ private:
     bool isNoteInputModeAction(const actions::ActionCode& actionCode) const;
     bool isTupletChooseAction(const actions::ActionCode& actionCode) const;
 
-    actions::ActionItem currentNoteInputModeAction() const;
+    ui::UiAction currentNoteInputModeAction() const;
 
-    uicomponents::MenuItem makeActionItem(const actions::ActionItem& action, const std::string& section);
-    uicomponents::MenuItem makeAddItem(const std::string& section);
+    int itemIndex(const actions::ActionCode& actionCode) const;
+
+    ui::MenuItem makeActionItem(const ui::UiAction& action, const QString& section);
+    ui::MenuItem makeAddItem(const QString& section);
+
+    QVariantList subitems(const actions::ActionCode& actionCode) const;
+    ui::MenuItemList noteInputMethodItems() const;
+    ui::MenuItemList tupletItems() const;
+    ui::MenuItemList addItems() const;
+    ui::MenuItemList notesItems() const;
+    ui::MenuItemList intervalsItems() const;
+    ui::MenuItemList measuresItems() const;
+    ui::MenuItemList framesItems() const;
+    ui::MenuItemList textItems() const;
+    ui::MenuItemList linesItems() const;
+
+    bool isMenuSecondary(const actions::ActionCode& actionCode) const;
+
+    void notifyAboutTupletItemChanged();
+    void notifyAboutAddItemChanged();
 
     std::vector<std::string> currentWorkspaceActions() const;
 
-    uicomponents::MenuItem& item(const actions::ActionCode& actionCode);
+    ui::MenuItem& item(const actions::ActionCode& actionCode);
     int findNoteInputModeItemIndex() const;
 
     INotationNoteInputPtr noteInput() const;
@@ -116,7 +143,7 @@ private:
 
     const ChordRest* elementToChordRest(const Element* element) const;
 
-    QList<uicomponents::MenuItem> m_items;
+    QList<ui::MenuItem> m_items;
 };
 }
 

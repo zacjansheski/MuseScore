@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Linux Music Score Editor
-//
-//  Copyright (C) 2009-2012 Werner Schweer and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #include <QDateTime>
 
@@ -29,6 +32,8 @@
 #include "libmscore/page.h"
 #include "libmscore/system.h"
 #include "libmscore/staff.h"
+
+#include "engraving/draw/qpainterprovider.h"
 
 namespace Ms {
 namespace PluginAPI {
@@ -169,15 +174,15 @@ void ScoreView::setScore(Ms::Score* s)
 //   paint
 //---------------------------------------------------------
 
-void ScoreView::paint(QPainter* p)
+void ScoreView::paint(QPainter* qp)
 {
-    p->setRenderHint(QPainter::Antialiasing, true);
-    p->setRenderHint(QPainter::TextAntialiasing, true);
-    p->fillRect(QRect(0, 0, width(), height()), _color);
+    mu::draw::Painter p(qp, "plugins_scoreview");
+    p.setAntialiasing(true);
+    p.fillRect(QRect(0, 0, width(), height()), _color);
     if (!score) {
         return;
     }
-    p->scale(mag, mag);
+    p.scale(mag, mag);
 
     Ms::Page* page = score->pages()[_currentPage];
     QList<const Ms::Element*> el;
@@ -190,9 +195,9 @@ void ScoreView::paint(QPainter* p)
 
     foreach (const Ms::Element* e, el) {
         QPointF pos(e->pagePos());
-        p->translate(pos);
-        e->draw(p);
-        p->translate(-pos);
+        p.translate(pos);
+        e->draw(&p);
+        p.translate(-pos);
     }
 }
 

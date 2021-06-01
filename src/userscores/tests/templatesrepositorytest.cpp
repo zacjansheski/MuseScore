@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #include <gtest/gtest.h>
 
@@ -48,11 +51,12 @@ protected:
         m_repository->setfileSystem(m_fileSystem);
     }
 
-    Meta createMeta(const QString& title) const
+    Meta createMeta(const io::path& path) const
     {
         Meta meta;
 
-        meta.title = title;
+        meta.title = path.toQString();
+        meta.filePath = path;
         meta.creationDate = QDate::currentDate();
 
         return meta;
@@ -64,8 +68,7 @@ protected:
     std::shared_ptr<FileSystemMock> m_fileSystem;
 };
 
-namespace mu {
-namespace userscores {
+namespace mu::userscores {
 bool operator==(const Template& templ1, const Template& templ2)
 {
     bool equals = true;
@@ -75,7 +78,6 @@ bool operator==(const Template& templ1, const Template& templ2)
     equals &= (templ1.creationDate == templ2.creationDate);
 
     return equals;
-}
 }
 }
 
@@ -88,7 +90,7 @@ TEST_F(TemplatesRepositoryTest, Templates)
         "/extensions/templates"
     };
 
-    EXPECT_CALL(*m_configuration, templatesDirPaths())
+    EXPECT_CALL(*m_configuration, availableTemplatesPaths())
     .WillOnce(Return(templatesDirPaths));
 
     // [GIVEN] All paths to mscz files
@@ -112,8 +114,8 @@ TEST_F(TemplatesRepositoryTest, Templates)
     for (const io::path& path: allPathsToMsczFiles) {
         Meta meta = createMeta(path.toQString());
 
-        ON_CALL(*m_msczReader, readMeta(path))
-        .WillByDefault(Return(RetVal<Meta>::make_ok(meta)));
+        ON_CALL(*m_msczReader, readMetaList(io::paths { path }))
+        .WillByDefault(Return(MetaList { meta }));
 
         Template templ(meta);
         templ.categoryTitle = io::dirname(path).toQString();

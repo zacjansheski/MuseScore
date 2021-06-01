@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #ifndef MU_AUDIO_MIXER_H
 #define MU_AUDIO_MIXER_H
 
@@ -55,11 +58,9 @@ public:
     // IAudioSource (AbstractAudioSource)
     void setSampleRate(unsigned int sampleRate) override;
 
-    unsigned int streamCount() const override;
+    unsigned int audioChannelsCount() const override;
 
-    void forward(unsigned int sampleCount) override;
-
-    void setBufferSize(unsigned int samples) override;
+    void process(float* outBuffer, unsigned int samplesPerChannel) override;
 
     // Self
 
@@ -67,11 +68,13 @@ public:
 
 private:
     //! mix the channel in to the buffer
-    void mixinChannel(std::shared_ptr<MixerChannel> channel, unsigned int samplesCount);
-    void mixinChannelStream(std::shared_ptr<MixerChannel> channel, unsigned int streamId, unsigned int samplesCount);
+    void mixinChannel(float* outBuffer, float* inBuffer, std::shared_ptr<MixerChannel> channel, unsigned int samplesCount);
+    void mixinChannelStream(float* outBuffer, float* inBuffer, std::shared_ptr<MixerChannel> channel, unsigned int streamId,
+                            unsigned int samplesCount);
 
     Mode m_mode = STEREO;
     float m_masterLevel = 1.f;
+    std::vector<float> m_writeCacheBuff;
     std::map<ChannelID, std::shared_ptr<MixerChannel> > m_inputList = {};
     std::map<unsigned int, std::shared_ptr<IAudioProcessor> > m_insertList = {};
     std::shared_ptr<Clock> m_clock;

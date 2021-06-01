@@ -1,10 +1,34 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "textsettingsmodel.h"
 
 #include <QFont>
 
-#include "types/texttypes.h"
 #include "libmscore/textbase.h"
+
+#include "log.h"
+#include "translation.h"
 #include "dataformatter.h"
+#include "types/texttypes.h"
 
 using namespace mu::inspector;
 
@@ -15,8 +39,8 @@ TextSettingsModel::TextSettingsModel(QObject* parent, IElementRepositoryService*
     setTitle(qtrc("inspector", "Text"));
     createProperties();
 
-    adapter()->isTextEditingChanged().onNotify(this, [this]() {
-        setIsSpecialCharactersInsertionAvailable(adapter()->isTextEditingStarted());
+    isTextEditingChanged().onNotify(this, [this]() {
+        setIsSpecialCharactersInsertionAvailable(isTextEditingStarted());
     });
 }
 
@@ -145,12 +169,12 @@ void TextSettingsModel::resetProperties()
 
 void TextSettingsModel::insertSpecialCharacters()
 {
-    adapter()->showSpecialCharactersDialog();
+    NOT_IMPLEMENTED;
 }
 
 void TextSettingsModel::showStaffTextProperties()
 {
-    adapter()->showStaffTextPropertiesDialog();
+    NOT_IMPLEMENTED;
 }
 
 PropertyItem* TextSettingsModel::fontFamily() const
@@ -277,4 +301,22 @@ void TextSettingsModel::updateStaffPropertiesAvailability()
                        == TextTypes::TextType::TEXT_TYPE_STAFF;
 
     setAreStaffTextPropertiesAvailable(isAvailable && !m_textType->isUndefined());
+}
+
+bool TextSettingsModel::isTextEditingStarted() const
+{
+    IF_ASSERT_FAILED(context() && context()->currentNotation()) {
+        return false;
+    }
+
+    return context()->currentNotation()->interaction()->isTextEditingStarted();
+}
+
+mu::async::Notification TextSettingsModel::isTextEditingChanged() const
+{
+    IF_ASSERT_FAILED(context() && context()->currentNotation()) {
+        return mu::async::Notification();
+    }
+
+    return context()->currentNotation()->interaction()->textEditingChanged();
 }

@@ -1,32 +1,35 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "roottreeitem.h"
 
 using namespace mu::instruments;
 using namespace mu::notation;
 
 RootTreeItem::RootTreeItem(INotationPartsPtr notationParts, QObject* parent)
-    : AbstractInstrumentPanelTreeItem(InstrumentTreeItemType::ItemType::ROOT, notationParts, parent)
+    : AbstractInstrumentsPanelTreeItem(InstrumentsTreeItemType::ItemType::ROOT, notationParts, parent)
 {
 }
 
-void RootTreeItem::moveChildren(const int sourceRow, const int count, AbstractInstrumentPanelTreeItem* destinationParent,
+void RootTreeItem::moveChildren(const int sourceRow, const int count, AbstractInstrumentsPanelTreeItem* destinationParent,
                                 const int destinationRow)
 {
     IDList partIds;
@@ -43,14 +46,14 @@ void RootTreeItem::moveChildren(const int sourceRow, const int count, AbstractIn
         moveMode = INotationParts::InsertMode::After;
     }
 
-    const AbstractInstrumentPanelTreeItem* destinationPartItem = destinationParent->childAtRow(destinationRow_);
+    const AbstractInstrumentsPanelTreeItem* destinationPartItem = destinationParent->childAtRow(destinationRow_);
     if (!destinationPartItem) {
         return;
     }
 
     notationParts()->moveParts(partIds, destinationPartItem->id(), moveMode);
 
-    AbstractInstrumentPanelTreeItem::moveChildren(sourceRow, count, destinationParent, destinationRow);
+    AbstractInstrumentsPanelTreeItem::moveChildren(sourceRow, count, destinationParent, destinationRow);
 }
 
 void RootTreeItem::removeChildren(const int row, const int count, const bool deleteChild)
@@ -65,5 +68,5 @@ void RootTreeItem::removeChildren(const int row, const int count, const bool del
         notationParts()->removeParts(partIds);
     }
 
-    AbstractInstrumentPanelTreeItem::removeChildren(row, count, deleteChild);
+    AbstractInstrumentsPanelTreeItem::removeChildren(row, count, deleteChild);
 }

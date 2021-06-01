@@ -1,28 +1,31 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2019 Werner Schweer and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
-import QtQuick 2.8
+import QtQuick 2.15
 import QtQuick.Controls 2.1
 
-import MuseScore.Palette 1.0
-import MuseScore.UiComponents 1.0
 import MuseScore.Ui 1.0
+import MuseScore.UiComponents 1.0
+import MuseScore.Palette 1.0
 
 import "utils.js" as Utils
 
@@ -35,6 +38,8 @@ Item {
     property bool searchOpened: searchTextInput.visible
 
     property alias popupMaxHeight: palettePopup.maxHeight
+
+    property alias navigation: keynavSub
 
     signal addCustomPaletteRequested(var paletteName)
 
@@ -55,20 +60,39 @@ Item {
         }
     }
 
+    NavigationPanel {
+        id: keynavSub
+        name: "PalettesHeader"
+        onActiveChanged: {
+            if (active) {
+                header.forceActiveFocus()
+            }
+        }
+    }
+
     FlatButton {
         id: morePalettesButton
         anchors.left: parent.left
         anchors.right: searchTextButton.left
         anchors.rightMargin: 8
+        objectName: "AddPalettesBtn"
+        navigation.panel: keynavSub
+        navigation.order: 1
+        enabled: !searchTextInput.visible
         text: qsTrc("palette", "Add Palettes")
-        onClicked: palettePopup.visible = !palettePopup.visible
+        onClicked: {
+            palettePopup.visible = !palettePopup.visible
+        }
     }
 
     FlatButton {
         id: searchTextButton
         anchors.right: parent.right
+        objectName: "SearchPalettesBtn"
+        navigation.panel: keynavSub
+        navigation.order: 2
+        enabled: !searchTextInput.visible
         icon: IconCode.SEARCH
-
         onClicked: {
             toggleSearch()
         }
@@ -77,6 +101,37 @@ Item {
     SearchField {
         id: searchTextInput
         width: parent.width
+
+        //! TODO Move to SearchField inside
+        NavigationControl {
+            id: keynavSearchField
+            name: "SearchPalettesField"
+            panel: keynavSub
+            order: 3
+            enabled: searchTextInput.visible
+            onActiveChanged: {
+                if (keynavSearchField.active) {
+                    searchTextInput.forceActiveFocus()
+                }
+            }
+        }
+
+        NavigationControl {
+            id: keynavSearchFieldClose
+            name: "SearchPalettesFieldClose"
+            panel: keynavSub
+            order: 4
+            enabled: searchTextInput.visible && searchTextInput.clearTextButtonVisible
+            onTriggered: toggleSearch()
+        }
+
+        onVisibleChanged: {
+            if (!searchTextInput.visible) {
+                morePalettesButton.navigation.requestActive()
+            }
+        }
+
+        //! ----------
 
         visible: false
 
@@ -94,10 +149,6 @@ Item {
             }
         }
 
-        KeyNavigation.tab: paletteTree.currentTreeItem
-
-        Keys.onDownPressed: paletteTree.focusFirstItem();
-        Keys.onUpPressed: paletteTree.focusLastItem();
         Keys.onEscapePressed: toggleSearch()
 
         clearTextButtonVisible: true
@@ -135,14 +186,6 @@ Item {
 
         onAddCustomPaletteRequested: {
             createCustomPalettePopup.open()
-        }
-    }
-
-    Connections {
-        target: palettesWidget
-        function onHasFocusChanged() {
-            if (!palettesWidget.hasFocus && !palettePopup.inMenuAction)
-                palettePopup.visible = false;
         }
     }
 }

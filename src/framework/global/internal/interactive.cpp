@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "interactive.h"
 
 #include <QFileDialog>
@@ -35,9 +38,23 @@
 using namespace mu;
 using namespace mu::framework;
 
-IInteractive::Button Interactive::question(const std::string& title, const std::string& text,
+static IInteractive::Result standardDialogResult(const RetVal<Val>& retVal)
+{
+    if (!retVal.ret) {
+        return IInteractive::Result();
+    }
+
+    QVariantMap resultMap = retVal.val.toQVariant().toMap();
+
+    int btn = resultMap["buttonId"].toInt();
+    bool showAgain = resultMap["showAgain"].toBool();
+    return IInteractive::Result(btn, showAgain);
+}
+
+IInteractive::Result Interactive::question(const std::string& title, const std::string& text,
                                            const Buttons& buttons,
-                                           const Button& def) const
+                                           const Button& def,
+                                           const Options& options) const
 {
     ButtonDatas datas;
     datas.reserve(buttons.size());
@@ -45,53 +62,13 @@ IInteractive::Button Interactive::question(const std::string& title, const std::
         datas.push_back(buttonData(b));
     }
 
-    return static_cast<Button>(question(title, Text(text), datas, int(def)));
+    return question(title, Text(text), datas, int(def), options);
 }
 
-int Interactive::question(const std::string& title, const Text& text, const ButtonDatas& btns, int defBtn) const
+IInteractive::Result Interactive::question(const std::string& title, const Text& text, const ButtonDatas& btns, int defBtn,
+                                           const Options& options) const
 {
-    //! NOTE Temporarily, need to replace the qml dialog
-
-    auto format = [](IInteractive::TextFormat f) {
-        switch (f) {
-        case IInteractive::TextFormat::PlainText: return Qt::PlainText;
-        case IInteractive::TextFormat::RichText:  return Qt::RichText;
-        }
-        return Qt::PlainText;
-    };
-
-    QMap<QAbstractButton*, int> btnsMap;
-    auto makeButton = [&btnsMap](const ButtonData& b, QWidget* parent) {
-        QPushButton* btn = new QPushButton(parent);
-        btn->setText(QString::fromStdString(b.text));
-        btnsMap[btn] = b.btn;
-        return btn;
-    };
-
-    QMessageBox msgBox;
-    msgBox.setWindowTitle(QString::fromStdString(title));
-    msgBox.setText(QString::fromStdString(text.text));
-    msgBox.setTextFormat(format(text.format));
-
-    for (const ButtonData& b : btns) {
-        QPushButton* btn = makeButton(b, &msgBox);
-        msgBox.addButton(btn, QMessageBox::ActionRole);
-
-        if (b.btn == defBtn) {
-            msgBox.setDefaultButton(btn);
-        }
-    }
-
-    QGridLayout* layout = (QGridLayout*)msgBox.layout();
-    QSpacerItem* hSpacer = new QSpacerItem(300, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
-    layout->addItem(hSpacer, layout->rowCount(), 0, 1, layout->columnCount());
-
-    msgBox.exec();
-
-    QAbstractButton* clickedBtn = msgBox.clickedButton();
-    int retBtn = btnsMap.value(clickedBtn);
-
-    return retBtn;
+    return standardDialogResult(provider()->question(title, text, btns, defBtn, options));
 }
 
 IInteractive::ButtonData Interactive::buttonData(Button b) const
@@ -122,30 +99,25 @@ IInteractive::ButtonData Interactive::buttonData(Button b) const
     return ButtonData(int(b), "");
 }
 
-void Interactive::message(Type type, const std::string& title, const std::string& text) const
+IInteractive::Result Interactive::info(const std::string& title, const std::string& text, const ButtonDatas& buttons,
+                                       int defBtn,
+                                       const Options& options) const
 {
-    //! NOTE Temporarily, need to replace the qml dialog
+    return standardDialogResult(provider()->info(title, text, buttons, defBtn, options));
+}
 
-    auto icon = [](Type type) {
-        switch (type) {
-        case Type::Info:        return QMessageBox::Information;
-        case Type::Warning:     return QMessageBox::Warning;
-        case Type::Critical:    return QMessageBox::Critical;
-        }
-        return QMessageBox::NoIcon;
-    };
+IInteractive::Result Interactive::warning(const std::string& title, const std::string& text, const ButtonDatas& buttons,
+                                          int defBtn,
+                                          const QFlags<IInteractive::Option>& options) const
+{
+    return standardDialogResult(provider()->warning(title, text, buttons, defBtn, options));
+}
 
-    QMessageBox msgBox;
-    msgBox.setWindowTitle(QString::fromStdString(title));
-    msgBox.setText(QString::fromStdString(text));
-    msgBox.setStandardButtons(QMessageBox::Ok);
-    msgBox.setIcon(icon(type));
-
-    QGridLayout* layout = (QGridLayout*)msgBox.layout();
-    QSpacerItem* hSpacer = new QSpacerItem(300, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
-    layout->addItem(hSpacer, layout->rowCount(), 0, 1, layout->columnCount());
-
-    msgBox.exec();
+IInteractive::Result Interactive::error(const std::string& title, const std::string& text, const ButtonDatas& buttons,
+                                        int defBtn,
+                                        const Options& options) const
+{
+    return standardDialogResult(provider()->error(title, text, buttons, defBtn, options));
 }
 
 mu::io::path Interactive::selectOpeningFile(const QString& title, const io::path& dir, const QString& filter)
@@ -154,9 +126,17 @@ mu::io::path Interactive::selectOpeningFile(const QString& title, const io::path
     return path;
 }
 
-io::path Interactive::selectSavingFile(const QString& title, const io::path& dir, const QString& filter)
+io::path Interactive::selectSavingFile(const QString& title, const io::path& dir, const QString& filter, bool confirmOverwrite)
 {
-    QString path = QFileDialog::getSaveFileName(mainWindow()->qMainWindow(), title, dir.toQString(), filter);
+    QFileDialog::Options options;
+    options.setFlag(QFileDialog::DontConfirmOverwrite, !confirmOverwrite);
+    QString path = QFileDialog::getSaveFileName(mainWindow()->qMainWindow(), title, dir.toQString(), filter, nullptr, options);
+    return path;
+}
+
+io::path Interactive::selectDirectory(const QString& title, const io::path& dir)
+{
+    QString path = QFileDialog::getExistingDirectory(mainWindow()->qMainWindow(), title, dir.toQString());
     return path;
 }
 
@@ -188,9 +168,19 @@ RetVal<bool> Interactive::isOpened(const std::string& uri) const
     return provider()->isOpened(Uri(uri));
 }
 
+RetVal<bool> Interactive::isOpened(const Uri& uri) const
+{
+    return provider()->isOpened(uri);
+}
+
 void Interactive::close(const std::string& uri)
 {
     provider()->close(Uri(uri));
+}
+
+void Interactive::close(const Uri& uri)
+{
+    provider()->close(uri);
 }
 
 ValCh<Uri> Interactive::currentUri() const

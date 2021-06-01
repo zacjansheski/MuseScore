@@ -1,14 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2007-2011 Werner Schweer
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2
-//  as published by the Free Software Foundation and appearing in
-//  the file LICENCE.GPL
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #include "midifile.h"
 #include "libmscore/xml.h"
@@ -851,7 +861,7 @@ void MidiTrack::mergeNoteOnOffAndFindMidiType(MidiType* mt)
                     }
                 }
             }
-            el.insert(std::pair<int,MidiEvent>(i->first, ev));
+            el.insert(std::pair<int, MidiEvent>(i->first, ev));
             ev.setType(ME_INVALID);
             continue;
         }
@@ -885,7 +895,7 @@ void MidiTrack::mergeNoteOnOffAndFindMidiType(MidiType* mt)
             qDebug("-no note-off for note at %d", tick);
             note.setLen(1);
         }
-        el.insert(std::pair<int,MidiEvent>(tick, note));
+        el.insert(std::pair<int, MidiEvent>(tick, note));
         ev.setType(ME_INVALID);
     }
     _events = el;

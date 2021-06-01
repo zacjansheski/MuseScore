@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #ifndef MU_USERSCORES_USERSCORECONFIGURATION_H
 #define MU_USERSCORES_USERSCORECONFIGURATION_H
 
@@ -24,36 +27,56 @@
 #include "iglobalconfiguration.h"
 #include "extensions/iextensionsconfiguration.h"
 #include "notation/inotationconfiguration.h"
+#include "global/val.h"
+#include "system/ifilesystem.h"
 
 namespace mu::userscores {
 class UserScoresConfiguration : public IUserScoresConfiguration
 {
-    INJECT(usescores, framework::IGlobalConfiguration, globalConfiguration)
+    INJECT(userscores, framework::IGlobalConfiguration, globalConfiguration)
     INJECT(userscores, extensions::IExtensionsConfiguration, extensionsConfiguration)
     INJECT(userscores, notation::INotationConfiguration, notationConfiguration)
+    INJECT(userscores, system::IFileSystem, fileSystem)
 
 public:
     static const QString DEFAULT_FILE_SUFFIX;
+    static const QString DEFAULT_EXPORT_SUFFIX;
 
     void init();
 
-    ValCh<QStringList> recentScoreList() const override;
-    void setRecentScoreList(const QStringList& recentScoreList) override;
+    ValCh<io::paths> recentScorePaths() const override;
+    void setRecentScorePaths(const io::paths& recentScorePaths) override;
 
-    io::paths templatesDirPaths() const override;
-    io::path scoresPath() const override;
-    io::path defaultSavingFilePath(const std::string& fileName) const override;
+    io::path myFirstScorePath() const override;
+
+    io::paths availableTemplatesPaths() const override;
+
+    ValCh<io::path> templatesPath() const override;
+    void setTemplatesPath(const io::path& path) override;
+
+    ValCh<io::path> scoresPath() const override;
+    void setScoresPath(const io::path& path) override;
+
+    io::path defaultSavingFilePath(const io::path& fileName) const override;
 
     QColor templatePreviewBackgroundColor() const override;
-    async::Channel<QColor> templatePreviewBackgroundColorChanged() const override;
+    async::Notification templatePreviewBackgroundChanged() const override;
 
     PreferredScoreCreationMode preferredScoreCreationMode() const override;
     void setPreferredScoreCreationMode(PreferredScoreCreationMode mode) override;
 
 private:
-    QStringList parseRecentList(const std::string& recents) const;
+    io::path mainTemplatesDirPath() const;
 
-    async::Channel<QStringList> m_recentListChanged;
+    io::paths actualRecentScorePaths() const;
+    io::paths parsePaths(const mu::Val& value) const;
+
+    io::path userTemplatesPath() const;
+    io::path defaultTemplatesPath() const;
+
+    async::Channel<io::paths> m_recentScorePathsChanged;
+    async::Channel<io::path> m_templatesPathChanged;
+    async::Channel<io::path> m_scoresPathChanged;
 };
 }
 

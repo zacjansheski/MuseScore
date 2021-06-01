@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #include "pngwriter.h"
 
@@ -26,17 +29,25 @@
 #include "libmscore/score.h"
 #include "libmscore/page.h"
 
+#include "engraving/draw/qpainterprovider.h"
+
 #include <QImage>
-#include <QPainter>
 
 using namespace mu::iex::imagesexport;
+using namespace mu::notation;
 using namespace mu::system;
 
-mu::Ret PngWriter::write(const notation::INotationPtr notation, IODevice& destinationDevice, const Options& options)
+std::vector<INotationWriter::UnitType> PngWriter::supportedUnitTypes() const
+{
+    return { UnitType::PER_PAGE };
+}
+
+mu::Ret PngWriter::write(INotationPtr notation, IODevice& destinationDevice, const Options& options)
 {
     IF_ASSERT_FAILED(notation) {
         return make_ret(Ret::Code::UnknownError);
     }
+
     Ms::Score* score = notation->elements()->msScore();
     IF_ASSERT_FAILED(score) {
         return make_ret(Ret::Code::UnknownError);
@@ -77,9 +88,8 @@ mu::Ret PngWriter::write(const notation::INotationPtr notation, IODevice& destin
     double scaling = CANVAS_DPI / Ms::DPI;
     Ms::MScore::pixelRatio = 1.0 / scaling;
 
-    QPainter painter(&image);
-    painter.setRenderHint(QPainter::Antialiasing, true);
-    painter.setRenderHint(QPainter::TextAntialiasing, true);
+    mu::draw::Painter painter(&image, "pngwriter");
+    painter.setAntialiasing(true);
     painter.scale(scaling, scaling);
     if (TRIM_MARGIN_SIZE >= 0) {
         painter.translate(-pageRect.topLeft());

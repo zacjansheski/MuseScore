@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #ifndef MU_NOTATION_EDITSTYLE_H
 #define MU_NOTATION_EDITSTYLE_H
 
@@ -26,32 +29,6 @@
 #include "iinteractive.h"
 
 namespace mu::notation {
-class Score;
-class EditStyle;
-
-//---------------------------------------------------------
-//   StyleWidget
-//---------------------------------------------------------
-
-struct StyleWidget {
-    StyleId idx;
-    bool showPercent;
-    QObject* widget;
-    QToolButton* reset;
-};
-
-//---------------------------------------------------------
-//   EditStylePage
-///   This is a type for a pointer to any QWidget that is a member of EditStyle.
-///   It's used to create static references to the pointers to pages.
-//---------------------------------------------------------
-
-typedef QWidget* EditStyle::* EditStylePage;
-
-//---------------------------------------------------------
-//   EditStyle
-//---------------------------------------------------------
-
 class EditStyle : public QDialog, private Ui::EditStyleBase
 {
     Q_OBJECT
@@ -60,6 +37,19 @@ class EditStyle : public QDialog, private Ui::EditStyleBase
     INJECT(notation, mu::notation::INotationConfiguration, configuration)
     INJECT(notation, mu::framework::IInteractive, interactive)
 
+public:
+    EditStyle(QWidget* = nullptr);
+    EditStyle(const EditStyle&);
+
+    void setPage(int idx);
+    void gotoElement(Element* e);
+    static bool elementHasPage(Element* e);
+
+public slots:
+    void accept();
+    void reject();
+
+private:
     void showEvent(QShowEvent*);
     void hideEvent(QHideEvent*);
     void changeEvent(QEvent*);
@@ -67,6 +57,19 @@ class EditStyle : public QDialog, private Ui::EditStyleBase
     void retranslate();
     void setHeaderFooterToolTip();
     void adjustPagesStackSize(int currentPageIndex);
+
+    /// EditStylePage
+    /// This is a type for a pointer to any QWidget that is a member of EditStyle.
+    /// It's used to create static references to the pointers to pages.
+    typedef QWidget* EditStyle::* EditStylePage;
+    static EditStylePage pageForElement(Element*);
+
+    struct StyleWidget {
+        StyleId idx;
+        bool showPercent;
+        QObject* widget;
+        QToolButton* reset;
+    };
 
     QVector<StyleWidget> styleWidgets;
     const StyleWidget& styleWidget(StyleId id) const;
@@ -86,7 +89,8 @@ class EditStyle : public QDialog, private Ui::EditStyleBase
     bool hasDefaultStyleValue(StyleId id) const;
     void setStyleValue(StyleId id, const QVariant& value);
 
-    static EditStylePage pageForElement(Element*);
+    int numberOfPage;
+    int pageListMap[50];
 
 private slots:
     void selectChordDescriptionFile();
@@ -114,18 +118,12 @@ private slots:
     void editUserStyleName();
     void endEditUserStyleName();
     void resetUserStyleName();
-
-public:
-    EditStyle(QWidget* = nullptr);
-    EditStyle(const EditStyle&);
-
-    void setPage(int idx);
-    void gotoElement(Element* e);
-    static bool elementHasPage(Element* e);
-
-public slots:
-    void accept();
-    void reject();
+    void pageListRowChanged(int);
+    void pageListResetOrder();
+    void pageListMoved(QModelIndex, int, int, QModelIndex, int);
+    void stringToArray(std::string, int*);
+    std::string arrayToString(int*);
+    std::string ConsecutiveStr(int);
 };
 }
 

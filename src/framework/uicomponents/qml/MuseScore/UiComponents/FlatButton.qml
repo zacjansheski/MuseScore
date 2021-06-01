@@ -1,46 +1,96 @@
-import QtQuick 2.8
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+import QtQuick 2.15
+import MuseScore.Ui 1.0
 import MuseScore.UiComponents 1.0
 
-FocusableItem {
+FocusScope {
     id: root
 
     property alias icon: buttonIcon.iconCode
     property alias text: textLabel.text
-    property string hint
+
+    property string toolTipTitle: ""
+    property string toolTipDescription: ""
+    property string toolTipShortcut: ""
 
     property alias iconFont: buttonIcon.font
     property alias textFont: textLabel.font
 
-    property color normalStateColor: privateProperties.defaultColor
-    property color hoveredStateColor: privateProperties.defaultColor
-    property color pressedStateColor: privateProperties.defaultColor
+    property color normalStateColor: prv.defaultColor
+    property color hoveredStateColor: prv.defaultColor
+    property color pressedStateColor: prv.defaultColor
     property bool accentButton: false
 
     property int orientation: Qt.Vertical
 
-    signal clicked()
+    property alias navigation: navCtrl
+    property alias accessible: navCtrl.accessible
 
-    QtObject {
-        id: privateProperties
+    property alias mouseArea: mouseArea
 
-        property color defaultColor: accentButton ? ui.theme.accentColor : ui.theme.buttonColor
-        property bool isVertical: orientation === Qt.Vertical
-    }
+    property bool isClickOnKeyNavTriggered: true
+
+    signal clicked(var mouse)
+    signal pressAndHold(var mouse)
+
+    objectName: root.text
 
     height: contentWrapper.height + 14
-    width: (Boolean(text) ? Math.max(contentWrapper.width + 32, privateProperties.isVertical ? 132 : 0) : contentWrapper.width + 16)
+    width: (Boolean(text) ? Math.max(contentWrapper.width + 32, prv.isVertical ? 132 : 0) : contentWrapper.width + 16)
 
     opacity: root.enabled ? 1.0 : ui.theme.itemOpacityDisabled
 
+    QtObject {
+        id: prv
+
+        property color defaultColor: root.accentButton ? ui.theme.accentColor : ui.theme.buttonColor
+        property bool isVertical: root.orientation === Qt.Vertical
+    }
+
+    NavigationControl {
+        id: navCtrl
+        name: root.objectName !== "" ? root.objectName : "FlatButton"
+        enabled: root.enabled && root.visible
+
+        accessible.role: MUAccessible.Button
+        accessible.name: root.text
+        accessible.visualItem: root
+
+        onTriggered: {
+            if (root.isClickOnKeyNavTriggered) {
+                root.clicked()
+            }
+        }
+    }
+
     Rectangle {
-        id: backgroundRect
-
+        id: background
         anchors.fill: parent
-
-        color: normalStateColor
+        color: root.normalStateColor
         opacity: ui.theme.buttonOpacityNormal
-        border.width: 0
         radius: 3
+        border.width: navCtrl.active ? 2 : 0
+        border.color: ui.theme.focusColor
     }
 
     Item {
@@ -51,8 +101,8 @@ FocusableItem {
         anchors.verticalCenter: parent ? parent.verticalCenter : undefined
         anchors.horizontalCenter: parent ? parent.horizontalCenter : undefined
 
-        height: !privateProperties.isVertical ? Math.max(buttonIcon.height, textLabel.height) : buttonIcon.height + textLabel.height + spacing
-        width: privateProperties.isVertical ? Math.max(textLabel.width, buttonIcon.width) : buttonIcon.width + textLabel.width + spacing
+        height: !prv.isVertical ? Math.max(buttonIcon.height, textLabel.height) : buttonIcon.height + textLabel.height + spacing
+        width: prv.isVertical ? Math.max(textLabel.width, buttonIcon.width) : buttonIcon.width + textLabel.width + spacing
 
         StyledIconLabel {
             id: buttonIcon
@@ -69,7 +119,7 @@ FocusableItem {
 
         states: [
             State {
-                when: !privateProperties.isVertical
+                when: !prv.isVertical
                 AnchorChanges {
                     target: buttonIcon
                     anchors.left: parent.left
@@ -86,7 +136,7 @@ FocusableItem {
                 }
             },
             State {
-                when: privateProperties.isVertical
+                when: prv.isVertical
                 AnchorChanges {
                     target: buttonIcon
                     anchors.top: parent.top
@@ -105,38 +155,14 @@ FocusableItem {
         ]
     }
 
-    MouseArea {
-        id: mouseArea
-
-        anchors.fill: parent
-
-        hoverEnabled: true
-
-        onReleased: {
-            root.clicked()
-        }
-
-        onContainsMouseChanged: {
-            if (!Boolean(root.hint)) {
-                return
-            }
-
-            if (containsMouse) {
-                ui.tooltip.show(this, root.hint)
-            } else {
-                ui.tooltip.hide(this)
-            }
-        }
-    }
-
     states: [
         State {
             name: "PRESSED"
             when: mouseArea.pressed
 
             PropertyChanges {
-                target: backgroundRect
-                color: pressedStateColor
+                target: background
+                color: root.pressedStateColor
                 opacity: ui.theme.buttonOpacityHit
             }
         },
@@ -146,10 +172,32 @@ FocusableItem {
             when: mouseArea.containsMouse && !mouseArea.pressed
 
             PropertyChanges {
-                target: backgroundRect
-                color: hoveredStateColor
+                target: background
+                color: root.hoveredStateColor
                 opacity: ui.theme.buttonOpacityHover
             }
         }
     ]
+
+    MouseArea {
+        id: mouseArea
+        anchors.fill: parent
+
+        hoverEnabled: true
+
+        onClicked: function (mouse) { root.clicked(mouse) }
+        onPressAndHold: function (mouse) { root.pressAndHold(mouse) }
+
+        onContainsMouseChanged: {
+            if (!Boolean(root.toolTipTitle)) {
+                return
+            }
+
+            if (mouseArea.containsMouse) {
+                ui.tooltip.show(this, root.toolTipTitle, root.toolTipDescription, root.toolTipShortcut)
+            } else {
+                ui.tooltip.hide(this)
+            }
+        }
+    }
 }

@@ -1,3 +1,24 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "importmidi_instrument.h"
 #include "importmidi_chord.h"
 #include "importmidi_inner.h"
@@ -146,7 +167,7 @@ const InstrumentTemplate* findInstrument(const QString& groupId, const QString& 
 {
     const InstrumentTemplate* instr = nullptr;
 
-    for (const InstrumentGroup* group: instrumentGroups) {
+    for (const InstrumentGroup* group: qAsConst(instrumentGroups)) {
         if (group->id == groupId) {
             for (const InstrumentTemplate* templ: group->instrumentTemplates) {
                 if (templ->id == instrId) {
@@ -167,7 +188,7 @@ const InstrumentTemplate* findClosestInstrument(const MTrack& track)
     int maxLessProgram = -1;
     const InstrumentTemplate* closestTemplate = nullptr;
 
-    for (const InstrumentGroup* group: instrumentGroups) {
+    for (const InstrumentGroup* group: qAsConst(instrumentGroups)) {
         for (const InstrumentTemplate* templ: group->instrumentTemplates) {
             if (templ->staffGroup == StaffGroup::TAB) {
                 continue;
@@ -199,7 +220,7 @@ std::vector<const InstrumentTemplate*> findInstrumentsForProgram(const MTrack& t
         trackPitches = findAllPitches(track);
     }
 
-    for (const InstrumentGroup* group: instrumentGroups) {
+    for (const InstrumentGroup* group: qAsConst(instrumentGroups)) {
         for (const InstrumentTemplate* templ: group->instrumentTemplates) {
             if (templ->staffGroup == StaffGroup::TAB) {
                 continue;
@@ -401,7 +422,7 @@ void findInstrumentsForAllTracks(const QList<MTrack>& tracks, bool forceReload)
 void instrumentTemplatesChanged()
 {
     QStringList files(midiImportOperations.allMidiFiles());
-    for (const QString& file : files) {
+    for (const QString& file : qAsConst(files)) {
         MidiOperations::CurrentMidiFileSetter s(midiImportOperations, file);
         MidiOperations::FileData* data = midiImportOperations.data();
         if (data) {
@@ -441,7 +462,7 @@ void createInstruments(Score* score, QList<MTrack>& tracks)
 
         if (part->nstaves() == 1) {
             if (track.mtrack->drumTrack()) {
-                part->staff(0)->setStaffType(Fraction(0,1), *StaffType::preset(StaffTypes::PERC_DEFAULT));
+                part->staff(0)->setStaffType(Fraction(0, 1), *StaffType::preset(StaffTypes::PERC_DEFAULT));
                 if (!instr) {
                     part->instrument()->setDrumset(smDrumset);
                 }
@@ -461,7 +482,7 @@ void createInstruments(Score* score, QList<MTrack>& tracks)
             for (int i = 0; i != part->nstaves(); ++i) {
                 if (instr->staffTypePreset) {
                     part->staff(i)->init(instr, nullptr, i);
-                    part->staff(i)->setStaffType(Fraction(0,1), *(instr->staffTypePreset));
+                    part->staff(i)->setStaffType(Fraction(0, 1), *(instr->staffTypePreset));
                 }
 //                        part->staff(i)->setLines(0, instr->staffLines[i]);
 //                        part->staff(i)->setSmall(0, instr->smallStaff[i]);

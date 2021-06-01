@@ -1,3 +1,24 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 import QtQuick 2.12
 
 import "internal"
@@ -7,6 +28,7 @@ Item {
 
     property var model: null
     property int orientation: Qt.Horizontal
+    readonly property bool isHorizontal: orientation === Qt.Horizontal
 
     property Component sectionDelegate: Item {}
     property Component itemDelegate: Item {}
@@ -27,6 +49,9 @@ Item {
     QtObject {
         id: privateProperties
 
+        property int spacingBeforeSection: isHorizontal ? columnSpacing : rowSpacing
+        property int spacingAfterSection: spacingBeforeSection
+
         function modelSections() {
             var _sections = []
 
@@ -45,20 +70,25 @@ Item {
 
     Loader {
         anchors.fill: parent
-        sourceComponent: orientation === Qt.Horizontal ? horizontalView : verticalView
+        sourceComponent: isHorizontal ? horizontalView : verticalView
     }
 
     Component {
         id: horizontalView
 
         Row {
+            spacing: privateProperties.spacingBeforeSection
+
             Repeater {
                 model: Boolean(root.model) ? privateProperties.modelSections() : []
 
                 Row {
-                    spacing: 2
+                    spacing: privateProperties.spacingAfterSection
+                    height: parent.height
 
                     GridViewSection {
+                        anchors.verticalCenter: parent.verticalCenter
+
                         width: root.sectionWidth
                         height: root.sectionHeight
 
@@ -76,9 +106,6 @@ Item {
                         cellWidth: root.cellWidth
                         cellHeight: root.cellHeight
 
-                        sectionWidth: root.sectionWidth
-                        sectionHeight: root.sectionHeight
-
                         rows: root.rows
                         rowSpacing: root.rowSpacing
                         columns: root.columns
@@ -93,15 +120,17 @@ Item {
         id: verticalView
 
         Column {
+            spacing: privateProperties.spacingBeforeSection
+
             Repeater {
                 model: Boolean(root.model) ? privateProperties.modelSections() : []
 
                 Column {
-                    spacing: 2
+                    spacing: privateProperties.spacingAfterSection
+                    width: parent.width
 
                     GridViewSection {
-                        anchors.left: parent.left
-                        anchors.leftMargin: root.columnSpacing
+                        anchors.horizontalCenter: parent.horizontalCenter
 
                         width: root.sectionWidth
                         height: root.sectionHeight
@@ -119,9 +148,6 @@ Item {
 
                         cellWidth: root.cellWidth
                         cellHeight: root.cellHeight
-
-                        sectionWidth: root.sectionWidth
-                        sectionHeight: root.sectionHeight
 
                         rows: root.rows
                         rowSpacing: root.rowSpacing

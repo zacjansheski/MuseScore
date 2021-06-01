@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "telemetryconfiguration.h"
 
 #include "global/settings.h"
@@ -33,6 +36,10 @@ void TelemetryConfiguration::init()
     settings()->setDefaultValue(REQUEST_TELEMETRY_PERMISSION, Val(true));
     settings()->setDefaultValue(IS_TELEMETRY_ALLOWED, Val(false));
     settings()->setDefaultValue(IS_DUMP_UPLOAD_ALLOWED, Val(true));
+
+    settings()->valueChanged(IS_TELEMETRY_ALLOWED).onReceive(this, [this](const Val& allowed) {
+        m_isTelemetryAllowedChannel.send(allowed.toBool());
+    });
 }
 
 bool TelemetryConfiguration::needRequestTelemetryPermission() const
@@ -40,10 +47,14 @@ bool TelemetryConfiguration::needRequestTelemetryPermission() const
     return settings()->value(REQUEST_TELEMETRY_PERMISSION).toBool();
 }
 
-bool TelemetryConfiguration::isTelemetryAllowed() const
+mu::ValCh<bool> TelemetryConfiguration::isTelemetryAllowed() const
 {
+    mu::ValCh<bool> allowed;
+    allowed.ch = m_isTelemetryAllowedChannel;
     static QString id(TELEMETRY_TRACK_ID);
-    return !id.isEmpty() && settings()->value(IS_TELEMETRY_ALLOWED).toBool();
+    allowed.val = !id.isEmpty() && settings()->value(IS_TELEMETRY_ALLOWED).toBool();
+
+    return allowed;
 }
 
 void TelemetryConfiguration::setIsTelemetryAllowed(bool val)

@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "notationnoteinput.h"
 
 #include "libmscore/score.h"
@@ -88,10 +91,10 @@ void NotationNoteInput::startNoteInput()
         // if no note/rest is selected, start with voice 0
         int track = is.track() == -1 ? 0 : (is.track() / VOICES) * VOICES;
         // try to find an appropriate measure to start in
-        Fraction tick = el ? el->tick() : Fraction(0,1);
+        Fraction tick = el ? el->tick() : Fraction(0, 1);
         el = score()->searchNote(tick, track);
         if (!el) {
-            el = score()->searchNote(Fraction(0,1), track);
+            el = score()->searchNote(Fraction(0, 1), track);
         }
     }
 
@@ -109,13 +112,13 @@ void NotationNoteInput::startNoteInput()
     }
     //! ---
 
+    m_interaction->select({ el }, SelectType::SINGLE, 0);
+
     Duration d(is.duration());
     if (!d.isValid() || d.isZero() || d.type() == Duration::DurationType::V_MEASURE) {
         is.setDuration(Duration(Duration::DurationType::V_QUARTER));
     }
     is.setAccidentalType(Ms::AccidentalType::NONE);
-
-    score()->select(el, SelectType::SINGLE, 0);
 
     is.setRest(false);
     is.setNoteEntryMode(true);
@@ -311,7 +314,7 @@ QRectF NotationNoteInput::cursorRect() const
 
     QRectF result = QRectF(x, y, w, h);
 
-    if (configuration()->navigatorOrientation().val == framework::Orientation::Horizontal) {
+    if (configuration()->canvasOrientation().val == framework::Orientation::Horizontal) {
         result.translate(system->page()->pos());
     }
 

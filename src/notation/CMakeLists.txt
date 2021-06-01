@@ -1,21 +1,22 @@
-#=============================================================================
-#  MuseScore
-#  Music Composition & Notation
+# SPDX-License-Identifier: GPL-3.0-only
+# MuseScore-CLA-applies
 #
-#  Copyright (C) 2020 MuseScore BVBA and others
+# MuseScore
+# Music Composition & Notation
 #
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License version 2.
+# Copyright (C) 2021 MuseScore BVBA and others
 #
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as
+# published by the Free Software Foundation.
 #
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-#=============================================================================
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 set(MODULE notation)
 
@@ -53,8 +54,8 @@ set(MODULE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/inotationplayback.h
     ${CMAKE_CURRENT_LIST_DIR}/inotationelements.h
     ${CMAKE_CURRENT_LIST_DIR}/inotationparts.h
-    ${CMAKE_CURRENT_LIST_DIR}/internal/notationactions.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/internal/notationactions.h
+    ${CMAKE_CURRENT_LIST_DIR}/internal/notationuiactions.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/internal/notationuiactions.h
     ${CMAKE_CURRENT_LIST_DIR}/internal/igetscore.h
     ${CMAKE_CURRENT_LIST_DIR}/internal/masternotation.cpp
     ${CMAKE_CURRENT_LIST_DIR}/internal/masternotation.h
@@ -177,9 +178,10 @@ set(MODULE_LINK
     ${FREETYPE_LIB}
     qzip
     ${Z_LIB}
-    libmscore
+    engraving
     commonscene
     uicomponents
+    ui
     )
 
 if (NOT MSVC AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 9.0)

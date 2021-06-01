@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2021 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "sanitysynthesizer.h"
 #include "internal/audiosanitizer.h"
 
@@ -75,10 +78,10 @@ void SanitySynthesizer::setIsActive(bool arg)
     m_synth->setIsActive(arg);
 }
 
-Ret SanitySynthesizer::setupChannels(const std::vector<midi::Event>& events)
+Ret SanitySynthesizer::setupMidiChannels(const std::vector<midi::Event>& events)
 {
     ONLY_AUDIO_WORKER_THREAD;
-    return m_synth->setupChannels(events);
+    return m_synth->setupMidiChannels(events);
 }
 
 bool SanitySynthesizer::handleEvent(const midi::Event& e)
@@ -105,28 +108,28 @@ void SanitySynthesizer::flushSound()
     m_synth->flushSound();
 }
 
-void SanitySynthesizer::channelSoundsOff(midi::channel_t chan)
+void SanitySynthesizer::midiChannelSoundsOff(midi::channel_t chan)
 {
     ONLY_AUDIO_WORKER_THREAD;
-    m_synth->channelSoundsOff(chan);
+    m_synth->midiChannelSoundsOff(chan);
 }
 
-bool SanitySynthesizer::channelVolume(midi::channel_t chan, float val)
+bool SanitySynthesizer::midiChannelVolume(midi::channel_t chan, float val)
 {
     ONLY_AUDIO_WORKER_THREAD;
-    return m_synth->channelVolume(chan, val);
+    return m_synth->midiChannelVolume(chan, val);
 }
 
-bool SanitySynthesizer::channelBalance(midi::channel_t chan, float val)
+bool SanitySynthesizer::midiChannelBalance(midi::channel_t chan, float val)
 {
     ONLY_AUDIO_WORKER_THREAD;
-    return m_synth->channelBalance(chan, val);
+    return m_synth->midiChannelBalance(chan, val);
 }
 
-bool SanitySynthesizer::channelPitch(midi::channel_t chan, int16_t val)
+bool SanitySynthesizer::midiChannelPitch(midi::channel_t chan, int16_t val)
 {
     ONLY_AUDIO_WORKER_THREAD;
-    return m_synth->channelPitch(chan, val);
+    return m_synth->midiChannelPitch(chan, val);
 }
 
 // IAudioSource
@@ -136,32 +139,20 @@ void SanitySynthesizer::setSampleRate(unsigned int sampleRate)
     m_synth->setSampleRate(sampleRate);
 }
 
-unsigned int SanitySynthesizer::streamCount() const
+unsigned int SanitySynthesizer::audioChannelsCount() const
 {
     ONLY_AUDIO_WORKER_THREAD;
-    return m_synth->streamCount();
+    return m_synth->audioChannelsCount();
 }
 
-async::Channel<unsigned int> SanitySynthesizer::streamsCountChanged() const
+async::Channel<unsigned int> SanitySynthesizer::audioChannelsCountChanged() const
 {
     ONLY_AUDIO_WORKER_THREAD;
-    return m_synth->streamsCountChanged();
+    return m_synth->audioChannelsCountChanged();
 }
 
-void SanitySynthesizer::forward(unsigned int sampleCount)
+void SanitySynthesizer::process(float* buffer, unsigned int sampleCount)
 {
     ONLY_AUDIO_WORKER_THREAD;
-    m_synth->forward(sampleCount);
-}
-
-const float* SanitySynthesizer::data() const
-{
-    ONLY_AUDIO_WORKER_THREAD;
-    return m_synth->data();
-}
-
-void SanitySynthesizer::setBufferSize(unsigned int samples)
-{
-    ONLY_AUDIO_WORKER_THREAD;
-    return m_synth->setBufferSize(samples);
+    m_synth->process(buffer, sampleCount);
 }

@@ -1,21 +1,22 @@
-#=============================================================================
-#  MuseScore
-#  Music Composition & Notation
+# SPDX-License-Identifier: GPL-3.0-only
+# MuseScore-CLA-applies
 #
-#  Copyright (C) 2020 MuseScore BVBA and others
+# MuseScore
+# Music Composition & Notation
 #
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License version 2.
+# Copyright (C) 2021 MuseScore BVBA and others
 #
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as
+# published by the Free Software Foundation.
 #
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-#=============================================================================
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 set(MODULE workspace)
 set(MODULE_QRC workspace.qrc)
@@ -52,6 +53,12 @@ set(MODULE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/internal/iworkspacecreator.h
     ${CMAKE_CURRENT_LIST_DIR}/internal/workspacecreator.cpp
     ${CMAKE_CURRENT_LIST_DIR}/internal/workspacecreator.h
+    ${CMAKE_CURRENT_LIST_DIR}/internal/workspacesettings.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/internal/workspacesettings.h
+    ${CMAKE_CURRENT_LIST_DIR}/internal/workspaceuiactions.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/internal/workspaceuiactions.h
+    ${CMAKE_CURRENT_LIST_DIR}/internal/workspaceactioncontroller.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/internal/workspaceactioncontroller.h
     )
 
 if (NOT MSVC AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 9.0)
@@ -60,7 +67,7 @@ endif (NOT MSVC AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_
 
 set(MODULE_LINK
     qzip
-    libmscore
+    engraving
     )
 
 include(${PROJECT_SOURCE_DIR}/build/module.cmake)

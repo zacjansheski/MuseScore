@@ -1,99 +1,87 @@
-import QtQuick 2.7
-import QtQuick.Layouts 1.3
-import QtQuick.Controls 2.2
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+import QtQuick 2.15
+import QtQuick.Controls 2.15
 
 import MuseScore.Ui 1.0
-import MuseScore.Dock 1.0
 import MuseScore.UiComponents 1.0
+import MuseScore.Dock 1.0
+
 import MuseScore.UserScores 1.0
 import MuseScore.Cloud 1.0
 
+import "../dockwindow"
+
 DockPage {
-    id: homePage
+    id: root
+
+    property string item: "scores"
+    property string subItem: ""
 
     objectName: "Home"
+    uri: "musescore://home"
+
+    onItemChanged: {
+        Qt.callLater(root.setCurrentCentral, item)
+    }
+
+    function setCurrentCentral(name) {
+        if (item === name || !Boolean(name)) {
+            return
+        }
+
+        item = name
+
+        switch (name) {
+        case "scores": root.central = scoresComp; break
+        case "add-ons": root.central = addonsComp; break
+        case "audio": root.central = audioComp; break
+        case "feautured": root.central = feauturedComp; break
+        case "learn": root.central = learnComp; break
+        case "support": root.central = supportComp; break
+        case "account": root.central = accountComp; break
+        }
+    }
 
     panels: [
         DockPanel {
-            id: resourcesPanel
-            objectName: "resourcesPanel"
+            objectName: "homeMenu"
 
-            width: 292
             minimumWidth: 76
+            maximumWidth: 292
 
-            color: ui.theme.backgroundPrimaryColor
+            allowedAreas: Qt.NoDockWidgetArea
 
-            Rectangle {
-                anchors.fill: parent
-                color: ui.theme.backgroundPrimaryColor
+            HomeMenu {
+                currentPageName: root.item
 
-                ColumnLayout {
-                    anchors.top: parent.top
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-
-                    spacing: 0
-
-                    AccountInfoButton {
-                        Layout.preferredHeight: 60
-                        Layout.fillWidth: true
-
-                        ButtonGroup.group: homeMenuButtons.radioButtonGroup
-
-                        checked: homeCentral.currentCompName == "account"
-
-                        onToggled: {
-                            homeCentral.load("account")
-                        }
-
-                        onUserAuthorizedChanged: {
-                            homeCentral.load("scores")
-                        }
-                    }
-
-                    HomeMenu {
-                        id: homeMenuButtons
-                        Layout.topMargin: 20
-                        Layout.fillWidth: true
-
-                        onSelected: {
-                            homeCentral.load(name)
-                        }
-                    }
+                onSelected: {
+                    root.setCurrentCentral(name)
                 }
             }
         }
     ]
 
-    central: DockCentral {
-        id: homeCentral
-        objectName: "homeCentral"
-
-        property var currentComp: scoresComp
-        property var currentCompName: "scores"
-
-        function load(name) {
-            console.info("loadCentral: " + name)
-            currentCompName = name
-            switch (name) {
-            case "scores":      currentComp = scoresComp; break
-            case "add-ons":     currentComp = addonsComp; break
-            case "audio":       currentComp = audioComp; break
-            case "feautured":   currentComp = feauturedComp; break
-            case "learn":       currentComp = learnComp; break
-            case "support":     currentComp = supportComp; break
-            case "account":     currentComp = accountComp; break;
-            }
-        }
-
-        Rectangle {
-            Loader {
-                id: centralLoader
-                anchors.fill: parent
-                sourceComponent: homeCentral.currentComp
-            }
-        }
-    }
+    central: scoresComp
 
     Component {
         id: accountComp
@@ -103,55 +91,51 @@ DockPage {
 
     Component {
         id: scoresComp
+
         ScoresPage {}
     }
 
     Component {
         id: addonsComp
-        AddonsContent {}
+
+        AddonsContent {
+            item: root.subItem
+        }
     }
 
     Component {
         id: audioComp
 
-        Rectangle {
-            StyledTextLabel {
-                anchors.fill: parent
-                text: "Audio & VST"
-            }
+        StyledTextLabel {
+            anchors.centerIn: parent
+            text: "Audio & VST"
         }
     }
 
     Component {
         id: feauturedComp
 
-        Rectangle {
-            StyledTextLabel {
-                anchors.fill: parent
-                text: "Feautured"
-            }
+        StyledTextLabel {
+            anchors.centerIn: parent
+            text: "Feautured"
         }
     }
 
     Component {
         id: learnComp
 
-        Rectangle {
-            StyledTextLabel {
-                anchors.fill: parent
-                text: "Learn"
-            }
+        StyledTextLabel {
+            anchors.centerIn: parent
+            text: "Learn"
         }
     }
 
     Component {
         id: supportComp
 
-        Rectangle {
-            StyledTextLabel {
-                anchors.fill: parent
-                text: "Support"
-            }
+        StyledTextLabel {
+            anchors.centerIn: parent
+            text: "Support"
         }
     }
 }

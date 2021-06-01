@@ -1,97 +1,90 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #ifndef MU_DOCK_DOCKTOOLBAR_H
 #define MU_DOCK_DOCKTOOLBAR_H
 
-#include "dockview.h"
-
-class QToolBar;
+#include "internal/dockbase.h"
 
 namespace mu::dock {
-class DockToolBar : public DockView
+class DockToolBar : public DockBase
 {
     Q_OBJECT
 
-    Q_PROPERTY(int orientation READ orientation NOTIFY orientationChanged)
-    Q_PROPERTY(int minimumHeight READ minimumHeight WRITE setMinimumHeight NOTIFY minimumHeightChanged)
-    Q_PROPERTY(int minimumWidth READ minimumWidth WRITE setMinimumWidth NOTIFY minimumWidthChanged)
-    Q_PROPERTY(Qt::ToolBarAreas allowedAreas READ allowedAreas WRITE setAllowedAreas NOTIFY allowedAreasChanged)
-    Q_PROPERTY(bool floating READ floating NOTIFY floatingChanged)
-    Q_PROPERTY(bool floatable READ floatable WRITE setFloatable NOTIFY floatableChanged)
     Q_PROPERTY(bool movable READ movable WRITE setMovable NOTIFY movableChanged)
+    Q_PROPERTY(Qt::Orientation orientation READ orientation WRITE setOrientation NOTIFY orientationChanged)
+
+    Q_PROPERTY(
+        QSize horizontalPreferredSize READ horizontalPreferredSize WRITE setHorizontalPreferredSize NOTIFY horizontalPreferredSizeChanged)
+    Q_PROPERTY(QSize verticalPreferredSize READ verticalPreferredSize WRITE setVerticalPreferredSize NOTIFY verticalPreferredSizeChanged)
 
 public:
     explicit DockToolBar(QQuickItem* parent = nullptr);
-    ~DockToolBar();
 
-    struct Widget {
-        QToolBar* bar = nullptr;
-        Qt::ToolBarArea breakArea { Qt::TopToolBarArea };
-    };
-
-    Widget widget() const;
-
-    int orientation() const;
-    int minimumHeight() const;
-    int minimumWidth() const;
-
-    Qt::ToolBarAreas allowedAreas() const;
-
-    bool floating() const;
-    bool floatable() const;
     bool movable() const;
+    Qt::Orientation orientation() const;
+
+    Q_INVOKABLE void setDraggableMouseArea(QQuickItem* mouseArea);
+
+    QSize horizontalPreferredSize() const;
+    QSize verticalPreferredSize() const;
 
 public slots:
-    void setMinimumHeight(int minimumHeight);
-    void setMinimumWidth(int minimumWidth);
-    void setAllowedAreas(Qt::ToolBarAreas allowedAreas);
-    void setFloatable(bool floatable);
+    void setMinimumWidth(int width) override;
+    void setMinimumHeight(int height) override;
+    void setMaximumWidth(int width) override;
+    void setMaximumHeight(int height) override;
+
     void setMovable(bool movable);
+    void setOrientation(Qt::Orientation orientation);
+    void setHorizontalPreferredSize(QSize horizontalPreferredSize);
+    void setVerticalPreferredSize(QSize verticalPreferredSize);
 
 signals:
-    void orientationChanged(int orientation);
-    void minimumHeightChanged(int minimumHeight);
-    void minimumWidthChanged(int minimumWidth);
-    void allowedAreasChanged(Qt::ToolBarAreas allowedAreas);
-    void floatingChanged(bool floating);
-    void floatableChanged(bool floatable);
     void movableChanged(bool movable);
+    void orientationChanged(Qt::Orientation orientation);
+    void horizontalPreferredSizeChanged(QSize horizontalPreferredSize);
+    void verticalPreferredSizeChanged(QSize verticalPreferredSize);
 
 protected:
-    void onComponentCompleted() override;
-    void updateStyle() override;
+    void componentComplete() override;
 
-private slots:
-    void onWidgetEvent(QEvent* event) override;
+    DockType type() const override;
+
+    static const int MIN_SIDE_SIZE;
+    static const int MAX_SIDE_SIZE;
 
 private:
-    QToolBar* toolBar() const;
+    void updateSizeConstraints();
 
-    void resize(const QSize& size);
-    void setFloating(bool floating);
+    bool isOrientationChangingAllowed() const;
 
-    Widget m_tool;
-    EventsWatcher* m_eventsWatcher = nullptr;
-    int m_minimumHeight = 0;
-    int m_minimumWidth = 0;
-    bool m_floating = false;
+    class DraggableArea;
+    DraggableArea* m_draggableArea = nullptr;
+
+    bool m_movable = true;
+    Qt::Orientation m_orientation = Qt::Horizontal;
+    QSize m_horizontalPreferredSize;
+    QSize m_verticalPreferredSize;
 };
 }
 

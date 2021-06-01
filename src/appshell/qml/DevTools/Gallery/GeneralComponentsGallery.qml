@@ -1,3 +1,24 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 import QtQuick 2.7
 import QtQuick.Controls 2.0
 import QtQuick.Controls 1.5
@@ -9,7 +30,7 @@ import MuseScore.Ui 1.0
 Rectangle {
     id: root
 
-    color: ui.theme.backgroundPrimaryColor
+    color: ui.theme.backgroundSecondaryColor
 
     Flickable {
         id: flickableWrapper
@@ -33,6 +54,7 @@ Rectangle {
                     { textRole: "StyledComboBox", componentRole: comboboxSample },
                     { textRole: "StyledPopup", componentRole: popupSample },
                     { textRole: "StyledPopupView", componentRole: styledPopupViewComponent },
+                    { textRole: "StyledMenu", componentRole: styledMenuComponent },
                     { textRole: "CheckBox", componentRole: checkBoxSample },
                     { textRole: "ColorPicker", componentRole: colorPickerSample },
                     { textRole: "ExpandableBlank", componentRole: expandableBlankSample },
@@ -41,16 +63,18 @@ Rectangle {
                     { textRole: "RadioButtonGroup + FlatRadioButton", componentRole: flatRadioButtonSample },
                     { textRole: "RoundedRadioButton", componentRole: roundedRadioButtonSample },
                     { textRole: "IncrementalPropertyControl (Hidden icon, Icon left, Icon right)", componentRole: incrementalPropertyControlSample },
-                    { textRole: "FlatToogleButton", componentRole: flatToogleButtonSample },
+                    { textRole: "FlatToggleButton", componentRole: flatToggleButtonSample },
                     { textRole: "RoundedRectangle (which allows to round the particular corners)", componentRole: roundedRectangleSample },
                     { textRole: "TextInputField", componentRole: textInputFieldSample },
                     { textRole: "SearchField", componentRole: searchFieldSample },
+                    { textRole: "FilePicker", componentRole: filePickerSample },
                     { textRole: "TabPanel", componentRole: tabPanelSample },
                     { textRole: "GradientTabButton", componentRole: gradientTabButtonsSample },
                     { textRole: "GridView", componentRole: gridViewVertical },
                     { textRole: "StyledSlider", componentRole: slidersSample },
                     { textRole: "NumberInputField", componentRole: numberInputFieldSample },
-                    { textRole: "TimeInputField", componentRole: timeInputFieldSample }
+                    { textRole: "TimeInputField", componentRole: timeInputFieldSample },
+                    { textRole: "ValueList", componentRole: valueListSample }
                 ]
 
                 delegate: Column {
@@ -111,13 +135,13 @@ Rectangle {
     Component {
         id: popupSample
 
-        Column {
+        Row {
             spacing: 12
 
             FlatButton {
                 id: popupDownButton
 
-                text: "Click to show popup downward"
+                text: "Show Popup downward"
 
                 onClicked: {
                     if (popupDown.opened) {
@@ -146,7 +170,7 @@ Rectangle {
             FlatButton {
                 id: popupUpButton
 
-                text: "Click to show popup upward"
+                text: "Show Popup upward"
 
                 onClicked: {
                     if (popupUp.opened) {
@@ -171,6 +195,140 @@ Rectangle {
                     text: "Hello, World!"
 
                     anchors.centerIn: parent
+                }
+            }
+        }
+    }
+
+    Component {
+        id: styledPopupViewComponent
+
+        Row {
+            spacing: 12
+
+            FlatButton {
+                text: "Show PopupView downward"
+
+                onClicked: {
+                    popupViewDown.toggleOpened()
+                }
+
+                StyledPopupView {
+                    id: popupViewDown
+
+                    contentWidth: layout.childrenRect.width
+                    contentHeight: layout.childrenRect.height
+
+                    Column {
+                        id: layout
+                        spacing: 12
+                        anchors.fill: parent
+
+                        CheckBox {
+                            text: "Some checkbox"
+                        }
+
+                        FlatButton {
+                            text: "Some button"
+                        }
+
+                        FlatButton {
+                            text: "Accent button 1"
+                            accentButton: true
+                        }
+
+                        FlatButton {
+                            text: "Accent button 2"
+                            accentButton: true
+                        }
+                    }
+                }
+            }
+
+            FlatButton {
+                text: "Show PopupView upward"
+
+                onClicked: {
+                    popupViewUp.toggleOpened()
+                }
+
+                StyledPopupView {
+                    id: popupViewUp
+                    opensUpward: true
+
+                    Column {
+                        spacing: 12
+
+                        width: childrenRect.width
+                        height: childrenRect.height
+
+                        CheckBox {
+                            text: "Some checkbox"
+                        }
+
+                        FlatButton {
+                            text: "Some button"
+                        }
+
+                        FlatButton {
+                            text: "Accent button 1"
+                            accentButton: true
+                        }
+
+                        FlatButton {
+                            text: "Accent button 2"
+                            accentButton: true
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Component {
+        id: styledMenuComponent
+
+        Row {
+            spacing: 12
+
+            FlatButton {
+                text: "Show Menu"
+
+                onClicked: {
+                    menu.toggleOpened()
+                }
+
+                StyledMenu {
+                    id: menu
+
+                    model: {
+                        var _subitems = [
+                                    {code: "2", icon: IconCode.PAGE, title: "first action", enabled: true},
+                                    {code: "3", icon: IconCode.PAGE, title: "with subitems", enabled: true, subitems: [
+                                            {code: "4", title: "first action", enabled: true, selectable: true},
+                                            {code: "5", title: "second action", enabled: true, selectable: true, selected: true},
+                                            {code: "6", title: "third action", enabled: true, selectable: true},
+                                            {},
+                                            {code: "7", title: "clear"}
+                                        ]}
+                                ]
+
+                        var items = [
+                                    {code: "0", icon: IconCode.PAGE, title: "enabled action", enabled: true},
+                                    {code: "1", icon: IconCode.AMBITUS, title: "with subitems", enabled: true, shortcut: "Ctrl+A", subitems: _subitems },
+                                    {},
+                                    {code: "5", title: "with shortcut", enabled: true, shortcut: "Ctrl+Shift+G"},
+                                    {code: "6", icon: IconCode.PAGE, title: "disabled action", enabled: false},
+                                    {code: "7", icon: IconCode.CLEF_BASS, title: "checkable action", enabled: true, checkable: true, checked: true}
+                                ]
+
+                        return items
+                    }
+
+                    onHandleAction: {
+                        console.log("selected " + actionCode + " index " + actionIndex)
+                        menu.close()
+                    }
                 }
             }
         }
@@ -447,9 +605,9 @@ Rectangle {
     }
 
     Component {
-        id: flatToogleButtonSample
+        id: flatToggleButtonSample
 
-        FlatToogleButton {
+        FlatToggleButton {
             id: lockButton
 
             height: 20
@@ -535,40 +693,12 @@ Rectangle {
     }
 
     Component {
-        id: styledPopupViewComponent
+        id: filePickerSample
 
-        FlatButton {
-            text: "Show popup view"
+        FilePicker {
+            width: 220
 
-            onClicked: {
-                popupView.toggleOpened()
-            }
-
-            StyledPopupView {
-                id: popupView
-
-                Column {
-                    spacing: 12
-
-                    CheckBox {
-                        text: "Some checkbox"
-                    }
-
-                    FlatButton {
-                        text: "Some buton"
-                    }
-
-                    FlatButton {
-                        text: "Accent button 1"
-                        accentButton: true
-                    }
-
-                    FlatButton {
-                        text: "Accent button 2"
-                        accentButton: true
-                    }
-                }
-            }
+            path: "/some/test/path/foo.txt"
         }
     }
 
@@ -803,6 +933,51 @@ Rectangle {
         TimeInputField {
             Component.onCompleted: {
                 time = new Date(2021, 1, 3, 1, 23, 44, 3)
+            }
+        }
+    }
+
+    Component {
+        id: valueListSample
+
+        ValueList {
+
+            width: 560
+            height: 226
+
+            keyRoleName: "name"
+            keyTitle: "Name"
+            valueRoleName: "age"
+            valueTitle: "Age"
+
+            model: ListModel {
+                ListElement {
+                    name: "Alex"
+                    age: 12
+                    valueType: "Int"
+                    min: 1
+                    max: 15
+                }
+                ListElement {
+                    name: "Tony"
+                    age: 15
+                    valueType: "Int"
+                }
+                ListElement {
+                    name: "Fred"
+                    age: 10
+                    valueType: "Int"
+                }
+                ListElement {
+                    name: "Emma"
+                    age: 5
+                    valueType: "Int"
+                }
+                ListElement {
+                    name: "Anna"
+                    age: 11
+                    valueType: "Int"
+                }
             }
         }
     }

@@ -1,3 +1,24 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "importmidi_swing.h"
 #include "libmscore/score.h"
 #include "libmscore/chordrest.h"
@@ -76,7 +97,7 @@ void SwingDetector::add(ChordRest* cr)
 void SwingDetector::reset()
 {
     elements.clear();
-    sumLen = ReducedFraction(Fraction(0,1));
+    sumLen = ReducedFraction(Fraction(0, 1));
 }
 
 void SwingDetector::append(ChordRest* cr)
@@ -149,9 +170,7 @@ void SwingDetector::applySwing()
     const int startTick = first->segment()->tick().ticks();
     ChordRest* last = elements.back();
     last->segment()->remove(last);
-    Segment* s
-        = last->measure()->getSegment(SegmentType::ChordRest,
-                                      Fraction::fromTicks(startTick + MScore::division / 2));
+    Segment* s = last->measure()->getSegment(SegmentType::ChordRest, Fraction::fromTicks(startTick + MScore::division / 2));
     s->add(last);
 
     if (elements.size() == 3) {

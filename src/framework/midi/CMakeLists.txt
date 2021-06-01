@@ -1,21 +1,22 @@
-#=============================================================================
-#  MuseScore
-#  Music Composition & Notation
+# SPDX-License-Identifier: GPL-3.0-only
+# MuseScore-CLA-applies
 #
-#  Copyright (C) 2020 MuseScore BVBA and others
+# MuseScore
+# Music Composition & Notation
 #
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License version 2.
+# Copyright (C) 2021 MuseScore BVBA and others
 #
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as
+# published by the Free Software Foundation.
 #
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-#=============================================================================
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 set(MODULE midi)
 
@@ -67,8 +68,12 @@ set(MODULE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/internal/dummymidiinport.h
     ${CMAKE_CURRENT_LIST_DIR}/internal/midiportdatasender.cpp
     ${CMAKE_CURRENT_LIST_DIR}/internal/midiportdatasender.h
-    ${CMAKE_CURRENT_LIST_DIR}/devtools/midiportdevmodel.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/devtools/midiportdevmodel.h
+    ${CMAKE_CURRENT_LIST_DIR}/view/mididevicemappingmodel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/view/mididevicemappingmodel.h
+    ${CMAKE_CURRENT_LIST_DIR}/view/editmidimappingmodel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/view/editmidimappingmodel.h
+    ${CMAKE_CURRENT_LIST_DIR}/view/devtools/midiportdevmodel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/view/devtools/midiportdevmodel.h
     )
 
 set(MODULE_LINK
@@ -80,5 +85,9 @@ include(GetPlatformInfo)
 if (OS_IS_WIN)
     set(MODULE_LINK ${MODULE_LINK} winmm)
 endif(OS_IS_WIN)
+
+set(MODULE_QRC midi.qrc)
+
+set(MODULE_QML_IMPORT ${CMAKE_CURRENT_LIST_DIR}/qml )
 
 include(${PROJECT_SOURCE_DIR}/build/module.cmake)

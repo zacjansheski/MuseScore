@@ -1,36 +1,38 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "notationmodule.h"
 
 #include <QQmlEngine>
 
 #include "modularity/ioc.h"
 #include "ui/iuiengine.h"
+#include "ui/iuiactionsregister.h"
 
 #include "internal/notationcreator.h"
 #include "internal/notation.h"
 #include "internal/notationactioncontroller.h"
 #include "internal/notationconfiguration.h"
 #include "internal/midiinputcontroller.h"
-
-#include "actions/iactionsregister.h"
-#include "internal/notationactions.h"
+#include "internal/notationuiactions.h"
 #include "internal/notationreadersregister.h"
 #include "internal/notationwritersregister.h"
 #include "internal/mscznotationreader.h"
@@ -57,6 +59,7 @@
 #include "view/widgets/measureproperties.h"
 #include "view/widgets/editstaff.h"
 #include "view/widgets/breaksdialog.h"
+#include "view/widgets/pagesettings.h"
 #include "view/widgets/scoreproperties.h"
 #include "view/widgets/transposedialog.h"
 #include "view/widgets/selectnotedialog.h"
@@ -69,9 +72,11 @@ using namespace mu::notation;
 using namespace mu::framework;
 using namespace mu::ui;
 using namespace mu::actions;
+using namespace mu::uicomponents;
 
 static std::shared_ptr<NotationConfiguration> s_configuration = std::make_shared<NotationConfiguration>();
 static std::shared_ptr<NotationActionController> s_actionController = std::make_shared<NotationActionController>();
+static std::shared_ptr<NotationUiActions> s_notationUiActions = std::make_shared<NotationUiActions>(s_actionController);
 static std::shared_ptr<MidiInputController> s_midiInputController = std::make_shared<MidiInputController>();
 
 static void notationscene_init_qrc()
@@ -99,15 +104,18 @@ void NotationModule::registerExports()
 
 void NotationModule::resolveImports()
 {
-    auto ar = ioc()->resolve<IActionsRegister>(moduleName());
+    auto ar = ioc()->resolve<IUiActionsRegister>(moduleName());
     if (ar) {
-        ar->reg(std::make_shared<NotationActions>());
+        ar->reg(s_notationUiActions);
     }
 
     auto ir = ioc()->resolve<IInteractiveUriRegister>(moduleName());
     if (ir) {
         ir->registerUri(Uri("musescore://notation/style"),
                         ContainerMeta(ContainerType::QWidgetDialog, qRegisterMetaType<EditStyle>("EditStyle")));
+
+        ir->registerUri(Uri("musescore://notation/pagesettings"),
+                        ContainerMeta(ContainerType::QWidgetDialog, qRegisterMetaType<PageSettings>("PageSettings")));
 
         ir->registerUri(Uri("musescore://notation/properties"),
                         ContainerMeta(ContainerType::QWidgetDialog, qRegisterMetaType<ScorePropertiesDialog>("ScorePropertiesDialog")));
@@ -175,14 +183,13 @@ void NotationModule::registerUiTypes()
     if (ui) {
         ui->addSourceImportPath(notation_QML_IMPORT);
     }
-
-    Ms::MScore::registerUiTypes();
 }
 
 void NotationModule::onInit(const IApplication::RunMode&)
 {
     s_configuration->init();
     s_actionController->init();
+    s_notationUiActions->init();
     s_midiInputController->init();
 
     Notation::init();

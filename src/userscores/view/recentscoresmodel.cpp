@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "recentscoresmodel.h"
 
 #include "log.h"
@@ -41,10 +44,10 @@ RecentScoresModel::RecentScoresModel(QObject* parent)
     m_roles.insert(RoleTitle, "title");
     m_roles.insert(RoleScore, "score");
 
-    ValCh<std::vector<Meta> > recentScoresCh = userScoresService()->recentScoreList();
-    updateRecentScores(recentScoresCh.val);
+    ValCh<MetaList> recentScores = userScoresService()->recentScoreList();
+    updateRecentScores(recentScores.val);
 
-    recentScoresCh.ch.onReceive(this, [this](const std::vector<Meta>& list) {
+    recentScores.ch.onReceive(this, [this](const MetaList& list) {
         updateRecentScores(list);
     });
 }
@@ -101,15 +104,15 @@ void RecentScoresModel::setRecentScores(const QVariantList& recentScores)
     endResetModel();
 }
 
-void RecentScoresModel::updateRecentScores(const std::vector<Meta>& recentScoresList)
+void RecentScoresModel::updateRecentScores(const MetaList& recentScoresList)
 {
     QVariantList recentScores;
 
     for (const Meta& meta : recentScoresList) {
         QVariantMap obj;
 
-        obj[SCORE_TITLE_KEY] = !meta.title.isEmpty() ? meta.title : meta.fileName;
-        obj[SCORE_PATH_KEY] = meta.filePath;
+        obj[SCORE_TITLE_KEY] = !meta.title.isEmpty() ? meta.title : meta.fileName.toQString();
+        obj[SCORE_PATH_KEY] = meta.filePath.toQString();
         obj[SCORE_THUMBNAIL_KEY] = meta.thumbnail;
         obj[SCORE_TIME_SINCE_CREATION_KEY] = DataFormatter::formatTimeSinceCreation(meta.creationDate);
         obj[SCORE_ADD_NEW_KEY] = false;

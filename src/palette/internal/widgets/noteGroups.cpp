@@ -1,14 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2013 Werner Schweer and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2
-//  as published by the Free Software Foundation and appearing in
-//  the file LICENSE.GPL
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #include "noteGroups.h"
 
@@ -35,7 +45,7 @@ Score* NoteGroups::createScore(int n, TDuration::DurationType t, std::vector<Cho
     c.setTimeSig(_sig);
     c.createScore("");
     c.addPart("voice");
-    c.move(0, Fraction(0,1));
+    c.move(0, Fraction(0, 1));
     c.addKeySig(Key::C);
 
     TimeSig* nts = c.addTimeSig(_sig);
@@ -57,16 +67,12 @@ Score* NoteGroups::createScore(int n, TDuration::DurationType t, std::vector<Cho
         chord->setStemDirection(Direction::UP);
         chords->push_back(chord);
     }
-    //c.score()->style().set(Sid::pageOddTopMargin, 16.0/INCH);
-    c.score()->style().set(Sid::pageOddLeftMargin, 0.0);
 
-    c.score()->parts().front()->setLongName("");
-    c.score()->style().set(Sid::linearStretch, 1.3);
-    c.score()->style().set(Sid::MusicalSymbolFont, QString("Bravura"));
-    c.score()->style().set(Sid::MusicalTextFont, QString("Bravura Text"));
+    c.score()->style().set(Sid::pageOddLeftMargin, 0.0);
+    c.score()->style().set(Sid::pageOddTopMargin, 10.0 / INCH);
     c.score()->style().set(Sid::startBarlineSingle, true);
 
-    StaffType* st = c.score()->staff(0)->staffType(Fraction(0,1));
+    StaffType* st = c.score()->staff(0)->staffType(Fraction(0, 1));
     st->setLines(1);            // single line only
     st->setGenClef(false);      // no clef
 //      st->setGenTimesig(false); // don't display time sig since ExampleView is unable to reflect custom time sig text/symbols

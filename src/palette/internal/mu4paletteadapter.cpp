@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "mu4paletteadapter.h"
 
 #include <QAction>
@@ -35,27 +38,20 @@ MU4PaletteAdapter::MU4PaletteAdapter()
     m_paletteEnabled.val = true;
 }
 
-QAction* MU4PaletteAdapter::getAction(const char* id_) const
+const ui::UiAction& MU4PaletteAdapter::getAction(const actions::ActionCode& code) const
 {
-    QString id(id_);
-    QAction* a = m_actions.value(id, nullptr);
-    if (!a) {
-        a = new QAction();
-        m_actions.insert(id, a);
-    }
-    return a;
+    return actionsRegister()->action(code);
 }
 
-QString MU4PaletteAdapter::actionHelp(const char* id) const
+void MU4PaletteAdapter::showMasterPalette(const QString& selectedPaletteName)
 {
-    return QString(id);
-}
+    QStringList params {
+        "sync=false",
+        QString("selectedPaletteName=%1").arg(selectedPaletteName)
+    };
 
-void MU4PaletteAdapter::showMasterPalette(const QString& arg)
-{
-    Q_UNUSED(arg);
-
-    interactive()->open("musescore://palette/masterpalette?sync=false");
+    QString uri = QString("musescore://palette/masterpalette?%1").arg(params.join('&'));
+    interactive()->open(uri.toStdString());
 }
 
 bool MU4PaletteAdapter::isSelected() const

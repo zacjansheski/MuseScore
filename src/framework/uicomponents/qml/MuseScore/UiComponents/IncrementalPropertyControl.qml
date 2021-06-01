@@ -1,3 +1,24 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 import QtQuick 2.9
 import MuseScore.UiComponents 1.0
 import MuseScore.Ui 1.0
@@ -6,7 +27,7 @@ Item {
     id: root
 
     property alias iconModeEnum: _iconModeEnum
-    property int iconMode: Boolean(icon) ? iconModeEnum.left : iconModeEnum.hidden
+    property int iconMode: !iconImage.isEmpty ? iconModeEnum.left : iconModeEnum.hidden
     property int iconBackgroundSize: 20
     property alias icon: iconImage.iconCode
 
@@ -19,12 +40,47 @@ Item {
     property alias validator: textInputField.validator
     property alias measureUnitsSymbol: textInputField.measureUnitsSymbol
 
+    property alias navigation: textInputField.navigation
+
     readonly property int spacing: 8
 
     signal valueEdited(var newValue)
 
     implicitHeight: 30
     implicitWidth: parent.width
+
+    navigation.name: root.objectName != "" ? root.objectName : "IncrementalControl"
+
+    function increment() {
+        var value = root.isIndeterminate ? 0.0 : currentValue
+        var newValue = value + step
+
+        if (newValue > root.maxValue)
+            return
+
+        root.valueEdited(+newValue.toFixed(decimals))
+    }
+
+    function decrement() {
+        var value = root.isIndeterminate ? 0.0 : currentValue
+        var newValue = value - step
+
+        if (newValue < root.minValue)
+            return
+
+        root.valueEdited(+newValue.toFixed(decimals))
+    }
+
+    Keys.onPressed: {
+        switch (event.key) {
+        case Qt.Key_Up:
+            increment()
+            break
+        case Qt.Key_Down:
+            decrement()
+            break
+        }
+    }
 
     QtObject {
         id: _iconModeEnum
@@ -60,39 +116,32 @@ Item {
         anchors.top: parent.top
         anchors.bottom: parent.bottom
 
-        validator: DoubleInputValidator {
+        DoubleInputValidator {
+            id: doubleInputValidator
             top: maxValue
             bottom: minValue
             decimal: decimals
         }
 
+        IntInputValidator {
+            id: intInputValidator
+            top: maxValue
+            bottom: minValue
+        }
+
+        validator: decimals > 0 ? doubleInputValidator : intInputValidator
+
         ValueAdjustControl {
             id: valueAdjustControl
 
-            anchors.verticalCenter: textInputField.verticalCenter
-            anchors.right: textInputField.right
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.right: parent.right
 
             icon: IconCode.SMALL_ARROW_DOWN
 
-            onIncreaseButtonClicked: {
-                var value = root.isIndeterminate ? 0.0 : currentValue
-                var newValue = value + step
+            onIncreaseButtonClicked: increment()
 
-                if (newValue > root.maxValue)
-                    return
-
-                root.valueEdited(+newValue.toFixed(decimals))
-            }
-
-            onDecreaseButtonClicked: {
-                var value = root.isIndeterminate ? 0.0 : currentValue
-                var newValue = value - step
-
-                if (newValue < root.minValue)
-                    return
-
-                root.valueEdited(+newValue.toFixed(decimals))
-            }
+            onDecreaseButtonClicked: decrement()
         }
 
         onCurrentTextEdited: {
@@ -118,7 +167,7 @@ Item {
             AnchorChanges { target: textInputField; anchors.left: iconBackground.right }
 
             PropertyChanges { target: textInputField; anchors.leftMargin: spacing
-                                                          width: root.width - iconBackground.width - root.spacing }
+                width: root.width - iconBackground.width - root.spacing }
         },
 
         State {
@@ -132,7 +181,7 @@ Item {
             AnchorChanges { target: iconBackground; anchors.left: textInputField.right }
 
             PropertyChanges { target: iconBackground; anchors.leftMargin: spacing
-                                                      visible: true }
+                visible: true }
         },
 
         State {

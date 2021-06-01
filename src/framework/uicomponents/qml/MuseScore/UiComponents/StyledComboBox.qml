@@ -1,4 +1,25 @@
-import QtQuick 2.9
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+import QtQuick 2.15
 import QtQuick.Controls 2.2
 import QtGraphicalEffects 1.0
 import MuseScore.Ui 1.0
@@ -14,12 +35,37 @@ ComboBox {
     property var value
     property var maxVisibleItemCount: 6
 
+    property alias navigation: navCtrl
+
     opacity: root.enabled ? 1 : ui.theme.itemOpacityDisabled
+
+    Keys.onReleased: {
+        //! TODO Conflicted with navigation, needs research
+        if (event.key === Qt.Key_Enter || event.key === Qt.Key_Return) {
+            event.accepted = true
+        }
+    }
+
+    onPressedChanged: {
+        if (root.pressed) {
+            root.ensureActiveFocus()
+        }
+    }
+
+    function ensureActiveFocus() {
+        if (!root.activeFocus) {
+            root.forceActiveFocus()
+        }
+    }
 
     function valueFromModel(index, roleName) {
 
         // Simple models (like JS array) with single predefined role name - modelData
         if (model[index] !== undefined) {
+            if (model[index][roleName] === undefined) {
+                return model[index]
+            }
+
             return model[index][roleName]
         }
 
@@ -55,6 +101,24 @@ ComboBox {
     implicitHeight: 30
 
     padding: 0
+
+    NavigationControl {
+        id: navCtrl
+        name: root.objectName != "" ? root.objectName : "StyledComboBox"
+        enabled: root.enabled
+        onActiveChanged: {
+            if (!root.activeFocus) {
+                root.forceActiveFocus()
+            }
+        }
+        onTriggered: {
+            if (root.popup.opened) {
+                root.popup.close()
+            } else {
+                root.popup.open()
+            }
+        }
+    }
 
     QtObject {
         id: privateProperties
@@ -101,30 +165,39 @@ ComboBox {
                     name: "TOP_CORNERS_ROUNDED"
                     when: index === 0
 
-                    PropertyChanges { target: delegateBackgroundRect; topLeftRadius: 4
-                                                                      topRightRadius: 4
-                                                                      bottomLeftRadius: 0
-                                                                      bottomRightRadius: 0 }
+                    PropertyChanges {
+                        target: delegateBackgroundRect;
+                        topLeftRadius: 4
+                        topRightRadius: 4
+                        bottomLeftRadius: 0
+                        bottomRightRadius: 0
+                    }
                 },
 
                 State {
                     name: "NO_ROUNDED_CORNERS"
                     when: index !== 0 && index !== count - 1
 
-                    PropertyChanges { target: delegateBackgroundRect; topLeftRadius: 0
-                                                                      topRightRadius: 0
-                                                                      bottomLeftRadius: 0
-                                                                      bottomRightRadius: 0 }
+                    PropertyChanges {
+                        target: delegateBackgroundRect;
+                        topLeftRadius: 0
+                        topRightRadius: 0
+                        bottomLeftRadius: 0
+                        bottomRightRadius: 0
+                    }
                 },
 
                 State {
                     name: "BOTTOM_CORNERS_ROUNDED"
                     when: index === count - 1
 
-                    PropertyChanges { target: delegateBackgroundRect; topLeftRadius: 0
-                                                                      topRightRadius: 0
-                                                                      bottomLeftRadius: 4
-                                                                      bottomRightRadius: 4 }
+                    PropertyChanges {
+                        target: delegateBackgroundRect;
+                        topLeftRadius: 0
+                        topRightRadius: 0
+                        bottomLeftRadius: 4
+                        bottomRightRadius: 4
+                    }
                 }
             ]
         }
@@ -142,31 +215,23 @@ ComboBox {
         horizontalAlignment: Qt.AlignLeft
     }
 
-    background: RoundedRectangle {
-        height: root.implicitHeight
-        width: contentItem.width
-
+    background: Rectangle {
+        height: root.height
+        width: root.width
         color: ui.theme.buttonColor
         opacity: ui.theme.buttonOpacityNormal
 
-        topLeftRadius: 4
-        topRightRadius: 0
-        bottomLeftRadius: 4
-        bottomRightRadius: 0
+        radius: 4
+
+        border.width: navCtrl.active ? 2 : 0
+        border.color: ui.theme.focusColor
     }
 
-    indicator: RoundedRectangle {
+    indicator: Item {
         id: indicatorCanvas
 
         height: root.implicitHeight
         width: height
-
-        topLeftRadius: 0
-        bottomLeftRadius: 0
-        topRightRadius: 4
-        bottomRightRadius: 4
-
-        color: ui.theme.buttonColor
 
         x: root.width - width
         y: root.topPadding + (root.availableHeight - height) / 2
@@ -203,18 +268,17 @@ ComboBox {
             boundsBehavior: Flickable.StopAtBounds
             highlightMoveDuration: 250
 
+            ScrollBar.vertical: StyledScrollBar { }
+
             populate: Transition {
                 NumberAnimation { property: "opacity"; from: 0.5; to: 1; duration: 200; easing.type: Easing.OutCubic }
             }
         }
 
-        background: DropShadow {
+        background: StyledDropShadow {
             anchors.fill: parent
-            verticalOffset: 4
-            radius: 12.0
-            samples: 30
-            color: "#75000000"
             source: popup.contentItem
+            radius: 12.0
         }
 
         Behavior on implicitHeight {

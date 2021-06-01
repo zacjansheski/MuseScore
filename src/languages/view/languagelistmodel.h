@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #ifndef MU_LANGUAGES_LANGUAGELISTMODEL_H
 #define MU_LANGUAGES_LANGUAGELISTMODEL_H
 
@@ -48,9 +51,9 @@ public:
     QVariant data(const QModelIndex& index, int role) const override;
 
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
-    QHash<int,QByteArray> roleNames() const override;
+    QHash<int, QByteArray> roleNames() const override;
 
-    Q_INVOKABLE void load();
+    Q_INVOKABLE void init();
     Q_INVOKABLE void install(QString code);
     Q_INVOKABLE void update(QString code);
     Q_INVOKABLE void uninstall(QString code);
@@ -64,6 +67,9 @@ signals:
     void finish(const QVariantMap& item);
 
 private:
+    void load();
+    void setupConnections();
+
     int itemIndexByCode(const QString& code) const;
 
     QString languageStatusTitle(const Language& language) const;

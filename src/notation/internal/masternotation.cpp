@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "masternotation.h"
 #include "excerptnotation.h"
 #include "masternotationparts.h"
@@ -169,7 +172,7 @@ mu::Ret MasterNotation::createNew(const ScoreCreateOptions& scoreOptions)
     ks.setKey(scoreOptions.key);
     Ms::VBox* nvb = nullptr;
 
-    bool pickupMeasure = scoreOptions.measureTimesigNumerator > 0 && scoreOptions.measureTimesigDenominator > 0;
+    bool pickupMeasure = scoreOptions.withPickupMeasure;
     if (pickupMeasure) {
         measures += 1;
     }
@@ -239,6 +242,7 @@ mu::Ret MasterNotation::createNew(const ScoreCreateOptions& scoreOptions)
             nvb->setBottomMargin(tvb->bottomMargin());
             nvb->setLeftMargin(tvb->leftMargin());
             nvb->setRightMargin(tvb->rightMargin());
+            nvb->setAutoSizeEnabled(tvb->isAutoSizeEnabled());
         }
         delete tscore;
     } else {
@@ -267,7 +271,7 @@ mu::Ret MasterNotation::createNew(const ScoreCreateOptions& scoreOptions)
     for (int i = 0; i < measures; ++i) {
         Ms::Fraction tick = firstMeasureTicks + timesig * (i - 1);
         if (i == 0) {
-            tick = Ms::Fraction(0,1);
+            tick = Ms::Fraction(0, 1);
         }
         QList<Ms::Rest*> puRests;
         for (Ms::Score* _score : score->scoreList()) {
@@ -291,7 +295,7 @@ mu::Ret MasterNotation::createNew(const ScoreCreateOptions& scoreOptions)
                     ts->setTrack(staffIdx * VOICES);
                     ts->setSig(timesig, scoreOptions.timesigType);
                     Ms::Measure* m = _score->firstMeasure();
-                    Ms::Segment* s = m->getSegment(Ms::SegmentType::TimeSig, Ms::Fraction(0,1));
+                    Ms::Segment* s = m->getSegment(Ms::SegmentType::TimeSig, Ms::Fraction(0, 1));
                     s->add(ts);
                     Part* part = staff->part();
                     if (!part->instrument()->useDrumset()) {
@@ -306,11 +310,11 @@ mu::Ret MasterNotation::createNew(const ScoreCreateOptions& scoreOptions)
                         }
                         // do not create empty keysig unless custom or atonal
                         if (nKey.custom() || nKey.isAtonal() || nKey.key() != Key::C) {
-                            staff->setKey(Ms::Fraction(0,1), nKey);
+                            staff->setKey(Ms::Fraction(0, 1), nKey);
                             Ms::KeySig* keysig = new Ms::KeySig(score);
                             keysig->setTrack(staffIdx * VOICES);
                             keysig->setKeySigEvent(nKey);
-                            Ms::Segment* ss = measure->getSegment(Ms::SegmentType::KeySig, Ms::Fraction(0,1));
+                            Ms::Segment* ss = measure->getSegment(Ms::SegmentType::KeySig, Ms::Fraction(0, 1));
                             ss->add(keysig);
                         }
                     }
@@ -376,7 +380,7 @@ mu::Ret MasterNotation::createNew(const ScoreCreateOptions& scoreOptions)
         Ms::MeasureBase* measure = score->measures()->first();
         if (measure->type() != ElementType::VBOX) {
             Ms::MeasureBase* nm = nvb ? nvb : new Ms::VBox(score);
-            nm->setTick(Ms::Fraction(0,1));
+            nm->setTick(Ms::Fraction(0, 1));
             nm->setNext(measure);
             score->measures()->add(nm);
             measure = nm;
@@ -513,10 +517,12 @@ mu::Ret MasterNotation::save(const io::path& path, SaveMode saveMode)
     switch (saveMode) {
     case SaveMode::SaveSelection:
         return saveSelectionOnScore(path);
-    case SaveMode::Unknown:
+    case SaveMode::Save:
     case SaveMode::SaveAs:
     case SaveMode::SaveCopy:
         return saveScore(path);
+    case SaveMode::SaveOnline:
+        return make_ret(Ret::Code::NotSupported);
     }
 
     return make_ret(Err::UnknownError);

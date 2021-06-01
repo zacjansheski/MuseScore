@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Linux Music Score Editor
-//
-//  Copyright (C) 2010 Werner Schweer and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 // TODO LVI 2011-10-30: determine how to report import errors.
 // Currently all output (both debug and error reports) are done using qDebug.
@@ -122,7 +125,7 @@ static void setTempo(Ms::Score* score, int tempo)
     tempoText += QString(" = %1").arg(tempo);
     tt->setPlainText(tempoText);
     Ms::Measure* measure = score->firstMeasure();
-    Ms::Segment* segment = measure->getSegment(Ms::SegmentType::ChordRest, Ms::Fraction(0,1));
+    Ms::Segment* segment = measure->getSegment(Ms::SegmentType::ChordRest, Ms::Fraction(0, 1));
     segment->add(tt);
 }
 
@@ -132,9 +135,9 @@ public:
     MsScWriter();
     void beginMeasure(const Bww::MeasureBeginFlags mbf);
     void endMeasure(const Bww::MeasureEndFlags mef);
-    void header(const QString title, const QString type,const QString composer, const QString footer,const unsigned int temp);
-    void note(const QString pitch, const QVector<Bww::BeamType> beamList,const QString type, const int dots,bool tieStart = false,
-              bool tieStop = false,StartStop triplet = StartStop::ST_NONE,bool grace = false);
+    void header(const QString title, const QString type, const QString composer, const QString footer, const unsigned int temp);
+    void note(const QString pitch, const QVector<Bww::BeamType> beamList, const QString type, const int dots, bool tieStart = false,
+              bool tieStop = false, StartStop triplet = StartStop::ST_NONE, bool grace = false);
     void setScore(Ms::Score* s) { score = s; }
     void tsig(const int beats, const int beat);
     void trailer();
@@ -172,7 +175,7 @@ MsScWriter::MsScWriter()
     beats(4),
     beat(4),
     measureNumber(0),
-    tick(Ms::Fraction(0,1)),
+    tick(Ms::Fraction(0, 1)),
     currentMeasure(0),
     tuplet(0),
     lastVolta(0),
@@ -445,7 +448,7 @@ void MsScWriter::header(const QString title, const QString type,
     // addText(vbox, score, strPoet, Ms::Tid::POET);
     // addText(vbox, score, strTranslator, Ms::Tid::TRANSLATOR);
     if (vbox) {
-        vbox->setTick(Ms::Fraction(0,1));
+        vbox->setTick(Ms::Fraction(0, 1));
         score->measures()->add(vbox);
     }
     if (!footer.isEmpty()) {

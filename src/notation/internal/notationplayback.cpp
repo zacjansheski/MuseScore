@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "notationplayback.h"
 
 #include <cmath>
@@ -96,6 +99,7 @@ void NotationPlayback::updateLoopBoundaries()
     boundaries.loopOutTick = score()->loopOutTick().ticks();
     boundaries.loopInRect = loopBoundaryRectByTick(LoopBoundaryType::LoopIn, boundaries.loopInTick);
     boundaries.loopOutRect = loopBoundaryRectByTick(LoopBoundaryType::LoopOut, boundaries.loopOutTick);
+    boundaries.visible = m_loopBoundaries.val.visible;
 
     if (m_loopBoundaries.val != boundaries) {
         m_loopBoundaries.set(boundaries);
@@ -472,8 +476,8 @@ MidiData NotationPlayback::playNoteMidiData(const Ms::Note* note) const
     makeInitEvents(midiData.initEvents, masterNote->score());
 
     Ms::Fraction tick = masterNote->chord()->tick();
-    if (tick < Ms::Fraction(0,1)) {
-        tick = Ms::Fraction(0,1);
+    if (tick < Ms::Fraction(0, 1)) {
+        tick = Ms::Fraction(0, 1);
     }
     Ms::Instrument* instr = masterNote->part()->instrument(tick);
     channel_t channel = instr->channel(masterNote->subchannel())->channel();
@@ -502,21 +506,24 @@ MidiData NotationPlayback::playNoteMidiData(const Ms::Note* note) const
 
 MidiData NotationPlayback::playChordMidiData(const Ms::Chord* chord) const
 {
-    Ms::Part* part = chord->staff()->part();
-    Ms::Fraction tick = chord->segment() ? chord->segment()->tick() : Ms::Fraction(0,1);
+    Ms::Part* part = chord->part();
+    Ms::Fraction tick = chord->segment() ? chord->segment()->tick() : Ms::Fraction(0, 1);
     Ms::Instrument* instr = part->instrument(tick);
+    channel_t channel = instr->channel(chord->notes()[0]->subchannel())->channel();
 
     MidiData midiData;
     midiData.division = Ms::MScore::division;
     makeInitEvents(midiData.initEvents, chord->score());
 
+    Track t;
+    t.num = 0;
+    t.channels.push_back(channel);
+    midiData.tracks.push_back(t);
+
     Chunk chunk;
     chunk.beginTick = 0;
     chunk.endTick = Ms::MScore::defaultPlayDuration * 2;
     for (Ms::Note* n : chord->notes()) {
-        const Ms::Channel* msCh = instr->channel(n->subchannel());
-
-        channel_t channel = msCh->channel();
         int pitch = n->ppitch();
 
         auto event = midi::Event(midi::Event::Opcode::NoteOn);
@@ -636,11 +643,14 @@ void NotationPlayback::addLoopOut(int _tick)
     score()->setLoopOutTick(tick);
 }
 
-void NotationPlayback::removeLoopBoundaries()
+void NotationPlayback::setLoopBoundariesVisible(bool visible)
 {
-    Fraction null = Fraction::fromTicks(0);
-    score()->setLoopInTick(null);
-    score()->setLoopOutTick(null);
+    if (m_loopBoundaries.val.visible == visible) {
+        return;
+    }
+
+    m_loopBoundaries.val.visible = visible;
+    m_loopBoundaries.set(m_loopBoundaries.val);
 }
 
 QRect NotationPlayback::loopBoundaryRectByTick(LoopBoundaryType boundaryType, int _tick) const
@@ -723,9 +733,9 @@ QRect NotationPlayback::loopBoundaryRectByTick(LoopBoundaryType boundaryType, in
     return QRect(x, y, width, height);
 }
 
-mu::async::Channel<LoopBoundaries> NotationPlayback::loopBoundariesChanged() const
+mu::ValCh<LoopBoundaries> NotationPlayback::loopBoundaries() const
 {
-    return m_loopBoundaries.ch;
+    return m_loopBoundaries;
 }
 
 Tempo NotationPlayback::tempo(int tick) const
@@ -737,12 +747,13 @@ Tempo NotationPlayback::tempo(int tick) const
     }
 
     const Ms::TempoText* tempoText = this->tempoText(tick);
-    if (!tempoText) {
-        tempo.valueBpm = score()->tempo(Fraction::fromTicks(tick)) * 60;
+    Ms::TDuration duration = tempoText ? tempoText->duration() : Ms::TDuration();
+
+    if (!tempoText || !duration.isValid()) {
+        tempo.duration = DurationType::V_QUARTER;
+        tempo.valueBpm = std::round(score()->tempo(Fraction::fromTicks(tick)) * 60.);
         return tempo;
     }
-
-    Ms::TDuration duration = tempoText->duration();
 
     tempo.valueBpm = tempoText->tempoBpm();
     tempo.duration = duration.type();

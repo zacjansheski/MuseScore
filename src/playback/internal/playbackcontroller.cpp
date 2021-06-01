@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "playbackcontroller.h"
 
 #include "log.h"
@@ -66,9 +69,7 @@ void PlaybackController::init()
 
     sequencer()->positionChanged().onNotify(this, [this]() {
         if (configuration()->cursorType() == PlaybackCursorType::SMOOTH) {
-            float seconds = sequencer()->playbackPositionInSeconds();
-            int tick = m_notation->playback()->secToTick(seconds);
-            m_tickPlayed.set(tick);
+            m_tickPlayed.send(currentTick());
         }
 
         m_playbackPositionChanged.notify();
@@ -76,11 +77,17 @@ void PlaybackController::init()
 
     if (configuration()->cursorType() == PlaybackCursorType::STEPPED) {
         sequencer()->midiTickPlayed(MIDI_TRACK).onReceive(this, [this](midi::tick_t tick) {
-            m_tickPlayed.set(tick);
+            m_tickPlayed.send(tick);
         });
     }
 
     m_needRewindBeforePlay = true;
+}
+
+int PlaybackController::currentTick() const
+{
+    float seconds = sequencer()->playbackPositionInSeconds();
+    return m_notation ? m_notation->playback()->secToTick(seconds) : 0;
 }
 
 bool PlaybackController::isPlayAllowed() const
@@ -103,6 +110,16 @@ bool PlaybackController::isPaused() const
     return sequencer()->status() == ISequencer::PAUSED;
 }
 
+bool PlaybackController::isLoopVisible() const
+{
+    return playback() ? playback()->loopBoundaries().val.visible : false;
+}
+
+bool PlaybackController::isPlaybackLooped() const
+{
+    return playback() ? !playback()->loopBoundaries().val.isNull() : false;
+}
+
 Notification PlaybackController::isPlayingChanged() const
 {
     return m_isPlayingChanged;
@@ -115,7 +132,7 @@ Notification PlaybackController::playbackPositionChanged() const
 
 Channel<uint32_t> PlaybackController::midiTickPlayed() const
 {
-    return m_tickPlayed.ch;
+    return m_tickPlayed;
 }
 
 float PlaybackController::playbackPositionInSeconds() const
@@ -123,9 +140,9 @@ float PlaybackController::playbackPositionInSeconds() const
     return sequencer()->playbackPositionInSeconds();
 }
 
-void PlaybackController::playElementOnClick(const notation::Element* element)
+void PlaybackController::playElement(const notation::Element* element)
 {
-    if (!configuration()->isPlayElementOnClick()) {
+    if (!configuration()->playNotesWhenEditing()) {
         return;
     }
 
@@ -137,7 +154,7 @@ void PlaybackController::playElementOnClick(const notation::Element* element)
         return;
     }
 
-    if (element->isHarmony() && !configuration()->isPlayHarmonyOnClick()) {
+    if (element->isHarmony() && !configuration()->playHarmonyWhenEditing()) {
         return;
     }
 
@@ -158,6 +175,8 @@ INotationSelectionPtr PlaybackController::selection() const
 
 void PlaybackController::onNotationChanged()
 {
+    sequencer()->stop();
+
     if (m_notation) {
         m_notation->playback()->playPositionTickChanged().resetOnReceive(this);
     }
@@ -168,8 +187,8 @@ void PlaybackController::onNotationChanged()
             seek(tick);
         });
 
-        m_notation->playback()->loopBoundariesChanged().onReceive(this, [this](const LoopBoundaries& boundary) {
-            setLoop(boundary);
+        m_notation->playback()->loopBoundaries().ch.onReceive(this, [this](const LoopBoundaries& boundaries) {
+            setLoop(boundaries);
         });
     }
 
@@ -252,41 +271,46 @@ void PlaybackController::togglePlayRepeats()
 {
     bool playRepeatsEnabled = notationConfiguration()->isPlayRepeatsEnabled();
     notationConfiguration()->setIsPlayRepeatsEnabled(!playRepeatsEnabled);
-    notifyActionEnabledChanged(REPEAT_CODE);
+    notifyActionCheckedChanged(REPEAT_CODE);
 }
 
 void PlaybackController::toggleAutomaticallyPan()
 {
     bool panEnabled = notationConfiguration()->isAutomaticallyPanEnabled();
     notationConfiguration()->setIsAutomaticallyPanEnabled(!panEnabled);
-    notifyActionEnabledChanged(PAN_CODE);
+    notifyActionCheckedChanged(PAN_CODE);
 }
 
 void PlaybackController::toggleMetronome()
 {
     bool metronomeEnabled = notationConfiguration()->isMetronomeEnabled();
     notationConfiguration()->setIsMetronomeEnabled(!metronomeEnabled);
-    notifyActionEnabledChanged(METRONOME_CODE);
+    notifyActionCheckedChanged(METRONOME_CODE);
 }
 
 void PlaybackController::toggleMidiInput()
 {
     bool midiInputEnabled = notationConfiguration()->isMidiInputEnabled();
     notationConfiguration()->setIsMidiInputEnabled(!midiInputEnabled);
-    notifyActionEnabledChanged(MIDI_ON_CODE);
+    notifyActionCheckedChanged(MIDI_ON_CODE);
 }
 
 void PlaybackController::toggleCountIn()
 {
     bool countInEnabled = notationConfiguration()->isCountInEnabled();
     notationConfiguration()->setIsCountInEnabled(!countInEnabled);
-    notifyActionEnabledChanged(COUNT_IN_CODE);
+    notifyActionCheckedChanged(COUNT_IN_CODE);
 }
 
 void PlaybackController::toggleLoopPlayback()
 {
-    if (m_isPlaybackLooped) {
-        unsetLoop();
+    if (isLoopVisible()) {
+        hideLoop();
+        return;
+    }
+
+    if (isPlaybackLooped() && !selection()->isRange()) {
+        showLoop();
         return;
     }
 
@@ -298,60 +322,68 @@ void PlaybackController::toggleLoopPlayback()
         loopOutTick = selection()->range()->endTick().ticks();
     }
 
-    playback()->addLoopBoundary(LoopBoundaryType::LoopIn, loopInTick);
-    playback()->addLoopBoundary(LoopBoundaryType::LoopOut, loopOutTick);
-
-    m_isPlaybackLooped = true;
+    addLoopBoundaryToTick(LoopBoundaryType::LoopIn, loopInTick);
+    addLoopBoundaryToTick(LoopBoundaryType::LoopOut, loopOutTick);
 }
 
 void PlaybackController::addLoopBoundary(LoopBoundaryType type)
 {
-    if (!playback()) {
-        return;
-    }
-
     if (isPlaying()) {
-        playback()->addLoopBoundary(type, m_tickPlayed.val);
+        addLoopBoundaryToTick(type, currentTick());
     } else {
-        playback()->addLoopBoundary(type, INotationPlayback::SelectedNoteTick);
+        addLoopBoundaryToTick(type, INotationPlayback::SelectedNoteTick);
     }
 }
 
-void PlaybackController::setLoop(const LoopBoundaries& boundary)
+void PlaybackController::addLoopBoundaryToTick(LoopBoundaryType type, int tick)
 {
-    if (boundary.isNull()) {
-        unsetLoop();
+    if (playback()) {
+        playback()->addLoopBoundary(type, tick);
+        showLoop();
+    }
+}
+
+void PlaybackController::setLoop(const LoopBoundaries& boundaries)
+{
+    if (!boundaries.visible) {
+        hideLoop();
         return;
     }
 
-    uint64_t fromMilliseconds = secondsToMilliseconds(playback()->tickToSec(boundary.loopInTick));
-    uint64_t toMilliseconds = secondsToMilliseconds(playback()->tickToSec(boundary.loopOutTick));
+    uint64_t fromMilliseconds = secondsToMilliseconds(playback()->tickToSec(boundaries.loopInTick));
+    uint64_t toMilliseconds = secondsToMilliseconds(playback()->tickToSec(boundaries.loopOutTick));
 
     sequencer()->setLoop(fromMilliseconds, toMilliseconds);
+    showLoop();
 
-    m_isPlaybackLooped = true;
-    notifyActionEnabledChanged(LOOP_CODE);
+    notifyActionCheckedChanged(LOOP_CODE);
 }
 
-void PlaybackController::unsetLoop()
+void PlaybackController::showLoop()
 {
-    if (playback() && m_isPlaybackLooped) {
-        m_isPlaybackLooped = false;
-        sequencer()->unsetLoop();
-        playback()->removeLoopBoundaries();
-        notifyActionEnabledChanged(LOOP_CODE);
+    if (playback()) {
+        playback()->setLoopBoundariesVisible(true);
     }
 }
 
-void PlaybackController::notifyActionEnabledChanged(const ActionCode& actionCode)
+void PlaybackController::hideLoop()
 {
-    m_actionEnabledChanged.send(actionCode);
+    if (playback()) {
+        sequencer()->unsetLoop();
+        playback()->setLoopBoundariesVisible(false);
+        notifyActionCheckedChanged(LOOP_CODE);
+    }
 }
 
-bool PlaybackController::isActionEnabled(const ActionCode& actionCode) const
+void PlaybackController::notifyActionCheckedChanged(const ActionCode& actionCode)
 {
-    QMap<std::string, bool> isEnabled {
-        { LOOP_CODE, m_isPlaybackLooped },
+    m_actionCheckedChanged.send(actionCode);
+}
+
+bool PlaybackController::actionChecked(const ActionCode& actionCode) const
+{
+    QMap<std::string, bool> isChecked {
+        { LOOP_CODE, isLoopVisible() },
         { MIDI_ON_CODE, notationConfiguration()->isMidiInputEnabled() },
         { REPEAT_CODE, notationConfiguration()->isPlayRepeatsEnabled() },
         { PAN_CODE, notationConfiguration()->isAutomaticallyPanEnabled() },
@@ -359,12 +391,12 @@ bool PlaybackController::isActionEnabled(const ActionCode& actionCode) const
         { COUNT_IN_CODE, notationConfiguration()->isCountInEnabled() }
     };
 
-    return isEnabled[actionCode];
+    return isChecked[actionCode];
 }
 
-Channel<ActionCode> PlaybackController::actionEnabledChanged() const
+Channel<ActionCode> PlaybackController::actionCheckedChanged() const
 {
-    return m_actionEnabledChanged;
+    return m_actionCheckedChanged;
 }
 
 QTime PlaybackController::totalPlayTime() const
@@ -374,12 +406,12 @@ QTime PlaybackController::totalPlayTime() const
 
 Tempo PlaybackController::currentTempo() const
 {
-    return playback() ? playback()->tempo(m_tickPlayed.val) : Tempo();
+    return playback() ? playback()->tempo(currentTick()) : Tempo();
 }
 
 MeasureBeat PlaybackController::currentBeat() const
 {
-    return playback() ? playback()->beat(m_tickPlayed.val) : MeasureBeat();
+    return playback() ? playback()->beat(currentTick()) : MeasureBeat();
 }
 
 uint64_t PlaybackController::beatToMilliseconds(int measureIndex, int beatIndex) const

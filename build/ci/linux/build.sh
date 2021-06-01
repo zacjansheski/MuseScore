@@ -1,5 +1,23 @@
 #!/usr/bin/env bash
-
+# SPDX-License-Identifier: GPL-3.0-only
+# MuseScore-CLA-applies
+#
+# MuseScore
+# Music Composition & Notation
+#
+# Copyright (C) 2021 MuseScore BVBA and others
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 echo "Build Linux MuseScore AppImage"
 
 #set -x
@@ -11,6 +29,7 @@ ARTIFACTS_DIR=build.artifacts
 TELEMETRY_TRACK_ID=""
 CRASH_REPORT_URL=""
 BUILD_MODE=""
+SUFFIX="" # appended to `mscore` command name to avoid conflicts (e.g. `mscore-dev`)
 
 while [[ "$#" -gt 0 ]]; do
     case $1 in
@@ -29,10 +48,13 @@ if [ -z "$BUILD_MODE" ]; then BUILD_MODE=$(cat $ARTIFACTS_DIR/env/build_mode.env
 
 MUSESCORE_BUILD_CONFIG=dev
 BUILD_UNIT_TESTS=OFF
-if [ "$BUILD_MODE" == "devel_build" ]; then MUSESCORE_BUILD_CONFIG=dev; fi
-if [ "$BUILD_MODE" == "nightly_build" ]; then MUSESCORE_BUILD_CONFIG=dev; fi
-if [ "$BUILD_MODE" == "testing_build" ]; then MUSESCORE_BUILD_CONFIG=testing; fi
-if [ "$BUILD_MODE" == "stable_build" ]; then MUSESCORE_BUILD_CONFIG=release; fi
+case "${BUILD_MODE}" in
+"devel_build")   MUSESCORE_BUILD_CONFIG=dev; SUFFIX=-dev;;
+"nightly_build") MUSESCORE_BUILD_CONFIG=dev; SUFFIX=-nightly;;
+"testing_build") MUSESCORE_BUILD_CONFIG=testing; SUFFIX=-testing;;
+"stable_build")  MUSESCORE_BUILD_CONFIG=release; SUFFIX="";;
+"mtests")        MUSESCORE_BUILD_CONFIG=dev; BUILDTYPE=installdebug; OPTIONS="USE_SYSTEM_FREETYPE=ON UPDATE_CACHE=FALSE PREFIX=$ARTIFACTS_DIR/software";;
+esac
 
 echo "MUSESCORE_BUILD_CONFIG: $MUSESCORE_BUILD_CONFIG"
 echo "BUILD_NUMBER: $BUILD_NUMBER"
@@ -46,7 +68,7 @@ cat ./../musescore_environment.sh
 source ./../musescore_environment.sh
 
 echo " "
-${CXX} --version 
+${CXX} --version
 ${CC} --version
 echo " "
 cmake --version
@@ -65,6 +87,7 @@ MUSESCORE_REVISION=$(git rev-parse --short=7 HEAD)
 
 # Build portable AppImage
 MUSESCORE_BUILD_CONFIG=$MUSESCORE_BUILD_CONFIG \
+MUSESCORE_INSTALL_SUFFIX=$SUFFIX \
 MUSESCORE_BUILD_NUMBER=$BUILD_NUMBER \
 MUSESCORE_REVISION=$MUSESCORE_REVISION \
 MUSESCORE_TELEMETRY_ID=$TELEMETRY_TRACK_ID \

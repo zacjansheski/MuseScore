@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #include "templatesrepository.h"
 
@@ -32,7 +35,7 @@ RetVal<Templates> TemplatesRepository::templates() const
 {
     Templates result;
 
-    for (const io::path& dirPath: configuration()->templatesDirPaths()) {
+    for (const io::path& dirPath: configuration()->availableTemplatesPaths()) {
         QStringList filters { "*.mscz", "*.mscx" };
         RetVal<io::paths> files = fileSystem()->scanFiles(dirPath, filters);
 
@@ -50,17 +53,11 @@ RetVal<Templates> TemplatesRepository::templates() const
 Templates TemplatesRepository::loadTemplates(const io::paths& filePaths) const
 {
     Templates result;
+    MetaList metaList = msczReader()->readMetaList(filePaths);
 
-    for (const io::path& pathToFile: filePaths) {
-        RetVal<Meta> meta = msczReader()->readMeta(pathToFile);
-
-        if (!meta.ret) {
-            LOGE() << meta.ret.toString();
-            continue;
-        }
-
-        Template templ(meta.val);
-        templ.categoryTitle = correctedTitle(io::dirname(pathToFile).toQString());
+    for (const Meta& meta: metaList) {
+        Template templ(meta);
+        templ.categoryTitle = correctedTitle(io::dirname(meta.filePath).toQString());
 
         result << templ;
     }

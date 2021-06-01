@@ -1,5 +1,27 @@
-import QtQuick 2.9
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+import QtQuick 2.15
 import QtQuick.Dialogs 1.2
+
 import MuseScore.Ui 1.0
 
 Rectangle {
@@ -7,39 +29,39 @@ Rectangle {
 
     property bool isIndeterminate: false
 
+    property alias navigation: navCtrl
+
     signal newColorSelected(var newColor)
 
-    height: 26
+    height: 30
     width: parent.width
-    radius: 2
+
+    opacity: enabled ? 1 : ui.theme.itemOpacityDisabled
+
+    radius: 3
     color: "#000000"
 
-    Rectangle {
-        id: backgroundRect
+    border.width: navCtrl.active ? 2 : 1
+    border.color: navCtrl.active ? ui.theme.focusColor : "#000000"
 
-        anchors.fill: parent
-        anchors.margins: -2
-
-        radius: 2
-        color: "transparent"
-        border.width: 1
+    NavigationControl {
+        id: navCtrl
+        name: root.objectName != "" ? root.objectName : "ColorPicker"
+        enabled: root.enabled && root.visible
+        onTriggered: colorDialog.open()
     }
 
     StyledIconLabel {
         anchors.fill: parent
-
         iconCode: IconCode.QUESTION_MARK
-
         visible: isIndeterminate
     }
 
     MouseArea {
-        id: cliickableArea
+        id: clickableArea
 
         anchors.fill: parent
-
         hoverEnabled: true
-
         onClicked: {
             colorDialog.open()
         }
@@ -59,23 +81,23 @@ Rectangle {
     states: [
         State {
             name: "NORMAL"
-            when: !cliickableArea.containsMouse && !colorDialog.visible
+            when: !clickableArea.containsMouse && !colorDialog.visible
 
-            PropertyChanges { target: backgroundRect; border.color: ui.theme.buttonColor }
+            PropertyChanges { target: root; border.color: ui.theme.buttonColor }
         },
 
         State {
             name: "HOVERED"
-            when: cliickableArea.containsMouse && !cliickableArea.pressed && !colorDialog.visible
+            when: clickableArea.containsMouse && !clickableArea.pressed && !colorDialog.visible
 
-            PropertyChanges { target: backgroundRect; border.color: ui.theme.accentColor }
+            PropertyChanges { target: root; border.color: ui.theme.accentColor }
         },
 
         State {
             name: "PRESSED"
-            when: cliickableArea.pressed || colorDialog.visible
+            when: clickableArea.pressed || colorDialog.visible
 
-            PropertyChanges { target: backgroundRect; border.color: ui.theme.fontPrimaryColor }
+            PropertyChanges { target: root; border.color: ui.theme.fontPrimaryColor }
         }
     ]
 }

@@ -1,21 +1,22 @@
-#=============================================================================
-#  MuseScore
-#  Music Composition & Notation
+# SPDX-License-Identifier: GPL-3.0-only
+# MuseScore-CLA-applies
 #
-#  Copyright (C) 2020 MuseScore BVBA and others
+# MuseScore
+# Music Composition & Notation
 #
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License version 2.
+# Copyright (C) 2021 MuseScore BVBA and others
 #
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as
+# published by the Free Software Foundation.
 #
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-#=============================================================================
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 set(MODULE "inspector")
 
 set(MODULE_QRC ${CMAKE_CURRENT_LIST_DIR}/view/inspector_resources.qrc )
@@ -25,7 +26,6 @@ set(MODULE_QML_IMPORT ${CMAKE_CURRENT_LIST_DIR}/view/qml)
 set(MODULE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/inspectormodule.cpp
     ${CMAKE_CURRENT_LIST_DIR}/inspectormodule.h
-    ${CMAKE_CURRENT_LIST_DIR}/iinspectoradapter.h
     ${CMAKE_CURRENT_LIST_DIR}/types/accidentaltypes.h
     ${CMAKE_CURRENT_LIST_DIR}/types/ambitustypes.h
     ${CMAKE_CURRENT_LIST_DIR}/types/articulationtypes.h
@@ -176,14 +176,12 @@ set(MODULE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/internal/services/elementrepositoryservice.cpp
     ${CMAKE_CURRENT_LIST_DIR}/internal/services/elementrepositoryservice.h
     ${CMAKE_CURRENT_LIST_DIR}/internal/interfaces/ielementrepositoryservice.h
-    ${CMAKE_CURRENT_LIST_DIR}/internal/compatibility/mu4inspectoradapter.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/internal/compatibility/mu4inspectoradapter.h
     )
 
 set(MODULE_UI ${inspector_UI} )
 
 set(MODULE_INCLUDE
-    ${PROJECT_SOURCE_DIR}/src/libmscore
+    ${PROJECT_SOURCE_DIR}/src/engraving/libmscore
     )
 
 if (NOT MSVC AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 9.0)
@@ -191,7 +189,7 @@ if (NOT MSVC AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VER
 endif (NOT MSVC AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 9.0)
 
 set(MODULE_LINK
-    libmscore
+    engraving
     )
 
 set(MODULE_USE_UNITBUILD ON)

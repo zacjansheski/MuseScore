@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #ifndef MU_LANGUAGES_LANGUAGESSERVICE_H
 #define MU_LANGUAGES_LANGUAGESSERVICE_H
 
@@ -47,8 +50,7 @@ public:
     RetCh<LanguageProgress> update(const QString& languageCode) override;
     Ret uninstall(const QString& languageCode) override;
 
-    RetVal<Language> currentLanguage() const override;
-    Ret setCurrentLanguage(const QString& languageCode) override;
+    ValCh<Language> currentLanguage() const override;
 
     RetCh<Language> languageChanged() override;
 
@@ -56,8 +58,12 @@ private:
     RetVal<LanguagesHash> parseLanguagesConfig(const QByteArray& json) const;
     LanguageFiles parseLanguageFiles(const QJsonObject& languageObject) const;
 
+    void setCurrentLanguage(const QString& languageCode);
+
     bool isLanguageExists(const QString& languageCode) const;
     bool checkLanguageFilesHash(const QString& languageCode, const LanguageFiles& languageFiles) const;
+
+    Language language(const QString& languageCode) const;
 
     RetVal<LanguagesHash> correctLanguagesStates(LanguagesHash& languages) const;
     LanguageStatus::Status languageStatus(const Language& language) const;
@@ -67,7 +73,7 @@ private:
 
     Ret loadLanguage(const QString& languageCode);
 
-    void resetLanguageByDefault();
+    void resetLanguageToDefault();
 
     void th_refreshLanguages();
     void th_install(const QString& languageCode, async::Channel<LanguageProgress>* progressChannel, async::Channel<Ret>* finishChannel);
@@ -94,6 +100,7 @@ private:
 
 private:
     async::Channel<Language> m_languageChanged;
+    async::Channel<Language> m_currentLanguageChanged;
     QList<QTranslator*> m_translatorList;
 
     mutable QHash<QString, Operation> m_operationsHash;

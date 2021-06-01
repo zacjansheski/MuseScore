@@ -1,3 +1,24 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 import QtQuick 2.9
 import QtQuick.Layouts 1.3
 import MuseScore.Inspector 1.0
@@ -53,6 +74,9 @@ InspectorSectionView {
         columnSpacing: 4
 
         NoteSettings {
+            navigation.panel: root.navigationPanel
+            navigation.name: "NoteSettings"
+            navigation.row: root.navigationRow(1)
             popupPositionX: mapToGlobal(grid.x, grid.y).x - mapToGlobal(x, y).x
             popupAvailableWidth: root.width
             model: root.model ? root.model.modelByType(Inspector.TYPE_NOTE) : null
@@ -60,6 +84,9 @@ InspectorSectionView {
         }
 
         FermataSettings {
+            navigation.panel: root.navigationPanel
+            navigation.name: "FermataSettings"
+            navigation.row: root.navigationRow(2)
             popupPositionX: mapToGlobal(grid.x, grid.y).x - mapToGlobal(x, y).x
             popupAvailableWidth: root.width
             model: root.model ? root.model.modelByType(Inspector.TYPE_FERMATA) : null
@@ -67,6 +94,9 @@ InspectorSectionView {
         }
 
         GlissandoSettings {
+            navigation.panel: root.navigationPanel
+            navigation.name: "GlissandoSettings"
+            navigation.row: root.navigationRow(3)
             popupPositionX: mapToGlobal(grid.x, grid.y).x - mapToGlobal(x, y).x
             popupAvailableWidth: root.width
             model: root.model ? root.model.modelByType(Inspector.TYPE_GLISSANDO) : null
@@ -74,6 +104,9 @@ InspectorSectionView {
         }
 
         TempoSettings {
+            navigation.panel: root.navigationPanel
+            navigation.name: "TempoSettings"
+            navigation.row: root.navigationRow(4)
             popupPositionX: mapToGlobal(grid.x, grid.y).x - mapToGlobal(x, y).x
             popupAvailableWidth: root.width
             model: root.model ? root.model.modelByType(Inspector.TYPE_TEMPO) : null
@@ -81,6 +114,9 @@ InspectorSectionView {
         }
 
         BarlineSettings {
+            navigation.panel: root.navigationPanel
+            navigation.name: "BarlineSettings"
+            navigation.row: root.navigationRow(5)
             popupPositionX: mapToGlobal(grid.x, grid.y).x - mapToGlobal(x, y).x
             popupAvailableWidth: root.width
             barlineSettingsModel: root.model ? root.model.modelByType(Inspector.TYPE_BARLINE) : null
@@ -89,6 +125,9 @@ InspectorSectionView {
         }
 
         SectionBreakSettings {
+            navigation.panel: root.navigationPanel
+            navigation.name: "SectionBreakSettings"
+            navigation.row: root.navigationRow(6)
             popupPositionX: mapToGlobal(grid.x, grid.y).x - mapToGlobal(x, y).x
             popupAvailableWidth: root.width
             model: root.model ? root.model.modelByType(Inspector.TYPE_SECTIONBREAK) : null
@@ -96,6 +135,9 @@ InspectorSectionView {
         }
 
         MarkerSettings {
+            navigation.panel: root.navigationPanel
+            navigation.name: "MarkerSettings"
+            navigation.row: root.navigationRow(7)
             popupPositionX: mapToGlobal(grid.x, grid.y).x - mapToGlobal(x, y).x
             popupAvailableWidth: root.width
             model: root.model ? root.model.modelByType(Inspector.TYPE_MARKER) : null
@@ -103,6 +145,9 @@ InspectorSectionView {
         }
 
         JumpSettings {
+            navigation.panel: root.navigationPanel
+            navigation.name: "JumpSettings"
+            navigation.row: root.navigationRow(8)
             popupPositionX: mapToGlobal(grid.x, grid.y).x - mapToGlobal(x, y).x
             popupAvailableWidth: root.width
             model: root.model ? root.model.modelByType(Inspector.TYPE_JUMP) : null
@@ -110,6 +155,9 @@ InspectorSectionView {
         }
 
         KeySignatureSettings {
+            navigation.panel: root.navigationPanel
+            navigation.name: "KeySignatureSettings"
+            navigation.row: root.navigationRow(9)
             popupPositionX: mapToGlobal(grid.x, grid.y).x - mapToGlobal(x, y).x
             popupAvailableWidth: root.width
             model: root.model ? root.model.modelByType(Inspector.TYPE_KEYSIGNATURE) : null
@@ -117,6 +165,9 @@ InspectorSectionView {
         }
 
         AccidentalSettings {
+            navigation.panel: root.navigationPanel
+            navigation.name: "AccidentalSettings"
+            navigation.row: root.navigationRow(10)
             popupPositionX: mapToGlobal(grid.x, grid.y).x - mapToGlobal(x, y).x
             popupAvailableWidth: root.width
             model: root.model ? root.model.modelByType(Inspector.TYPE_ACCIDENTAL) : null
@@ -124,6 +175,9 @@ InspectorSectionView {
         }
 
         FretDiagramSettings {
+            navigation.panel: root.navigationPanel
+            navigation.name: "FretDiagramSettings"
+            navigation.row: root.navigationRow(11)
             popupPositionX: mapToGlobal(grid.x, grid.y).x - mapToGlobal(x, y).x
             popupAvailableWidth: root.width
             model: root.model ? root.model.modelByType(Inspector.TYPE_FRET_DIAGRAM) : null
@@ -131,6 +185,9 @@ InspectorSectionView {
         }
 
         PedalSettings {
+            navigation.panel: root.navigationPanel
+            navigation.name: "PedalSettings"
+            navigation.row: root.navigationRow(12)
             popupPositionX: mapToGlobal(grid.x, grid.y).x - mapToGlobal(x, y).x
             popupAvailableWidth: root.width
             model: root.model ? root.model.modelByType(Inspector.TYPE_PEDAL) : null
@@ -138,6 +195,9 @@ InspectorSectionView {
         }
 
         SpacerSettings {
+            navigation.panel: root.navigationPanel
+            navigation.name: "SpacerSettings"
+            navigation.row: root.navigationRow(13)
             popupPositionX: mapToGlobal(grid.x, grid.y).x - mapToGlobal(x, y).x
             popupAvailableWidth: root.width
             model: root.model ? root.model.modelByType(Inspector.TYPE_SPACER) : null
@@ -145,6 +205,9 @@ InspectorSectionView {
         }
 
         ClefSettings {
+            navigation.panel: root.navigationPanel
+            navigation.name: "ClefSettings"
+            navigation.row: root.navigationRow(14)
             popupPositionX: mapToGlobal(grid.x, grid.y).x - mapToGlobal(x, y).x
             popupAvailableWidth: root.width
             model: root.model ? root.model.modelByType(Inspector.TYPE_CLEF) : null
@@ -152,6 +215,9 @@ InspectorSectionView {
         }
 
         HairpinSettings {
+            navigation.panel: root.navigationPanel
+            navigation.name: "HairpinSettings"
+            navigation.row: root.navigationRow(15)
             popupPositionX: mapToGlobal(grid.x, grid.y).x - mapToGlobal(x, y).x
             popupAvailableWidth: root.width
             model: root.model ? root.model.modelByType(Inspector.TYPE_HAIRPIN) : null
@@ -159,6 +225,9 @@ InspectorSectionView {
         }
 
         CrescendoSettings {
+            navigation.panel: root.navigationPanel
+            navigation.name: "CrescendoSettings"
+            navigation.row: root.navigationRow(16)
             popupPositionX: mapToGlobal(grid.x, grid.y).x - mapToGlobal(x, y).x
             popupAvailableWidth: root.width
             model: root.model ? root.model.modelByType(Inspector.TYPE_CRESCENDO) : null
@@ -166,6 +235,9 @@ InspectorSectionView {
         }
 
         StaffTypeSettings {
+            navigation.panel: root.navigationPanel
+            navigation.name: "StaffTypeSettings"
+            navigation.row: root.navigationRow(17)
             popupPositionX: mapToGlobal(grid.x, grid.y).x - mapToGlobal(x, y).x
             popupAvailableWidth: root.width
             model: root.model ? root.model.modelByType(Inspector.TYPE_STAFF_TYPE_CHANGES) : null
@@ -173,6 +245,9 @@ InspectorSectionView {
         }
 
         TextFrameSettings {
+            navigation.panel: root.navigationPanel
+            navigation.name: "TextFrameSettings"
+            navigation.row: root.navigationRow(18)
             popupPositionX: mapToGlobal(grid.x, grid.y).x - mapToGlobal(x, y).x
             popupAvailableWidth: root.width
             model: root.model ? root.model.modelByType(Inspector.TYPE_TEXT_FRAME) : null
@@ -180,6 +255,9 @@ InspectorSectionView {
         }
 
         VerticalFrameSettings {
+            navigation.panel: root.navigationPanel
+            navigation.name: "VerticalFrameSettings"
+            navigation.row: root.navigationRow(19)
             popupPositionX: mapToGlobal(grid.x, grid.y).x - mapToGlobal(x, y).x
             popupAvailableWidth: root.width
             model: root.model ? root.model.modelByType(Inspector.TYPE_VERTICAL_FRAME) : null
@@ -187,6 +265,9 @@ InspectorSectionView {
         }
 
         HorizontalFrameSettings {
+            navigation.panel: root.navigationPanel
+            navigation.name: "HorizontalFrameSettings"
+            navigation.row: root.navigationRow(20)
             popupPositionX: mapToGlobal(grid.x, grid.y).x - mapToGlobal(x, y).x
             popupAvailableWidth: root.width
             model: root.model ? root.model.modelByType(Inspector.TYPE_HORIZONTAL_FRAME) : null
@@ -194,6 +275,9 @@ InspectorSectionView {
         }
 
         ArticulationSettings {
+            navigation.panel: root.navigationPanel
+            navigation.name: "ArticulationSettings"
+            navigation.row: root.navigationRow(21)
             popupPositionX: mapToGlobal(grid.x, grid.y).x - mapToGlobal(x, y).x
             popupAvailableWidth: root.width
             model: root.model ? root.model.modelByType(Inspector.TYPE_ARTICULATION) : null
@@ -201,6 +285,9 @@ InspectorSectionView {
         }
 
         OrnamentSettings {
+            navigation.panel: root.navigationPanel
+            navigation.name: "OrnamentSettings"
+            navigation.row: root.navigationRow(22)
             popupPositionX: mapToGlobal(grid.x, grid.y).x - mapToGlobal(x, y).x
             popupAvailableWidth: root.width
             model: root.model ? root.model.modelByType(Inspector.TYPE_ORNAMENT) : null
@@ -208,6 +295,9 @@ InspectorSectionView {
         }
 
         AmbitusSettings {
+            navigation.panel: root.navigationPanel
+            navigation.name: "AmbitusSettings"
+            navigation.row: root.navigationRow(23)
             popupPositionX: mapToGlobal(grid.x, grid.y).x - mapToGlobal(x, y).x
             popupAvailableWidth: root.width
             model: root.model ? root.model.modelByType(Inspector.TYPE_AMBITUS) : null
@@ -215,6 +305,9 @@ InspectorSectionView {
         }
 
         ImageSettings {
+            navigation.panel: root.navigationPanel
+            navigation.name: "ImageSettings"
+            navigation.row: root.navigationRow(24)
             popupPositionX: mapToGlobal(grid.x, grid.y).x - mapToGlobal(x, y).x
             popupAvailableWidth: root.width
             model: root.model ? root.model.modelByType(Inspector.TYPE_IMAGE) : null
@@ -222,6 +315,9 @@ InspectorSectionView {
         }
 
         ChordSymbolSettings {
+            navigation.panel: root.navigationPanel
+            navigation.name: "ChordSymbolSettings"
+            navigation.row: root.navigationRow(25)
             popupPositionX: mapToGlobal(grid.x, grid.y).x - mapToGlobal(x, y).x
             popupAvailableWidth: root.width
             model: root.model ? root.model.modelByType(Inspector.TYPE_CHORD_SYMBOL) : null
@@ -229,6 +325,9 @@ InspectorSectionView {
         }
 
         BracketSettings {
+            navigation.panel: root.navigationPanel
+            navigation.name: "BracketSettings"
+            navigation.row: root.navigationRow(26)
             popupPositionX: mapToGlobal(grid.x, grid.y).x - mapToGlobal(x, y).x
             popupAvailableWidth: root.width
             model: root.model ? root.model.modelByType(Inspector.TYPE_BRACKET) : null
@@ -236,6 +335,9 @@ InspectorSectionView {
         }
 
         BraceSettings {
+            navigation.panel: root.navigationPanel
+            navigation.name: "BraceSettings"
+            navigation.row: root.navigationRow(27)
             popupPositionX: mapToGlobal(grid.x, grid.y).x - mapToGlobal(x, y).x
             popupAvailableWidth: root.width
             model: root.model ? root.model.modelByType(Inspector.TYPE_BRACE) : null
@@ -243,6 +345,9 @@ InspectorSectionView {
         }
 
         TimeSignatureSettings {
+            navigation.panel: root.navigationPanel
+            navigation.name: "TimeSignatureSettings"
+            navigation.row: root.navigationRow(28)
             popupPositionX: mapToGlobal(grid.x, grid.y).x - mapToGlobal(x, y).x
             popupAvailableWidth: root.width
             model: root.model ? root.model.modelByType(Inspector.TYPE_TIME_SIGNATURE) : null
@@ -250,6 +355,9 @@ InspectorSectionView {
         }
 
         MMRestSettings {
+            navigation.panel: root.navigationPanel
+            navigation.name: "MMRestSettings"
+            navigation.row: root.navigationRow(29)
             popupPositionX: mapToGlobal(grid.x, grid.y).x - mapToGlobal(x, y).x
             popupAvailableWidth: root.width
             model: root.model ? root.model.modelByType(Inspector.TYPE_MMREST) : null
@@ -257,6 +365,9 @@ InspectorSectionView {
         }
 
         BendSettings {
+            navigation.panel: root.navigationPanel
+            navigation.name: "BendSettings"
+            navigation.row: root.navigationRow(30)
             popupPositionX: mapToGlobal(grid.x, grid.y).x - mapToGlobal(x, y).x
             popupAvailableWidth: root.width
             model: root.model ? root.model.modelByType(Inspector.TYPE_BEND) : null
@@ -264,6 +375,9 @@ InspectorSectionView {
         }
 
         TremoloBarSettings {
+            navigation.panel: root.navigationPanel
+            navigation.name: "TremoloBarSettings"
+            navigation.row: root.navigationRow(31)
             popupPositionX: mapToGlobal(grid.x, grid.y).x - mapToGlobal(x, y).x
             popupAvailableWidth: root.width
             model: root.model ? root.model.modelByType(Inspector.TYPE_TREMOLOBAR) : null
@@ -271,6 +385,9 @@ InspectorSectionView {
         }
 
         TremoloSettings {
+            navigation.panel: root.navigationPanel
+            navigation.name: "TremoloSettings"
+            navigation.row: root.navigationRow(32)
             popupPositionX: mapToGlobal(grid.x, grid.y).x - mapToGlobal(x, y).x
             popupAvailableWidth: root.width
             model: root.model ? root.model.modelByType(Inspector.TYPE_TREMOLO) : null
@@ -278,6 +395,9 @@ InspectorSectionView {
         }
 
         MeasureRepeatSettings {
+            navigation.panel: root.navigationPanel
+            navigation.name: "MeasureRepeatSettings"
+            navigation.row: root.navigationRow(33)
             popupPositionX: mapToGlobal(grid.x, grid.y).x - mapToGlobal(x, y).x
             popupAvailableWidth: root.width
             model: root.model ? root.model.modelByType(Inspector.TYPE_MEASURE_REPEAT) : null

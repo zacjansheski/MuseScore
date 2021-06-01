@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "path.h"
 
 #include <QFileInfo>
@@ -123,8 +126,8 @@ mu::io::path mu::io::escapeFileName(const mu::io::path& fn_)
     fn = fn.replace(QChar(0xc4), "Ae");   // &Auml;
     fn = fn.replace(QChar(0xd6), "Oe");   // &Ouml;
     fn = fn.replace(QChar(0xdc), "Ue");   // &Uuml;
-    fn = fn.replace(QChar(0x266d),"b");   // musical flat sign, happen in instrument names, so can happen in part (file) names
-    fn = fn.replace(QChar(0x266f),"#");   // musical sharp sign, can happen in titles, so can happen in score (file) names
+    fn = fn.replace(QChar(0x266d), "b");   // musical flat sign, happen in instrument names, so can happen in part (file) names
+    fn = fn.replace(QChar(0x266f), "#");   // musical sharp sign, can happen in titles, so can happen in score (file) names
     fn = fn.replace(QRegExp("[" + QRegExp::escape("\\/:*?\"<>|") + "]"), "_");         //FAT/NTFS special chars
     return fn;
 }

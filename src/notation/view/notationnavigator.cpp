@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "notationnavigator.h"
 
 #include "libmscore/system.h"
@@ -25,20 +28,24 @@ using namespace mu::notation;
 NotationNavigator::NotationNavigator(QQuickItem* parent)
     : NotationPaintView(parent)
 {
-    setAcceptedMouseButtons(Qt::AllButtons);
     setReadonly(true);
+}
 
+void NotationNavigator::load()
+{
     initOrientation();
     initVisible();
 
-    theme()->themeChanged().onNotify(this, [this]() {
+    uiConfiguration()->currentThemeChanged().onNotify(this, [this]() {
         update();
     });
+
+    NotationPaintView::load();
 }
 
 bool NotationNavigator::isVerticalOrientation() const
 {
-    return configuration()->navigatorOrientation().val == framework::Orientation::Vertical;
+    return configuration()->canvasOrientation().val == framework::Orientation::Vertical;
 }
 
 QRectF NotationNavigator::notationContentRect() const
@@ -180,7 +187,7 @@ void NotationNavigator::setCursorRect(const QRect& rect)
 
 int NotationNavigator::orientation() const
 {
-    return static_cast<int>(configuration()->navigatorOrientation().val);
+    return static_cast<int>(configuration()->canvasOrientation().val);
 }
 
 INotationPtr NotationNavigator::currentNotation() const
@@ -190,7 +197,7 @@ INotationPtr NotationNavigator::currentNotation() const
 
 void NotationNavigator::initOrientation()
 {
-    ValCh<framework::Orientation> orientation = configuration()->navigatorOrientation();
+    ValCh<framework::Orientation> orientation = configuration()->canvasOrientation();
     orientation.ch.onReceive(this, [this](framework::Orientation) {
         moveCanvasToPosition(QPoint(0, 0));
         emit orientationChanged();
@@ -201,13 +208,9 @@ void NotationNavigator::initOrientation()
 
 void NotationNavigator::initVisible()
 {
-    ValCh<bool> visible = configuration()->isNavigatorVisible();
-    visible.ch.onReceive(this, [this](bool visible) {
-        setVisible(visible);
+    connect(this, &NotationNavigator::visibleChanged, [this]() {
         update();
     });
-
-    setVisible(visible.val);
 }
 
 ViewMode NotationNavigator::notationViewMode() const

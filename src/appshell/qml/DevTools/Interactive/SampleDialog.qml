@@ -1,21 +1,41 @@
-import QtQuick 2.7
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+import QtQuick 2.15
 import MuseScore.Ui 1.0
 import MuseScore.UiComponents 1.0
 
-QmlDialog {
+StyledDialogView {
 
     id: root
 
-    property var color: "#444444"
+    property color color: "#444444"
     property bool isApplyColor: false
 
-    width: 400
-    height: 400
+    contentWidth: 400
+    contentHeight: 400
 
     title: "Sample dialog"
 
     Rectangle {
-
         anchors.fill: parent
         color: root.isApplyColor ? root.color : "#666666"
 
@@ -28,7 +48,7 @@ QmlDialog {
                 id: input
                 anchors.horizontalCenter: parent.horizontalCenter
 
-                property var value: ""
+                property string value: ""
                 width: 150
                 onCurrentTextEdited: input.value = newTextValue
             }
@@ -73,14 +93,14 @@ QmlDialog {
         ContextMenu {
             id: menu
 
-            StyledMenuItem {
+            StyledContextMenuItem {
                 hintIcon: IconCode.UNDO
 
                 text: "Undo"
                 shortcut: "Ctrl+Z"
             }
 
-            StyledMenuItem {
+            StyledContextMenuItem {
                 hintIcon: IconCode.REDO
 
                 text: "Redo"
@@ -91,13 +111,13 @@ QmlDialog {
 
             SeparatorLine {}
 
-            StyledMenuItem {
+            StyledContextMenuItem {
                 hintIcon: IconCode.ZOOM_IN
 
                 text: "Zoom in"
             }
 
-            StyledMenuItem {
+            StyledContextMenuItem {
                 hintIcon: IconCode.ZOOM_OUT
 
                 text: "Zoom out"
@@ -105,7 +125,7 @@ QmlDialog {
 
             SeparatorLine {}
 
-            StyledMenuItem {
+            StyledContextMenuItem {
                 text: "Checkable"
 
                 checkable: true

@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "mixer.h"
 #include "log.h"
 #include "internal/audiosanitizer.h"
@@ -68,7 +71,7 @@ void Mixer::setSampleRate(unsigned int sampleRate)
     }
 }
 
-unsigned int Mixer::streamCount() const
+unsigned int Mixer::audioChannelsCount() const
 {
     ONLY_AUDIO_WORKER_THREAD;
     switch (m_mode) {
@@ -98,7 +101,7 @@ std::shared_ptr<IAudioProcessor> Mixer::processor(unsigned int number) const
 void Mixer::setProcessor(unsigned int number, std::shared_ptr<IAudioProcessor> insert)
 {
     ONLY_AUDIO_WORKER_THREAD;
-    IF_ASSERT_FAILED(insert->streamCount() == streamCount()) {
+    IF_ASSERT_FAILED(insert->streamCount() == audioChannelsCount()) {
         LOGE() << "Insert's stream count not equal to the channel";
         return;
     }
@@ -113,7 +116,6 @@ IMixer::ChannelID Mixer::addChannel(std::shared_ptr<IAudioSource> source)
 
     auto channel = std::make_shared<MixerChannel>();
     channel->setSource(source);
-    channel->setBufferSize(m_buffer.size());
     channel->setSampleRate(m_sampleRate);
 
     m_inputList[newId] = channel;
@@ -153,39 +155,35 @@ std::shared_ptr<IMixerChannel> Mixer::channel(unsigned int number) const
     return m_inputList.at(number);
 }
 
-void Mixer::setBufferSize(unsigned int samples)
+void Mixer::process(float* outBuffer, unsigned int samplesPerChannel)
 {
     ONLY_AUDIO_WORKER_THREAD;
-    AbstractAudioSource::setBufferSize(samples);
-    for (auto& input : m_inputList) {
-        input.second->setBufferSize(samples);
-    }
-}
-
-void Mixer::forward(unsigned int sampleCount)
-{
-    ONLY_AUDIO_WORKER_THREAD;
-    std::fill(m_buffer.begin(), m_buffer.end(), 0.f);
 
     if (m_clock) {
-        m_clock->forward(sampleCount);
+        m_clock->forward(samplesPerChannel);
+    }
+
+    if (m_writeCacheBuff.size() != samplesPerChannel * audioChannelsCount()) {
+        m_writeCacheBuff.resize(samplesPerChannel * audioChannelsCount(), 0.f);
     }
 
     for (auto& input : m_inputList) {
-        input.second->forward(sampleCount);
-        mixinChannel(input.second, sampleCount);
+        input.second->process(m_writeCacheBuff.data(), samplesPerChannel);
+        mixinChannel(outBuffer, m_writeCacheBuff.data(), input.second, samplesPerChannel);
     }
 
     for (auto& insert : m_insertList) {
         if (insert.second->active()) {
-            insert.second->process(m_buffer.data(), m_buffer.data(), sampleCount);
+            insert.second->process(m_writeCacheBuff.data(), outBuffer, samplesPerChannel);
         }
     }
-    std::transform(m_buffer.begin(), m_buffer.end(), m_buffer.begin(),
-                   [this](float sample) -> float { return sample * m_masterLevel; });
+
+    //!Note Temporarily disabled until the end of investigation (v.pereverzev@wsmgroup.ru)
+    /*std::transform(m_buffer.begin(), m_buffer.end(), m_buffer.begin(),
+                   [this](float sample) -> float { return sample * m_masterLevel; });*/
 }
 
-void Mixer::mixinChannel(std::shared_ptr<MixerChannel> channel, unsigned int samplesCount)
+void Mixer::mixinChannel(float* outBuffer, float* inBuffer, std::shared_ptr<MixerChannel> channel, unsigned int samplesCount)
 {
     if (!channel->active()) {
         return;
@@ -194,32 +192,32 @@ void Mixer::mixinChannel(std::shared_ptr<MixerChannel> channel, unsigned int sam
     switch (m_mode) {
     case MONO:
     case STEREO:
-        for (unsigned int i = 0; i < channel->streamCount(); ++i) {
-            mixinChannelStream(channel, i, samplesCount);
+        for (unsigned int i = 0; i < channel->audioChannelsCount(); ++i) {
+            mixinChannelStream(outBuffer, inBuffer, channel, i, samplesCount);
         }
         break;
     }
 }
 
-void Mixer::mixinChannelStream(std::shared_ptr<MixerChannel> channel, unsigned int streamId, unsigned int samplesCount)
+void Mixer::mixinChannelStream(float* outBuffer, float* inBuffer, std::shared_ptr<MixerChannel> channel, unsigned int streamId,
+                               unsigned int samplesCount)
 {
+    if (!outBuffer) {
+        return;
+    }
+
     auto balance = channel->balance(streamId).real();
     auto level = channel->level(streamId);
     for (unsigned int i = 0; i < samplesCount; ++i) {
-        for (unsigned int j = 0; j < streamCount(); ++j) {
-            //linear cross
-            float gain = 0.5f * balance * ((j * 2.f) - 1) + 0.5f;
-            if (gain < 0) {
-                gain = 0;
-            }
-            if (gain > 1) {
-                gain = 1;
-            }
-
-            auto channelBuffer = channel->data();
-            if (channelBuffer) {
-                m_buffer[i * streamCount() + j] += gain * level * channelBuffer[i * channel->streamCount() + streamId];
-            }
+        //linear cross
+        float gain = 0.5f * balance * ((streamId * 2.f) - 1) + 0.5f;
+        if (gain < 0) {
+            gain = 0;
         }
+        if (gain > 1) {
+            gain = 1;
+        }
+
+        outBuffer[i * audioChannelsCount() + streamId] = gain * level * inBuffer[i * audioChannelsCount() + streamId];
     }
 }

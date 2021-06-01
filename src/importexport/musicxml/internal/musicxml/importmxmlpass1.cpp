@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Linux Music Score Editor
-//
-//  Copyright (C) 2015 Werner Schweer and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #include "libmscore/box.h"
 #include "libmscore/chordrest.h"
@@ -1020,7 +1023,7 @@ Score::FileError MusicXMLParserPass1::parse()
 static bool allStaffGroupsIdentical(Part const* const p)
 {
     for (int i = 1; i < p->nstaves(); ++i) {
-        if (p->staff(0)->constStaffType(Fraction(0,1))->group() != p->staff(i)->constStaffType(Fraction(0,1))->group()) {
+        if (p->staff(0)->constStaffType(Fraction(0, 1))->group() != p->staff(i)->constStaffType(Fraction(0, 1))->group()) {
             return false;
         }
     }
@@ -1257,7 +1260,7 @@ static QString decodeEntities(const QString& src)
 
     int pos = 0;
     while ((pos = re.indexIn(src, pos)) != -1) {
-        ret = ret.replace(re.cap(0), QChar(re.cap(1).toInt(0,10)));
+        ret = ret.replace(re.cap(0), QChar(re.cap(1).toInt(0, 10)));
         pos += re.matchedLength();
     }
     return ret;
@@ -1719,7 +1722,7 @@ static void createPart(Score* score, const QString& id, PartMap& pm)
 //   partGroupStart
 //---------------------------------------------------------
 
-typedef std::map<int,MusicXmlPartGroup*> MusicXmlPartGroupMap;
+typedef std::map<int, MusicXmlPartGroup*> MusicXmlPartGroupMap;
 
 /**
  Store part-group start with number \a n, first part \a p and symbol / \a s in the partGroups
@@ -2317,7 +2320,7 @@ void MusicXMLParserPass1::measure(const QString& partId,
 
     // if necessary, round up to an integral number of 1/64s,
     // to comply with MuseScores actual measure length constraints
-    Fraction length = mDura * Fraction(64,1);
+    Fraction length = mDura * Fraction(64, 1);
     Fraction correctedLength = mDura;
     length.reduce();
     if (length.denominator() != 1) {

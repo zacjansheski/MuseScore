@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #ifndef MU_UI_QMLTOOLTIP_H
 #define MU_UI_QMLTOOLTIP_H
 
@@ -30,17 +33,22 @@ class QmlToolTip : public QObject
 public:
     explicit QmlToolTip(QObject* parent = nullptr);
 
-    Q_INVOKABLE void show(QQuickItem* item, const QString& text);
+    Q_INVOKABLE void show(QQuickItem* item, const QString& title, const QString& description = "", const QString& shortcut = "");
     Q_INVOKABLE void hide(QQuickItem* item);
 
 private slots:
-    void doShowToolTip();
+    void doShow();
     void doHide();
 
-private:
+signals:
+    void showToolTip(const QPoint& pos, const QString& title, const QString& description, const QString& shortcut);
+    void hideToolTip();
 
+private:
     QQuickItem* m_item = nullptr;
-    QString m_text;
+    QString m_title;
+    QString m_description;
+    QString m_shortcut;
     QTimer m_timer;
 };
 }

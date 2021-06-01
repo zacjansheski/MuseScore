@@ -1,3 +1,24 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 import QtQuick 2.9
 import QtQuick.Controls 2.12
 
@@ -18,7 +39,7 @@ ListItemBlank {
 
     signal copyPartRequested()
     signal removePartRequested()
-    signal voicesVisibilityChangeRequested()
+    signal voicesVisibilityChangeRequested(var voiceIndex, var voiceVisible)
     signal partClicked()
 
     function startEditTitle() {
@@ -151,14 +172,14 @@ ListItemBlank {
         y: showVoicesPopupButton.y + showVoicesPopupButton.height
 
         onVoiceVisibilityChangeRequested: {
-            root.voicesVisibilityChangeRequested()
+            root.voicesVisibilityChangeRequested(voiceIndex, voiceVisible)
         }
     }
 
     ContextMenu {
         id: contextMenu
 
-        StyledMenuItem {
+        StyledContextMenuItem {
             id: duplicateItem
 
             text: qsTrc("notation", "Duplicate")
@@ -168,17 +189,17 @@ ListItemBlank {
             }
         }
 
-        StyledMenuItem {
+        StyledContextMenuItem {
             id: deleteItem
 
-            text: qsTrc("notation", "Delete score")
+            text: qsTrc("notation", "Delete")
 
             onTriggered: {
                 root.removePartRequested()
             }
         }
 
-        StyledMenuItem {
+        StyledContextMenuItem {
             id: renameItem
 
             text: qsTrc("notation", "Rename")

@@ -6,7 +6,7 @@
         <file>qml/MuseScore/UiComponents/FocusableItem.qml</file>
         <file>qml/MuseScore/UiComponents/StyledTextLabel.qml</file>
         <file>qml/MuseScore/UiComponents/IncrementalPropertyControl.qml</file>
-        <file>qml/MuseScore/UiComponents/FlatToogleButton.qml</file>
+        <file>qml/MuseScore/UiComponents/FlatToggleButton.qml</file>
         <file>qml/MuseScore/UiComponents/FlatButton.qml</file>
         <file>qml/MuseScore/UiComponents/ExpandableBlankSection.qml</file>
         <file>qml/MuseScore/UiComponents/ExpandableBlank.qml</file>
@@ -21,7 +21,7 @@
         <file>qml/MuseScore/UiComponents/FlatRadioButton.qml</file>
         <file>qml/MuseScore/UiComponents/ColorPicker.qml</file>
         <file>qml/MuseScore/UiComponents/ContextMenu.qml</file>
-        <file>qml/MuseScore/UiComponents/StyledMenuItem.qml</file>
+        <file>qml/MuseScore/UiComponents/StyledContextMenuItem.qml</file>
         <file>qml/MuseScore/UiComponents/RoundedRectangle.qml</file>
         <file>qml/MuseScore/UiComponents/SearchField.qml</file>
         <file>qml/MuseScore/UiComponents/StyledTabButton.qml</file>
@@ -39,6 +39,19 @@
         <file>qml/MuseScore/UiComponents/internal/GridViewDelegate.qml</file>
         <file>qml/MuseScore/UiComponents/internal/GridViewSection.qml</file>
         <file>qml/MuseScore/UiComponents/StyledPopupView.qml</file>
+        <file>qml/MuseScore/UiComponents/StyledDialogView.qml</file>
         <file>qml/MuseScore/UiComponents/Border.qml</file>
+        <file>qml/MuseScore/UiComponents/StyledMenu.qml</file>
+        <file>qml/MuseScore/UiComponents/StyledMenuItem.qml</file>
+        <file>qml/MuseScore/UiComponents/MenuButton.qml</file>
+        <file>qml/MuseScore/UiComponents/FilePicker.qml</file>
+        <file>qml/MuseScore/UiComponents/ValueList.qml</file>
+        <file>qml/MuseScore/UiComponents/internal/ValueListHeaderItem.qml</file>
+        <file>qml/MuseScore/UiComponents/internal/ValueListItem.qml</file>
+        <file>qml/MuseScore/UiComponents/FocusableControl.qml</file>
+        <file>qml/MuseScore/UiComponents/StyledMenuLoader.qml</file>
+        <file>qml/MuseScore/UiComponents/TabItem.qml</file>
+        <file>qml/MuseScore/UiComponents/StyledDropShadow.qml</file>
+        <file>qml/MuseScore/UiComponents/StyledToolTip.qml</file>
     </qresource>
 </RCC>

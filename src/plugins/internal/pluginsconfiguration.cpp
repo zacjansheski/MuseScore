@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #include "pluginsconfiguration.h"
 
@@ -26,27 +29,54 @@ using namespace mu::plugins;
 using namespace mu::framework;
 
 static const std::string module_name("plugins");
-static const Settings::Key USERPATH_TO_PLUGINS(module_name, "application/paths/myPlugins");
+static const Settings::Key USER_PLUGINS_PATH(module_name, "application/paths/myPlugins");
 static const Settings::Key INSTALLED_PLUGINS(module_name, "plugins/installedPlugins");
 static const std::string PLUGINS_DIR("/plugins");
 
 void PluginsConfiguration::init()
 {
+    settings()->setDefaultValue(USER_PLUGINS_PATH, Val(globalConfiguration()->sharePath().toStdString() + "Plugins"));
+    settings()->valueChanged(USER_PLUGINS_PATH).onReceive(nullptr, [this](const Val& val) {
+        m_pluginsPathChanged.send(val.toString());
+    });
+
     settings()->valueChanged(INSTALLED_PLUGINS).onReceive(nullptr, [this](const Val& val) {
         CodeKeyList installedPlugins = parseInstalledPlugins(val);
         m_installedPluginsChanged.send(installedPlugins);
     });
+
+    fileSystem()->makePath(pluginsPath().val);
 }
 
-mu::io::paths PluginsConfiguration::pluginsDirPaths() const
+mu::io::paths PluginsConfiguration::availablePluginsPaths() const
 {
-    mu::io::paths result;
+    io::paths result;
 
     result.push_back(globalConfiguration()->dataPath() + PLUGINS_DIR);
-    result.push_back(globalConfiguration()->sharePath() + PLUGINS_DIR);
-    result.push_back(settings()->value(USERPATH_TO_PLUGINS).toString());
+
+    io::path defaultPluginsPath  = this->defaultPluginsPath();
+    result.push_back(defaultPluginsPath);
+
+    io::path userPluginsPath = this->userPluginsPath();
+    if (!userPluginsPath.empty() && userPluginsPath != defaultPluginsPath) {
+        result.push_back(userPluginsPath);
+    }
 
     return result;
+}
+
+mu::ValCh<mu::io::path> PluginsConfiguration::pluginsPath() const
+{
+    ValCh<io::path> result;
+    result.ch = m_pluginsPathChanged;
+    result.val = userPluginsPath();
+
+    return result;
+}
+
+void PluginsConfiguration::setPluginsPath(const io::path& path)
+{
+    settings()->setValue(USER_PLUGINS_PATH, Val(path.toStdString()));
 }
 
 mu::ValCh<CodeKeyList> PluginsConfiguration::installedPlugins() const
@@ -72,4 +102,14 @@ void PluginsConfiguration::setInstalledPlugins(const CodeKeyList& codeKeyList)
 CodeKeyList PluginsConfiguration::parseInstalledPlugins(const mu::Val& val) const
 {
     return val.toQVariant().toStringList();
+}
+
+mu::io::path PluginsConfiguration::userPluginsPath() const
+{
+    return settings()->value(USER_PLUGINS_PATH).toString();
+}
+
+mu::io::path PluginsConfiguration::defaultPluginsPath() const
+{
+    return settings()->defaultValue(USER_PLUGINS_PATH).toString();
 }

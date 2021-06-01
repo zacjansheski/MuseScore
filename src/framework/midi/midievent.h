@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #ifndef MU_MIDI_MIDIEVENT_H
 #define MU_MIDI_MIDIEVENT_H
 
@@ -372,7 +375,7 @@ struct Event {
     }
 
     //!return velocity in range [0.f, 1.f] independent from message type
-    float velocityFraction()
+    float velocityFraction() const
     {
         return velocity() / static_cast<float>(maxVelocity());
     }
@@ -979,15 +982,24 @@ struct Event {
     }
 
 private:
+    //!Note Temporarily disabled until the end of the investigation, looks like we're not supporting some 'custom' messages from MU3
+    //! v.pereverzev@wsmgroup.ru
     void assertMessageType(const std::set<MessageType>& supportedTypes) const
     {
         UNUSED(supportedTypes);
-        assert(isMessageTypeIn(supportedTypes));
+        //assert(isMessageTypeIn(supportedTypes));
     }
 
-    void assertChannelVoice() const { assert(isChannelVoice()); }
+    //!Note Temporarily disabled until the end of the investigation, looks like we're not supporting some 'custom' messages from MU3
+    //! v.pereverzev@wsmgroup.ru
+    void assertChannelVoice() const { /*assert(isChannelVoice());*/ }
 
-    void assertOpcode(const std::set<Opcode>& supportedOpcodes) const { UNUSED(supportedOpcodes); assert(isOpcodeIn(supportedOpcodes)); }
+    //!Note Temporarily disabled until the end of the investigation, looks like we're not supporting some 'custom' messages from MU3
+    //! v.pereverzev@wsmgroup.ru
+    void assertOpcode(const std::set<Opcode>& supportedOpcodes) const
+    {
+        UNUSED(supportedOpcodes); /*assert(isOpcodeIn(supportedOpcodes));*/
+    }
 
     static uint32_t scaleUp(uint32_t srcVal, size_t srcBits, size_t dstBits)
     {

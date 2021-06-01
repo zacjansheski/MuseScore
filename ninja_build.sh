@@ -1,5 +1,23 @@
 #!/usr/bin/env bash
-
+# SPDX-License-Identifier: GPL-3.0-only
+# MuseScore-CLA-applies
+#
+# MuseScore
+# Music Composition & Notation
+#
+# Copyright (C) 2021 MuseScore BVBA and others
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 JOBS=4
 TARGET=release
 
@@ -73,8 +91,8 @@ case $TARGET in
         ;; 
 
     debug)
-        mkdir -p build.release
-        cd build.release
+        mkdir -p build.debug
+        cd build.debug
         do_build Debug
         ;;
 
@@ -115,7 +133,7 @@ case $TARGET in
 
     appimage)
         MUSESCORE_INSTALL_DIR=MuseScore 
-        MUSESCORE_INSTALL_SUFFIX=-portable 
+        MUSESCORE_INSTALL_SUFFIX="-portable${MUSESCORE_INSTALL_SUFFIX}" # e.g. "-portable" or "-portable-nightly"
         MUSESCORE_LABEL="Portable AppImage" 
         MUSESCORE_NO_RPATH=ON 
 
@@ -128,7 +146,8 @@ case $TARGET in
         install_dir="$(cat $build_dir/PREFIX.txt)" 
         cd $install_dir
 
-        [ -L usr ] || ln -s . usr && mscore="mscore-portable" 
+        ln -sf . usr # we installed into the root of our AppImage but some tools expect a "usr" subdirectory
+        mscore="mscore${MUSESCORE_INSTALL_SUFFIX}"
         dsktp="${mscore}.desktop" 
         icon="${mscore}.svg" 
         mani="install_manifest.txt" 

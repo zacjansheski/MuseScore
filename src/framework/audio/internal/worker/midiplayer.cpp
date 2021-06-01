@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #include "midiplayer.h"
 
@@ -120,7 +123,7 @@ void MIDIPlayer::setupChannels()
     }
 
     for (const SynthState& st : m_synthStates) {
-        st.synth->setupChannels(m_midiData.initEventsForChannels(st.channels));
+        st.synth->setupMidiChannels(m_midiData.initEventsForChannels(st.channels));
     }
 }
 
@@ -497,7 +500,7 @@ void MIDIPlayer::setIsTrackMuted(track_t trackIndex, bool mute)
     auto setMuted = [this, mute](channel_t ch) {
         ChanState& state = m_chanStates[ch];
         state.muted = mute;
-        synth(ch)->channelSoundsOff(ch);
+        synth(ch)->midiChannelSoundsOff(ch);
     };
 
     const Track& track = m_midiData.tracks[trackIndex];
@@ -515,7 +518,7 @@ void MIDIPlayer::setTrackVolume(track_t trackIndex, float volume)
 
     const Track& track = m_midiData.tracks[trackIndex];
     for (channel_t ch : track.channels) {
-        synth(ch)->channelVolume(ch, volume);
+        synth(ch)->midiChannelVolume(ch, volume);
     }
 }
 
@@ -528,6 +531,6 @@ void MIDIPlayer::setTrackBalance(track_t trackIndex, float balance)
 
     const Track& track = m_midiData.tracks[trackIndex];
     for (channel_t ch : track.channels) {
-        synth(ch)->channelBalance(ch, balance);
+        synth(ch)->midiChannelBalance(ch, balance);
     }
 }

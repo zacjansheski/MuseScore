@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Linux Music Score Editor
-//
-//  Copyright (C) 2015 Werner Schweer and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #ifndef __IMPORTMXMLPASS2_H__
 #define __IMPORTMXMLPASS2_H__
@@ -125,7 +128,7 @@ private:
 class MusicXMLParserLyric
 {
 public:
-    MusicXMLParserLyric(const LyricNumberHandler lyricNumberHandler,QXmlStreamReader& e, Score* score, MxmlLogger* logger);
+    MusicXMLParserLyric(const LyricNumberHandler lyricNumberHandler, QXmlStreamReader& e, Score* score, MxmlLogger* logger);
     QSet<Lyrics*> extendedLyrics() const { return _extendedLyrics; }
     QMap<int, Lyrics*> numberedLyrics() const { return _numberedLyrics; }
     void parse();
@@ -160,7 +163,7 @@ public:
     QString print() const;
     void setText(const QString& text) { _text = text; }
     QString text() const { return _text; }
-    static Notation notationWithAttributes(const QString& name, const QXmlStreamAttributes attributes,const QString& parent = "",
+    static Notation notationWithAttributes(const QString& name, const QXmlStreamAttributes attributes, const QString& parent = "",
                                            const SymId& symId = SymId::noSym);
 private:
     QString _name;
@@ -199,8 +202,8 @@ class MusicXMLParserNotations
 public:
     MusicXMLParserNotations(QXmlStreamReader& e, Score* score, MxmlLogger* logger);
     void parse();
-    void addToScore(ChordRest* const cr, Note* const note, const int tick, SlurStack& slurs,Glissando* glissandi[MAX_NUMBER_LEVEL][2],
-                    MusicXmlSpannerMap& spanners, TrillStack& trills,Tie*& tie);
+    void addToScore(ChordRest* const cr, Note* const note, const int tick, SlurStack& slurs, Glissando* glissandi[MAX_NUMBER_LEVEL][2],
+                    MusicXmlSpannerMap& spanners, TrillStack& trills, Tie*& tie);
     MusicXmlTupletDesc tupletDesc() const { return _tupletDesc; }
     QString tremoloType() const { return _tremoloType; }
     int tremoloNr() const { return _tremoloNr; }
@@ -272,9 +275,9 @@ private:
     void time(const QString& partId, Measure* measure, const Fraction& tick);
     void divisions();
     void transpose(const QString& partId, const Fraction& tick);
-    Note* note(const QString& partId, Measure* measure, const Fraction sTime, const Fraction prevTime,Fraction& missingPrev, Fraction& dura,
-               Fraction& missingCurr, QString& currentVoice, GraceChordList& gcl, int& gac,Beam*& beam, FiguredBassList& fbl, int& alt,
-               MxmlTupletStates& tupletStates, Tuplets& tuplets);
+    Note* note(const QString& partId, Measure* measure, const Fraction sTime, const Fraction prevTime, Fraction& missingPrev,
+               Fraction& dura, Fraction& missingCurr, QString& currentVoice, GraceChordList& gcl, int& gac, Beam*& beam,
+               FiguredBassList& fbl, int& alt, MxmlTupletStates& tupletStates, Tuplets& tuplets);
     void notePrintSpacingNo(Fraction& dura);
     FiguredBassItem* figure(const int idx, const bool paren);
     FiguredBass* figuredBass();

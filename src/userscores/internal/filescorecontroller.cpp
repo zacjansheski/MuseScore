@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "filescorecontroller.h"
 
 #include <QObject>
@@ -29,6 +32,7 @@ using namespace mu;
 using namespace mu::userscores;
 using namespace mu::notation;
 using namespace mu::framework;
+using namespace mu::actions;
 
 void FileScoreController::init()
 {
@@ -41,9 +45,38 @@ void FileScoreController::init()
     dispatcher()->reg(this, "file-save-a-copy", this, &FileScoreController::saveScoreCopy);
     dispatcher()->reg(this, "file-save-selection", this, &FileScoreController::saveSelection);
 
+    dispatcher()->reg(this, "file-export", this, &FileScoreController::exportScore);
+
     dispatcher()->reg(this, "file-import-pdf", this, &FileScoreController::importPdf);
 
     dispatcher()->reg(this, "clear-recent", this, &FileScoreController::clearRecentScores);
+
+    dispatcher()->reg(this, "continue-last-session", this, &FileScoreController::continueLastSession);
+}
+
+IMasterNotationPtr FileScoreController::currentMasterNotation() const
+{
+    return globalContext()->currentMasterNotation();
+}
+
+INotationPtr FileScoreController::currentNotation() const
+{
+    return currentMasterNotation() ? currentMasterNotation()->notation() : nullptr;
+}
+
+INotationInteractionPtr FileScoreController::currentInteraction() const
+{
+    return currentNotation() ? currentNotation()->interaction() : nullptr;
+}
+
+INotationSelectionPtr FileScoreController::currentNotationSelection() const
+{
+    return currentNotation() ? currentInteraction()->selection() : nullptr;
+}
+
+Ret FileScoreController::openScore(const io::path& scorePath)
+{
+    return doOpenScore(scorePath);
 }
 
 void FileScoreController::openScore(const actions::ActionData& args)
@@ -105,7 +138,7 @@ void FileScoreController::newScore()
 
 void FileScoreController::saveScore()
 {
-    if (!globalContext()->currentMasterNotation()->created().val) {
+    if (!currentMasterNotation()->created().val) {
         doSaveScore();
         return;
     }
@@ -154,9 +187,9 @@ void FileScoreController::saveSelection()
         return;
     }
 
-    Ret save = globalContext()->currentMasterNotation()->save(selectedFilePath, SaveMode::SaveSelection);
-    if (!save) {
-        LOGE() << save.toString();
+    Ret ret = currentMasterNotation()->save(selectedFilePath, SaveMode::SaveSelection);
+    if (!ret) {
+        LOGE() << ret.toString();
     }
 }
 
@@ -167,7 +200,24 @@ void FileScoreController::importPdf()
 
 void FileScoreController::clearRecentScores()
 {
-    configuration()->setRecentScoreList({});
+    configuration()->setRecentScorePaths({});
+}
+
+void FileScoreController::continueLastSession()
+{
+    io::paths recentScorePaths = configuration()->recentScorePaths().val;
+
+    if (recentScorePaths.empty()) {
+        return;
+    }
+
+    io::path lastScorePath = recentScorePaths.front();
+    openScore(lastScorePath);
+}
+
+void FileScoreController::exportScore()
+{
+    interactive()->open("musescore://userscores/export");
 }
 
 io::path FileScoreController::selectScoreOpenningFile(const QStringList& filter)
@@ -184,20 +234,20 @@ io::path FileScoreController::selectScoreSavingFile(const io::path& defaultFileP
     return filePath;
 }
 
-void FileScoreController::doOpenScore(const io::path& filePath)
+Ret FileScoreController::doOpenScore(const io::path& filePath)
 {
     TRACEFUNC;
 
     auto notation = notationCreator()->newMasterNotation();
     IF_ASSERT_FAILED(notation) {
-        return;
+        return make_ret(Ret::Code::InternalError);
     }
 
     Ret ret = notation->load(filePath);
     if (!ret) {
         LOGE() << "failed load: " << filePath << ", ret: " << ret.toString();
         //! TODO Show dialog about error
-        return;
+        return make_ret(Ret::Code::InternalError);
     }
 
     if (!globalContext()->containsMasterNotation(filePath)) {
@@ -209,44 +259,67 @@ void FileScoreController::doOpenScore(const io::path& filePath)
     prependToRecentScoreList(filePath);
 
     interactive()->open("musescore://notation");
+
+    return make_ret(Ret::Code::Ok);
 }
 
 void FileScoreController::doSaveScore(const io::path& filePath, SaveMode saveMode)
 {
-    io::path oldPath = globalContext()->currentMasterNotation()->metaInfo().filePath;
+    io::path oldPath = currentMasterNotation()->metaInfo().filePath;
 
-    Ret save = globalContext()->currentMasterNotation()->save(filePath, saveMode);
-    if (!save) {
-        LOGE() << save.toString();
+    Ret ret = currentMasterNotation()->save(filePath, saveMode);
+    if (!ret) {
+        LOGE() << ret.toString();
         return;
     }
 
     if (saveMode == SaveMode::SaveAs && oldPath != filePath) {
         globalContext()->currentMasterNotationChanged().notify();
     }
+
+    prependToRecentScoreList(filePath);
 }
 
 io::path FileScoreController::defaultSavingFilePath() const
 {
-    Meta scoreMetaInfo = globalContext()->currentMasterNotation()->metaInfo();
+    Meta scoreMetaInfo = currentMasterNotation()->metaInfo();
 
-    QString fileName = scoreMetaInfo.title;
-    if (fileName.isEmpty()) {
+    io::path fileName = scoreMetaInfo.title;
+    if (fileName.empty()) {
         fileName = scoreMetaInfo.fileName;
     }
 
-    return configuration()->defaultSavingFilePath(fileName.toStdString());
+    return configuration()->defaultSavingFilePath(fileName);
 }
 
-void FileScoreController::prependToRecentScoreList(io::path filePath)
+void FileScoreController::prependToRecentScoreList(const io::path& filePath)
 {
-    QStringList recentScoreList = configuration()->recentScoreList().val;
-    QString path = filePath.toQString();
-
-    if (recentScoreList.contains(path)) {
-        recentScoreList.removeAll(path);
+    if (filePath.empty()) {
+        return;
     }
 
-    recentScoreList.prepend(path);
-    configuration()->setRecentScoreList(recentScoreList);
+    io::paths recentScorePaths = configuration()->recentScorePaths().val;
+
+    auto it = std::find(recentScorePaths.begin(), recentScorePaths.end(), filePath);
+    if (it != recentScorePaths.end()) {
+        recentScorePaths.erase(it);
+    }
+
+    recentScorePaths.insert(recentScorePaths.begin(), filePath);
+    configuration()->setRecentScorePaths(recentScorePaths);
+}
+
+bool FileScoreController::isScoreOpened() const
+{
+    return currentMasterNotation() != nullptr;
+}
+
+bool FileScoreController::isNeedSaveScore() const
+{
+    return currentMasterNotation() && currentMasterNotation()->needSave().val;
+}
+
+bool FileScoreController::hasSelection() const
+{
+    return currentNotationSelection() ? !currentNotationSelection()->isNone() : false;
 }

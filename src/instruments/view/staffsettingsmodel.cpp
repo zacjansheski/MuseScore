@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "staffsettingsmodel.h"
 
 using namespace mu::instruments;
@@ -103,7 +106,15 @@ void StaffSettingsModel::setVoiceVisible(int voiceIndex, bool visible)
     m_voicesVisibility[voiceIndex] = visible;
     parts()->setVoiceVisible(m_staffId, voiceIndex, visible);
 
-    emit voicesChanged();
+    //! NOTE Do not send a signal to change the list
+    //! This will lead to the re-creation of the controlы (checkboxes),
+    //! and so we will lose the control with active focus,
+    //! and new controls will be created and added.
+    //! None of the controls will be the active focus.
+    //! The checkbox state changes in the view.
+    //! An alternative solution - we need to make a powerful model
+    //! and not recreate elements when their state changes (do not reset it completely)
+    //emit voicesChanged();
 }
 
 bool StaffSettingsModel::isSmallStaff() const

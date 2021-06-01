@@ -1,27 +1,32 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #include "settings.h"
 #include "config.h"
 #include "log.h"
 
 #include <QSettings>
+#include <QStandardPaths>
+#include <QDir>
 
 using namespace mu;
 using namespace mu::framework;
@@ -36,11 +41,8 @@ Settings* Settings::instance()
 Settings::Settings()
 {
 #if defined(WIN_PORTABLE)
-    QString dataPath = QDir::cleanPath(QString("%1/../../../Data/settings")
-                                       .arg(QCoreApplication::applicationDirPath())
-                                       .arg(QCoreApplication::applicationName()));
-    QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, dataPath);
-    QSettings::setPath(QSettings::IniFormat, QSettings::SystemScope, dataPath);
+    QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, dataPath());
+    QSettings::setPath(QSettings::IniFormat, QSettings::SystemScope, dataPath());
 #endif
 
 #ifndef Q_OS_MAC
@@ -57,7 +59,7 @@ Settings::~Settings()
 
 const Settings::Items& Settings::items() const
 {
-    return m_items;
+    return m_isTransactionStarted ? m_localSettings : m_items;
 }
 
 /**
@@ -75,6 +77,25 @@ void Settings::reload()
 void Settings::load()
 {
     m_items = readItems();
+}
+
+void Settings::reset(bool keepDefaultSettings)
+{
+    m_settings->clear();
+
+    m_isTransactionStarted = false;
+    m_localSettings.clear();
+
+    if (!keepDefaultSettings) {
+        QDir(dataPath()).removeRecursively();
+    }
+
+    for (auto it = m_items.begin(); it != m_items.end(); ++it) {
+        it->second.value = it->second.defaultValue;
+
+        Channel<Val>& channel = findChannel(it->first);
+        channel.send(it->second.value);
+    }
 }
 
 Settings::Items Settings::readItems() const
@@ -110,10 +131,12 @@ void Settings::setValue(const Key& key, const Val& value)
         return;
     }
 
-    writeValue(key, value);
+    if (!m_isTransactionStarted) {
+        writeValue(key, value);
+    }
 
     if (item.isNull()) {
-        m_items[key] = Item{ key, value, value };
+        insertNewItem(key, value);
     } else {
         item.value = value;
     }
@@ -131,6 +154,17 @@ void Settings::writeValue(const Key& key, const Val& value)
     m_settings->setValue(QString::fromStdString(key.key), value.toQVariant());
 }
 
+QString Settings::dataPath() const
+{
+#if defined(WIN_PORTABLE)
+    return QDir::cleanPath(QString("%1/../../../Data/settings")
+                           .arg(QCoreApplication::applicationDirPath())
+                           .arg(QCoreApplication::applicationName()));
+#else
+    return QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+#endif
+}
+
 void Settings::setDefaultValue(const Key& key, const Val& value)
 {
     Item& item = findItem(key);
@@ -139,15 +173,101 @@ void Settings::setDefaultValue(const Key& key, const Val& value)
         m_items[key] = Item{ key, value, value };
     } else {
         item.defaultValue = value;
+        item.value.setType(value.type());
     }
+}
+
+void Settings::setCanBeMannualyEdited(const Settings::Key& key, bool canBeMannualyEdited)
+{
+    Item& item = findItem(key);
+
+    if (item.isNull()) {
+        m_items[key] = Item{ key, Val(), Val(), canBeMannualyEdited };
+    } else {
+        item.canBeMannualyEdited = canBeMannualyEdited;
+    }
+}
+
+void Settings::insertNewItem(const Settings::Key& key, const Val& value)
+{
+    Item item = Item{ key, value, value };
+    if (m_isTransactionStarted) {
+        m_localSettings[key] = item;
+    } else {
+        m_items[key] = item;
+    }
+}
+
+void Settings::beginTransaction()
+{
+    if (m_isTransactionStarted) {
+        LOGW() << "Transaction is already started";
+        return;
+    }
+
+    m_localSettings = m_items;
+    m_isTransactionStarted = true;
+}
+
+void Settings::commitTransaction()
+{
+    m_isTransactionStarted = false;
+
+    for (auto it = m_localSettings.begin(); it != m_localSettings.end(); ++it) {
+        Item& item = findItem(it->first);
+        if (item.value == it->second.value) {
+            continue;
+        }
+
+        if (item.isNull()) {
+            insertNewItem(it->first, it->second.value);
+        } else {
+            item.value = it->second.value;
+        }
+
+        writeValue(item.key, item.value);
+    }
+
+    m_localSettings.clear();
+}
+
+void Settings::rollbackTransaction()
+{
+    m_isTransactionStarted = false;
+
+    for (auto it = m_localSettings.begin(); it != m_localSettings.end(); ++it) {
+        Item item = findItem(it->first);
+        if (item.value == it->second.value) {
+            continue;
+        }
+
+        Channel<Val>& channel = findChannel(it->first);
+        channel.send(item.value);
+    }
+
+    m_localSettings.clear();
 }
 
 Settings::Item& Settings::findItem(const Key& key) const
 {
-    auto it = m_items.find(key);
+    Items& items = m_isTransactionStarted ? m_localSettings : m_items;
 
-    if (it == m_items.end()) {
+    auto it = items.find(key);
+
+    if (it == items.end()) {
         static Item null;
+        return null;
+    }
+
+    return it->second;
+}
+
+async::Channel<Val>& Settings::findChannel(const Settings::Key& key) const
+{
+    auto it = m_channels.find(key);
+
+    if (it == m_channels.end()) {
+        static async::Channel<Val> null;
         return null;
     }
 

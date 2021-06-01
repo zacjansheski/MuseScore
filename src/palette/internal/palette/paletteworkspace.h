@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2019 Werner Schweer and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #ifndef __PALETTEWORKSPACE_H__
 #define __PALETTEWORKSPACE_H__
@@ -51,7 +54,7 @@ class PaletteElementEditor : public QObject
     Q_PROPERTY(QString actionName READ actionName CONSTANT)   // TODO: make NOTIFY instead of CONSTANT for retranslations
 
 private slots:
-    void onElementAdded(const Element*);
+    void onElementAdded(const ElementPtr element);
 
 public:
     PaletteElementEditor(QObject* parent = nullptr)
@@ -102,7 +105,7 @@ public:
 
     Q_INVOKABLE virtual bool move(const QModelIndex& sourceParent, int sourceRow, const QModelIndex& destinationParent,
                                   int destinationChild) = 0;
-    Q_INVOKABLE virtual bool insert(const QModelIndex& parent, int row, const QVariantMap& mimeData,Qt::DropAction action) = 0;
+    Q_INVOKABLE virtual bool insert(const QModelIndex& parent, int row, const QVariantMap& mimeData, Qt::DropAction action) = 0;
     Q_INVOKABLE virtual bool insertNewItem(const QModelIndex& parent, int row, const QString& name) = 0;
     Q_INVOKABLE virtual void remove(const QModelIndex&) = 0;
     Q_INVOKABLE virtual void removeSelection(const QModelIndexList&, const QModelIndex& parent) = 0;
@@ -172,7 +175,7 @@ public:
     Qt::DropAction dropAction(const QVariantMap& mimeData, Qt::DropAction proposedAction, const QModelIndex& parent,
                               bool internal) const override;
 
-    bool move(const QModelIndex& sourceParent, int sourceRow, const QModelIndex& destinationParent,int destinationChild) override;
+    bool move(const QModelIndex& sourceParent, int sourceRow, const QModelIndex& destinationParent, int destinationChild) override;
     bool insert(const QModelIndex& parent, int row, const QVariantMap& mimeData, Qt::DropAction action) override;
     bool insertNewItem(const QModelIndex& parent, int row, const QString& name) override;
     void remove(const QModelIndex& index) override;
@@ -248,7 +251,7 @@ public:
     Q_INVOKABLE QModelIndex customElementsPaletteIndex(const QModelIndex& index);
 
     Q_INVOKABLE Ms::FilterPaletteTreeModel* poolPaletteModel(const QModelIndex& index);
-    Q_INVOKABLE Ms::AbstractPaletteController* poolPaletteController(Ms::FilterPaletteTreeModel*,const QModelIndex& rootIndex);
+    Q_INVOKABLE Ms::AbstractPaletteController* poolPaletteController(Ms::FilterPaletteTreeModel*, const QModelIndex& rootIndex);
 
     PaletteTreeModel* userPaletteModel() { return userPalette; }
 

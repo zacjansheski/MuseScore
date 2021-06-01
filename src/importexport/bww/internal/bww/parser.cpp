@@ -1,22 +1,24 @@
-//=============================================================================
-//  BWW to MusicXML converter
-//  Part of MusE Score
-//  Linux Music Score Editor
-//
-//  Copyright (C) 2010 Werner Schweer and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 /**
  \file
@@ -439,7 +441,6 @@ static void determineBeamStates(QList<Bww::MeasureDescription>& measures)
                     // if the beam does not end here (next note has beam "l")
                     // then beamState is CONTINUE else STOP
                     if (findNextNextNoteBeam(measures, j, i) == "l") {
-                        measures[j].notes[i].beamList[0] = Bww::BeamType::BM_END;
                         measures[j].notes[i].beamState = Bww::StartStop::ST_CONTINUE;
                         measures[j].notes[i].beamList[0] = Bww::BeamType::BM_CONTINUE;
                         state = State::RIGHT; // now in right part of beam

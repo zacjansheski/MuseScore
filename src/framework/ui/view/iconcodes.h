@@ -1,26 +1,42 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #ifndef MU_UI_ICONCODE_H
 #define MU_UI_ICONCODE_H
 
 #include <QObject>
+
+#ifdef WARNING
+#undef WARNING
+#endif
+#ifdef INFO
+#undef INFO
+#endif
+#ifdef ERROR
+#undef ERROR
+#endif
+#ifdef QUESTION
+#undef QUESTION
+#endif
 
 #ifdef FILE_OPEN
 #undef FILE_OPEN
@@ -178,6 +194,15 @@ public:
 
         GRADUATION_CAP = 0xF19D,
 
+        SCORE = 0xF319,
+
+        AUTO_TEXT = 0xF329,
+        NOTE_HEAD_EIGHTH = 0xF33A,
+        BEAM_START = 0xF33B,
+        BEAM_MIDDLE = 0xF33D,
+        BEAM_32 = 0xF33E,
+        BEAM_64 = 0xF33F,
+
         QUESTION_MARK = 0xF340,
 
         NOTE_HEAD_QUARTER = 0xF341,
@@ -193,7 +218,10 @@ public:
         CHORD_SYMBOL = 0xF352,
         GUITAR_BEND = 0xF353,
         MULTIMEASURE_REST = 0xF355,
+        IMPORT = 0xF357,
+        UPDATE = 0xF358,
         GUITAR_TREMOLO_BAR = 0xF35C,
+        SHORTCUTS = 0xF35D,
 
         TREMOLO_TWO_NOTES = 0xF35F,
         TREMOLO_STYLE_DEFAULT = 0xF35F,
@@ -255,6 +283,8 @@ public:
         NOTE_DOTTED_3 = 0xF396,
         NOTE_DOTTED_4 = 0xF397,
 
+        COPY = 0xF398,
+
         NOTE_PLUS = 0xF39D,
         NOTE_TO_RIGHT = 0xF39E,
         RHYTHM_ONLY = 0xF39F,
@@ -265,11 +295,18 @@ public:
 
         PAGE = 0xF3A5,
 
+        CONTINUOUS_VIEW_VERTICAL = 0xF3AF,
+
         PAN_SCORE = 0xF3B0,
         COUNT_IN = 0xF3B1,
         LOOP_IN = 0xF3C7,
         LOOP_OUT = 0xF3C8,
         PAUSE = 0xF3C9,
+
+        WARNING = 0xF3CE,
+        INFO = 0xF3CF,
+        ERROR = 0xF3D0,
+        QUESTION = 0xF3D1,
 
         AUTO,
         NONE,

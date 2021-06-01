@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "zerberussynth.h"
 #include <algorithm>
 
@@ -25,6 +28,7 @@
 #include "internal/controllers.h"
 #include "midi/miditypes.h"
 #include "midi/midierrors.h"
+#include "audioerrors.h"
 
 using namespace mu;
 using namespace mu::midi;
@@ -71,7 +75,7 @@ void ZerberusSynth::setSampleRate(unsigned int sampleRate)
     m_sampleRate = sampleRate;
     if (m_zerb) {
         m_zerb->setSampleRate(sampleRate);
-        m_preallocated.resize(int(sampleRate) * AUDIO_CHANNELS, 0);
+        m_preallocated.resize(int(sampleRate) * config()->audioChannelsCount(), 0);
     }
 }
 
@@ -116,7 +120,7 @@ Ret ZerberusSynth::removeSoundFonts()
     return ok ? make_ret(Err::NoError) : make_ret(Err::SoundFontFailedUnload);
 }
 
-Ret ZerberusSynth::setupChannels(const std::vector<Event>& events)
+Ret ZerberusSynth::setupMidiChannels(const std::vector<Event>& events)
 {
     IF_ASSERT_FAILED(m_zerb) {
         return make_ret(Err::SynthNotInited);
@@ -203,7 +207,7 @@ void ZerberusSynth::flushSound()
     m_zerb->process(samples, m_preallocated.data(), nullptr, nullptr);
 }
 
-void ZerberusSynth::channelSoundsOff(channel_t chan)
+void ZerberusSynth::midiChannelSoundsOff(channel_t chan)
 {
     IF_ASSERT_FAILED(m_zerb) {
         return;
@@ -212,7 +216,7 @@ void ZerberusSynth::channelSoundsOff(channel_t chan)
     m_zerb->allSoundsOff(chan);
 }
 
-bool ZerberusSynth::channelVolume(channel_t chan, float volume)
+bool ZerberusSynth::midiChannelVolume(channel_t chan, float volume)
 {
     int val = static_cast<int>(volume * 100.f);
     val = std::clamp(val, 0, 127);
@@ -221,7 +225,7 @@ bool ZerberusSynth::channelVolume(channel_t chan, float volume)
     return false;
 }
 
-bool ZerberusSynth::channelBalance(channel_t chan, float val)
+bool ZerberusSynth::midiChannelBalance(channel_t chan, float val)
 {
     UNUSED(chan);
     UNUSED(val);
@@ -229,7 +233,7 @@ bool ZerberusSynth::channelBalance(channel_t chan, float val)
     return false;
 }
 
-bool ZerberusSynth::channelPitch(channel_t chan, int16_t pitch)
+bool ZerberusSynth::midiChannelPitch(channel_t chan, int16_t pitch)
 {
     UNUSED(chan);
     UNUSED(pitch);
@@ -264,31 +268,17 @@ void ZerberusSynth::writeBuf(float* stream, unsigned int samples)
     m_zerb->process(samples, stream, nullptr, nullptr);
 }
 
-unsigned int ZerberusSynth::streamCount() const
+unsigned int ZerberusSynth::audioChannelsCount() const
 {
-    return synth::AUDIO_CHANNELS;
+    return config()->audioChannelsCount();
 }
 
-void ZerberusSynth::forward(unsigned int sampleCount)
+void ZerberusSynth::process(float* buffer, unsigned int sampleCount)
 {
-    writeBuf(m_buffer.data(), sampleCount);
+    writeBuf(buffer, sampleCount);
 }
 
-async::Channel<unsigned int> ZerberusSynth::streamsCountChanged() const
+async::Channel<unsigned int> ZerberusSynth::audioChannelsCountChanged() const
 {
     return m_streamsCountChanged;
-}
-
-const float* ZerberusSynth::data() const
-{
-    return m_buffer.data();
-}
-
-void ZerberusSynth::setBufferSize(unsigned int samples)
-{
-    auto sc = streamCount();
-    auto targetSize = samples * sc;
-    if (targetSize > 0 && m_buffer.size() < targetSize) {
-        m_buffer.resize(samples * streamCount());
-    }
 }

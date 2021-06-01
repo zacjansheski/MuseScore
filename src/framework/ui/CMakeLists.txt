@@ -1,21 +1,22 @@
-#=============================================================================
-#  MuseScore
-#  Music Composition & Notation
+# SPDX-License-Identifier: GPL-3.0-only
+# MuseScore-CLA-applies
 #
-#  Copyright (C) 2020 MuseScore BVBA and others
+# MuseScore
+# Music Composition & Notation
 #
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License version 2.
+# Copyright (C) 2021 MuseScore BVBA and others
 #
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as
+# published by the Free Software Foundation.
 #
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-#=============================================================================
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 set(MODULE ui)
 
@@ -56,8 +57,11 @@ set(MODULE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/uierrors.h
     ${CMAKE_CURRENT_LIST_DIR}/uitypes.h
     ${CMAKE_CURRENT_LIST_DIR}/imainwindow.h
-    ${CMAKE_CURRENT_LIST_DIR}/itheme.h
-    ${CMAKE_CURRENT_LIST_DIR}/iplatformtheme.h
+    ${CMAKE_CURRENT_LIST_DIR}/iuiactionsregister.h
+    ${CMAKE_CURRENT_LIST_DIR}/iuiactionsmodule.h
+    ${CMAKE_CURRENT_LIST_DIR}/iuicontextresolver.h
+    ${CMAKE_CURRENT_LIST_DIR}/inavigation.h
+    ${CMAKE_CURRENT_LIST_DIR}/inavigationcontroller.h
 
     ${CMAKE_CURRENT_LIST_DIR}/internal/interactiveuriregister.cpp
     ${CMAKE_CURRENT_LIST_DIR}/internal/interactiveuriregister.h
@@ -65,35 +69,72 @@ set(MODULE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/internal/uiengine.h
     ${CMAKE_CURRENT_LIST_DIR}/internal/uiconfiguration.cpp
     ${CMAKE_CURRENT_LIST_DIR}/internal/uiconfiguration.h
+    ${CMAKE_CURRENT_LIST_DIR}/internal/themeconverter.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/internal/themeconverter.h
+    ${CMAKE_CURRENT_LIST_DIR}/internal/iplatformtheme.h
+    ${CMAKE_CURRENT_LIST_DIR}/internal/uiactionsregister.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/internal/uiactionsregister.h
+    ${CMAKE_CURRENT_LIST_DIR}/internal/navigationcontroller.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/internal/navigationcontroller.h
+    ${CMAKE_CURRENT_LIST_DIR}/internal/navigationuiactions.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/internal/navigationuiactions.h
     ${PLATFORM_THEME_SRC}
 
     ${CMAKE_CURRENT_LIST_DIR}/view/interactiveprovider.cpp
     ${CMAKE_CURRENT_LIST_DIR}/view/interactiveprovider.h
     ${CMAKE_CURRENT_LIST_DIR}/view/qmlapi.cpp
     ${CMAKE_CURRENT_LIST_DIR}/view/qmlapi.h
-    ${CMAKE_CURRENT_LIST_DIR}/view/theme.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/view/theme.h
+    ${CMAKE_CURRENT_LIST_DIR}/view/uitheme.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/view/uitheme.h
     ${CMAKE_CURRENT_LIST_DIR}/view/iconcodes.h
     ${CMAKE_CURRENT_LIST_DIR}/view/musicalsymbolcodes.h
     ${CMAKE_CURRENT_LIST_DIR}/view/qmltranslation.cpp
     ${CMAKE_CURRENT_LIST_DIR}/view/qmltranslation.h
     ${CMAKE_CURRENT_LIST_DIR}/view/qmllauncher.cpp
     ${CMAKE_CURRENT_LIST_DIR}/view/qmllauncher.h
-    ${CMAKE_CURRENT_LIST_DIR}/view/qmldialog.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/view/qmldialog.h
     ${CMAKE_CURRENT_LIST_DIR}/view/qmltooltip.cpp
     ${CMAKE_CURRENT_LIST_DIR}/view/qmltooltip.h
     ${CMAKE_CURRENT_LIST_DIR}/view/widgetdialog.cpp
     ${CMAKE_CURRENT_LIST_DIR}/view/widgetdialog.h
+    ${CMAKE_CURRENT_LIST_DIR}/view/abstractmenumodel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/view/abstractmenumodel.h
+    ${CMAKE_CURRENT_LIST_DIR}/view/abstractnavigation.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/view/abstractnavigation.h
+    ${CMAKE_CURRENT_LIST_DIR}/view/navigationsection.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/view/navigationsection.h
+    ${CMAKE_CURRENT_LIST_DIR}/view/navigationpanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/view/navigationpanel.h
+    ${CMAKE_CURRENT_LIST_DIR}/view/navigationpopuppanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/view/navigationpopuppanel.h
+    ${CMAKE_CURRENT_LIST_DIR}/view/navigationcontrol.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/view/navigationcontrol.h
+    ${CMAKE_CURRENT_LIST_DIR}/view/navigationevent.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/view/navigationevent.h
+    ${CMAKE_CURRENT_LIST_DIR}/view/qmlaccessible.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/view/qmlaccessible.h
 
     ${CMAKE_CURRENT_LIST_DIR}/dev/interactivetestsmodel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/dev/interactivetestsmodel.h
     ${CMAKE_CURRENT_LIST_DIR}/dev/testdialog.cpp
     ${CMAKE_CURRENT_LIST_DIR}/dev/testdialog.h
+    ${CMAKE_CURRENT_LIST_DIR}/dev/keynav/keynavdevmodel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/dev/keynav/keynavdevmodel.h
+    ${CMAKE_CURRENT_LIST_DIR}/dev/keynav/abstractkeynavdevitem.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/dev/keynav/abstractkeynavdevitem.h
+    ${CMAKE_CURRENT_LIST_DIR}/dev/keynav/keynavdevcontrol.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/dev/keynav/keynavdevcontrol.h
+    ${CMAKE_CURRENT_LIST_DIR}/dev/keynav/keynavdevsubsection.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/dev/keynav/keynavdevsubsection.h
+    ${CMAKE_CURRENT_LIST_DIR}/dev/keynav/keynavdevsection.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/dev/keynav/keynavdevsection.h
     )
 
 set(MODULE_UI
     ${CMAKE_CURRENT_LIST_DIR}/dev/testdialog.ui
+    )
+
+set(MODULE_LINK
+    accessibility
     )
 
 include(${PROJECT_SOURCE_DIR}/build/module.cmake)

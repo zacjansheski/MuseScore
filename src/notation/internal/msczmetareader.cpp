@@ -1,8 +1,28 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "msczmetareader.h"
 
 #include <sstream>
 
-#include <QFileInfo>
 #include <QBuffer>
 
 #include "log.h"
@@ -13,22 +33,39 @@
 
 #include "framework/global/xmlreader.h"
 
-using namespace mu;
 using namespace mu::notation;
 using namespace mu::framework;
+using namespace mu::system;
 
-RetVal<Meta> MsczMetaReader::readMeta(const io::path& filePath) const
+MetaList MsczMetaReader::readMetaList(const io::paths& filePaths) const
+{
+    MetaList result;
+
+    for (const io::path& path: filePaths) {
+        RetVal<Meta> meta = readMeta(path);
+
+        if (!meta.ret) {
+            LOGE() << meta.ret.toString();
+            continue;
+        }
+
+        result.push_back(meta.val);
+    }
+
+    return result;
+}
+
+mu::RetVal<Meta> MsczMetaReader::readMeta(const io::path& filePath) const
 {
     RetVal<Meta> meta;
 
-    QFileInfo fileInfo(filePath.toQString());
-    if (!fileInfo.exists()) {
+    if (!fileSystem()->exists(filePath)) {
         LOGE() << "File not exists: " << filePath;
         meta.ret = make_ret(Err::FileNotFound);
         return meta;
     }
 
-    bool compressed = fileInfo.suffix() == "mscz";
+    bool compressed = io::syffix(filePath) == "mscz";
 
     if (compressed) {
         meta = loadCompressedMsc(filePath);
@@ -37,29 +74,26 @@ RetVal<Meta> MsczMetaReader::readMeta(const io::path& filePath) const
         meta = doReadMeta(reader);
     }
 
-    if (meta.val.fileName.isEmpty()) {
-        meta.val.fileName = fileInfo.baseName();
+    if (meta.val.fileName.empty()) {
+        meta.val.fileName = io::basename(filePath);
     }
 
-    meta.val.filePath = fileInfo.absoluteFilePath();
+    meta.val.filePath = filePath;
 
     return meta;
 }
 
-RetVal<Meta> MsczMetaReader::loadCompressedMsc(const io::path& filePath) const
+mu::RetVal<Meta> MsczMetaReader::loadCompressedMsc(const io::path& filePath) const
 {
     RetVal<Meta> meta;
 
-    QFile file(filePath.toQString());
-    if (!file.open(QIODevice::ReadOnly)) {
-        LOGE() << "Failed open file: " << filePath;
-        meta.ret = make_ret(Err::FileOpenError);
+    RetVal<QByteArray> data = fileSystem()->readFile(filePath);
+    if (!data.ret) {
+        meta.ret = data.ret;
         return meta;
     }
 
-    QByteArray data = file.readAll();
-
-    QBuffer buffer(&data);
+    QBuffer buffer(&data.val);
 
     MQZipReader zipReader(&buffer);
 
@@ -217,7 +251,7 @@ MsczMetaReader::RawMeta MsczMetaReader::doReadRawMeta(framework::XmlReader& xmlR
     return meta;
 }
 
-RetVal<Meta> MsczMetaReader::doReadMeta(framework::XmlReader& xmlReader) const
+mu::RetVal<Meta> MsczMetaReader::doReadMeta(framework::XmlReader& xmlReader) const
 {
     RawMeta rawMeta;
 
@@ -284,7 +318,7 @@ RetVal<Meta> MsczMetaReader::doReadMeta(framework::XmlReader& xmlReader) const
     return meta;
 }
 
-io::path MsczMetaReader::readRootFile(MQZipReader* zipReader) const
+mu::io::path MsczMetaReader::readRootFile(MQZipReader* zipReader) const
 {
     io::path rootFile;
 

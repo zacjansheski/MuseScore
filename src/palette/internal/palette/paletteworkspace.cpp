@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2019 Werner Schweer and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #include "paletteworkspace.h"
 
@@ -82,15 +85,15 @@ QString PaletteElementEditor::actionName() const
 //   PaletteElementEditor::onElementAdded
 //---------------------------------------------------------
 
-void PaletteElementEditor::onElementAdded(const Element* el)
+void PaletteElementEditor::onElementAdded(const ElementPtr element)
 {
     if (!_paletteIndex.isValid()
         || !_paletteIndex.data(PaletteTreeModel::VisibleRole).toBool()) {
-        interactive()->message(IInteractive::Type::Info, "", mu::trc("palette", "The palette was hidden or changed"));
+        interactive()->info("", mu::trc("palette", "The palette was hidden or changed"));
         return;
     }
     QVariantMap mimeData;
-    mimeData[mu::commonscene::MIME_SYMBOL_FORMAT] = el->mimeData(QPointF());
+    mimeData[mu::commonscene::MIME_SYMBOL_FORMAT] = element->mimeData(QPointF());
     _controller->insert(_paletteIndex, -1, mimeData, Qt::CopyAction);
 }
 
@@ -109,14 +112,14 @@ void PaletteElementEditor::open()
     using Type = PalettePanel::Type;
     switch (_type) {
     case Type::KeySig: {
-        KeyEditor* keyEditor = new KeyEditor(mainWindow()->qMainWindow());
+        KeyEditor* keyEditor = new KeyEditor();
         keyEditor->showKeyPalette(false);
         connect(keyEditor, &KeyEditor::keySigAdded, this, &PaletteElementEditor::onElementAdded);
         editor = keyEditor;
     }
     break;
     case Type::TimeSig: {
-        TimeDialog* timeEditor = new TimeDialog(mainWindow()->qMainWindow());
+        TimeDialog* timeEditor = new TimeDialog();
         timeEditor->showTimePalette(false);
         connect(timeEditor, &TimeDialog::timeSigAdded, this, &PaletteElementEditor::onElementAdded);
         editor = timeEditor;
@@ -130,9 +133,7 @@ void PaletteElementEditor::open()
         return;
     }
 
-    mainWindow()->stackUnder(editor);
     editor->setAttribute(Qt::WA_DeleteOnClose);
-
     editor->show();
 }
 
@@ -348,7 +349,7 @@ const
     int hideButton = int(IInteractive::Button::CustomButton) + 1;
     int deleteButton = hideButton + 1;
 
-    int button = interactive()->question(std::string(), question, {
+    IInteractive::Result result = interactive()->question(std::string(), question, {
             IInteractive::ButtonData(hideButton, mu::trc("palette", "Hide")),
             IInteractive::ButtonData(deleteButton, mu::trc("palette", "Delete permanently")),
             interactive()->buttonData(IInteractive::Button::Cancel)
@@ -356,9 +357,9 @@ const
 
     RemoveAction action = RemoveAction::NoAction;
 
-    if (button == deleteButton) {
+    if (result.button() == deleteButton) {
         action = RemoveAction::DeletePermanently;
-    } else if (button == hideButton) {
+    } else if (result.button() == hideButton) {
         action = RemoveAction::Hide;
     }
 
@@ -401,12 +402,12 @@ void UserPaletteController::queryRemove(const QModelIndexList& removeIndices, in
                                    ? mu::trc("palette", "Do you want to permanently delete this custom palette cell?")
                                    : mu::trc("palette", "Do you want to permanently delete these custom palette cells?");
 
-            IInteractive::Button button = interactive()->question(std::string(), question, {
+            IInteractive::Result result = interactive()->question(std::string(), question, {
                     IInteractive::Button::Yes,
                     IInteractive::Button::No
                 });
 
-            if (button == IInteractive::Button::Yes) {
+            if (result.standartButton() == IInteractive::Button::Yes) {
                 remove(removeIndices, RemoveAction::DeletePermanently);
             }
 
@@ -622,7 +623,7 @@ bool UserPaletteController::applyPaletteElement(const QModelIndex& index, Qt::Ke
 {
     const PaletteCell* cell = model()->data(index, PaletteTreeModel::PaletteCellRole).value<const PaletteCell*>();
     if (cell && cell->element) {
-        return Palette::applyPaletteElement(cell->element.get(), modifiers);
+        return Palette::applyPaletteElement(cell->element, modifiers);
     }
     return false;
 }
@@ -723,10 +724,9 @@ AbstractPaletteController* PaletteWorkspace::getCustomElementsPaletteController(
 {
     if (!customElementsPaletteController) {
         customElementsPaletteController = new UserPaletteController(customElementsPaletteModel(), userPalette, this);
-        customElementsPaletteController->setVisible(false);
         customElementsPaletteController->setCustom(true);
     }
-//             customElementsPaletteController = new CustomPaletteController(customElementsPaletteModel(), this, this);
+
     return customElementsPaletteController;
 }
 
@@ -873,12 +873,12 @@ bool PaletteWorkspace::removeCustomPalette(const QPersistentModelIndex& index)
             return false;
         }
 
-        IInteractive::Button button
+        IInteractive::Result result
             = interactive()->question("", mu::trc("palette", "Do you want to permanently delete this custom palette?"), {
                 IInteractive::Button::Yes, IInteractive::Button::No
             });
 
-        if (button == IInteractive::Button::Yes) {
+        if (result.standartButton() == IInteractive::Button::Yes) {
             return userPalette->removeRow(index.row(), index.parent());
         }
 
@@ -898,12 +898,12 @@ bool PaletteWorkspace::resetPalette(const QModelIndex& index)
         return false;
     }
 
-    IInteractive::Button button
+    IInteractive::Result result
         = interactive()->question("", mu::trc("palette",
                                               "Do you want to restore this palette to its default state? All changes to this palette will be lost."), {
             IInteractive::Button::Yes, IInteractive::Button::No
         });
-    if (button != IInteractive::Button::Yes) {
+    if (result.standartButton() != IInteractive::Button::Yes) {
         return false;
     }
 

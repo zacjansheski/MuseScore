@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2019 MuseScore BVBA
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #include <QTextCodec>
 
@@ -30,6 +33,7 @@
 #include "framework/uicomponents/uicomponentsmodule.h"
 #include "framework/fonts/fontsmodule.h"
 #include "framework/actions/actionsmodule.h"
+#include "framework/accessibility/accessibilitymodule.h"
 #ifdef BUILD_SHORTCUTS_MODULE
 #include "framework/shortcuts/shortcutsmodule.h"
 #else
@@ -61,6 +65,8 @@
 #else
 #include "stubs/userscores/userscoresstubmodule.h"
 #endif
+
+#include "engraving/engravingmodule.h"
 #include "notation/notationmodule.h"
 
 #include "importexport/musicxml/musicxmlmodule.h"
@@ -129,6 +135,10 @@
 #include "stubs/languages/languagesstubmodule.h"
 #endif
 
+#ifdef BUILD_AUTOBOT_MODULE
+#include "autobot/autobotmodule.h"
+#endif
+
 #else
 #include "wasmtest/wasmtestmodule.h"
 #endif
@@ -171,6 +181,7 @@ int main(int argc, char** argv)
 #endif
 
     app.addModule(new mu::actions::ActionsModule());
+    app.addModule(new mu::accessibility::AccessibilityModule());
     app.addModule(new mu::appshell::AppShellModule());
 
     app.addModule(new mu::context::ContextModule());
@@ -193,6 +204,7 @@ int main(int argc, char** argv)
     app.addModule(new mu::userscores::UserScoresStubModule());
 #endif
 
+    app.addModule(new mu::engraving::EngravingModule());
     app.addModule(new mu::notation::NotationModule());
     app.addModule(new mu::commonscene::CommonSceneModule());
 #ifdef BUILD_PLAYBACK_MODULE
@@ -206,6 +218,7 @@ int main(int argc, char** argv)
 #else
     app.addModule(new mu::instruments::InstrumentsStubModule());
 #endif
+
 #ifdef BUILD_VST
     app.addModule(new mu::vst::VSTModule());
 #endif
@@ -255,6 +268,10 @@ int main(int argc, char** argv)
     app.addModule(new mu::languages::LanguagesStubModule());
 #endif
 
+#ifdef BUILD_AUTOBOT_MODULE
+    app.addModule(new mu::autobot::AutobotModule());
+#endif
+
 #else
     app.addModule(new mu::wasmtest::WasmTestModule());
 #endif
@@ -291,6 +308,6 @@ int main(int argc, char** argv)
 #endif
 
     int code = app.run(argcFinal, argvFinal);
-    LOGI() << "Good buy!! code: " << code;
+    LOGI() << "Goodbye!! code: " << code;
     return code;
 }

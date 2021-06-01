@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "instrumentsrepository.h"
 
 #include "log.h"
@@ -30,17 +33,20 @@ using namespace mu::framework;
 
 void InstrumentsRepository::init()
 {
-    RetCh<Extension> extensionChanged;
     if (extensionsService()) {
-        extensionChanged = extensionsService()->extensionChanged();
+        RetCh<Extension> extensionChanged = extensionsService()->extensionChanged();
+        if (extensionChanged.ret) {
+            extensionChanged.ch.onReceive(this, [this](const Extension& newExtension) {
+                if (newExtension.types.testFlag(Extension::Instruments)) {
+                    load();
+                }
+            });
+        }
     }
-    if (extensionChanged.ret) {
-        extensionChanged.ch.onReceive(this, [this](const Extension& newExtension) {
-            if (newExtension.types.testFlag(Extension::Instruments)) {
-                load();
-            }
-        });
-    }
+
+    configuration()->instrumentListPathsChanged().onNotify(this, [this]() {
+        load();
+    });
 
     load();
 }
@@ -62,19 +68,7 @@ void InstrumentsRepository::load()
 
     clear();
 
-    io::paths instrumentsPaths = configuration()->instrumentPaths();
-    io::paths instrumentsFiles;
-
-    for (const io::path& path: instrumentsPaths) {
-        RetVal<io::paths> files = fileSystem()->scanFiles(path, { QString("*.xml") });
-        if (!files.ret) {
-            LOGE() << files.ret.toString();
-        }
-
-        for (const io::path& file: files.val) {
-            instrumentsFiles.push_back(file);
-        }
-    }
+    io::paths instrumentsFiles = configuration()->instrumentListPaths();
 
     int globalGroupsSequenceOrder = 0;
     auto correctGroupSequenceOrder = [&globalGroupsSequenceOrder](const InstrumentGroup& group) {

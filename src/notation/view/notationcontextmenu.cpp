@@ -1,28 +1,30 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "notationcontextmenu.h"
 
 #include "ui/view/iconcodes.h"
 
 using namespace mu::notation;
-using namespace mu::actions;
-using namespace mu::uicomponents;
+using namespace mu::ui;
 
 MenuItemList NotationContextMenu::items(const ElementType& elementType) const
 {
@@ -36,18 +38,12 @@ MenuItemList NotationContextMenu::items(const ElementType& elementType) const
     }
 }
 
-MenuItem NotationContextMenu::makeItem(const ActionItem& actionItem, const std::string& section, bool enabled, bool checked) const
+MenuItem NotationContextMenu::makeItem(const UiAction& action, const QString& section, bool enabled, bool checked) const
 {
-    MenuItem item = actionItem;
+    MenuItem item = action;
     item.section = section;
-    item.enabled = enabled;
-    item.checked = checked;
-
-    shortcuts::Shortcut shortcut = shortcutsRegister()->shortcut(actionItem.code);
-    if (shortcut.isValid()) {
-        item.shortcut = shortcut.sequence;
-    }
-
+    item.state.enabled = enabled;
+    item.state.checked = checked;
     return item;
 }
 

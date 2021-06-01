@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #ifndef MU_AUDIO_FLUIDSYNTH_H
 #define MU_AUDIO_FLUIDSYNTH_H
@@ -25,12 +28,17 @@
 #include <cstdint>
 #include <functional>
 
+#include "modularity/ioc.h"
+#include "iaudioconfiguration.h"
+
 #include "isynthesizer.h"
 
 namespace mu::audio::synth {
 struct Fluid;
 class FluidSynth : public ISynthesizer
 {
+    INJECT(audio, IAudioConfiguration, config)
+
 public:
     FluidSynth();
 
@@ -47,23 +55,21 @@ public:
     bool isActive() const override;
     void setIsActive(bool arg) override;
 
-    Ret setupChannels(const std::vector<midi::Event>& events) override;
+    Ret setupMidiChannels(const std::vector<midi::Event>& events) override;
     bool handleEvent(const midi::Event& e) override;
     void writeBuf(float* stream, unsigned int samples) override;
 
     void allSoundsOff() override; // all channels
     void flushSound() override;
 
-    void channelSoundsOff(midi::channel_t chan) override;
-    bool channelVolume(midi::channel_t chan, float val) override;  // 0. - 1.
-    bool channelBalance(midi::channel_t chan, float val) override; // -1. - 1.
-    bool channelPitch(midi::channel_t chan, int16_t pitch) override; // -12 - 12
+    void midiChannelSoundsOff(midi::channel_t chan) override;
+    bool midiChannelVolume(midi::channel_t chan, float val) override;  // 0. - 1.
+    bool midiChannelBalance(midi::channel_t chan, float val) override; // -1. - 1.
+    bool midiChannelPitch(midi::channel_t chan, int16_t pitch) override; // -12 - 12
 
-    unsigned int streamCount() const override;
-    void forward(unsigned int sampleCount) override;
-    async::Channel<unsigned int> streamsCountChanged() const override;
-    const float* data() const override;
-    void setBufferSize(unsigned int samples) override;
+    unsigned int audioChannelsCount() const override;
+    void process(float* buffer, unsigned int sampleCount) override;
+    async::Channel<unsigned int> audioChannelsCountChanged() const override;
 
 private:
 
@@ -88,8 +94,7 @@ private:
     std::vector<float> m_preallocated; // used to flush a sound
     bool m_isActive = false;
 
-    unsigned int m_sampleRate = 1;
-    std::vector<float> m_buffer = {};
+    unsigned int m_sampleRate = 0;
     async::Channel<unsigned int> m_streamsCountChanged;
 };
 }

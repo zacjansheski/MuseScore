@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Linux Music Score Editor
-//
-//  Copyright (C) 2013 Werner Schweer and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 //    CapXML import filter
 //    Supports the CapXML 1.0 file format version 1.0.8 (capella 2008)
@@ -164,8 +167,7 @@ void BasicDurationalObj::readCapx(XmlReader& e, unsigned int& fullm)
         }
     }
     qDebug("DurationObj ndots %d nodur %d postgr %d bsm %d inv %d notbl %d t %d hsh %d cnt %d trp %d ispro %d fullm %d",
-           nDots, noDuration, postGrace, bSmall, invisible, notBlack, int(t), horizontalShift, count, tripartite,
-           isProlonging, fullm
+           nDots, noDuration, postGrace, bSmall, invisible, notBlack, int(t), horizontalShift, count, tripartite, isProlonging, fullm
            );
 }
 
@@ -480,6 +482,7 @@ void ChordObj::readCapxNotes(XmlReader& e)
         if (e.name() == "head") {
             QString pitch = e.attribute("pitch");
             QString sstep;
+            QString shape = e.attribute("shape");
             while (e.readNextStartElement()) {
                 const QStringRef& tag(e.name());
                 if (tag == "alter") {
@@ -492,13 +495,18 @@ void ChordObj::readCapxNotes(XmlReader& e)
                     e.unknown();
                 }
             }
-            qDebug("ChordObj::readCapxNotes: pitch '%s' altstep '%s'",
-                   qPrintable(pitch), qPrintable(sstep));
+            qDebug("ChordObj::readCapxNotes: pitch '%s' altstep '%s' shape '%s'",
+                   qPrintable(pitch), qPrintable(sstep), qPrintable(shape));
             int istep = sstep.toInt();
             CNote n;
             n.pitch = pitchStr2Char(pitch);
             n.explAlteration = 0;
             n.headType = 0;
+            if (shape == "none") {
+                n.headGroup = int(NoteHead::Group::HEAD_CROSS);
+            } else {
+                n.headGroup = int(NoteHead::Group::HEAD_NORMAL);
+            }
             n.alteration = istep;
             n.silent = 0;
             notes.append(n);
@@ -835,7 +843,7 @@ void Capella::readCapxStaff(XmlReader& e, CapSystem* system)
     QString time = e.attribute("defaultTime");
     qstring2timesig(time, staff->numerator, staff->log2Denom, staff->allaBreve);
 
-    staff->iLayout   = findStaffIndex(layout,staffLayouts());
+    staff->iLayout   = findStaffIndex(layout, staffLayouts());
     staff->topDistX  = 0;
     staff->btmDistX  = 0;
     staff->color     = Qt::black;

@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "noteinputbarcustomisemodel.h"
 
 #include <optional>
@@ -25,15 +28,16 @@
 
 #include "internal/abstractnoteinputbaritem.h"
 #include "internal/actionnoteinputbaritem.h"
-#include "internal/notationactions.h"
+#include "internal/notationuiactions.h"
 #include "workspace/workspacetypes.h"
 
 #include "uicomponents/view/itemmultiselectionmodel.h"
 
 using namespace mu::notation;
 using namespace mu::workspace;
-using namespace mu::actions;
+using namespace mu::ui;
 using namespace mu::uicomponents;
+using namespace mu::actions;
 
 static const std::string NOTE_INPUT_TOOLBAR_NAME("noteInput");
 
@@ -85,17 +89,6 @@ bool NoteInputBarCustomiseModel::moveRows(const QModelIndex& sourceParent, int s
     return true;
 }
 
-static std::optional<size_t> indexOf(const ActionList& actions, const ActionCode& actionCode)
-{
-    for (size_t i = 0; i < actions.size(); ++i) {
-        if (actions[i].code == actionCode) {
-            return i;
-        }
-    }
-
-    return std::nullopt;
-}
-
 void NoteInputBarCustomiseModel::load()
 {
     m_actions.clear();
@@ -108,7 +101,8 @@ void NoteInputBarCustomiseModel::load()
     }
 
     for (const ActionCode& actionCode: actions) {
-        ActionItem action = actionsRegister()->action(actionCode);
+        UiAction action = actionsRegister()->action(actionCode);
+        ActionCodeList alist = currentWorkspaceActions();
         bool checked = containsAction(currentWorkspaceActions(), actionCode);
 
         m_actions << makeItem(action, checked);
@@ -407,7 +401,7 @@ void NoteInputBarCustomiseModel::updateAddSeparatorAvailability()
     setIsAddSeparatorAvailable(addingAvailable);
 }
 
-AbstractNoteInputBarItem* NoteInputBarCustomiseModel::makeItem(const mu::actions::ActionItem& action, bool checked)
+AbstractNoteInputBarItem* NoteInputBarCustomiseModel::makeItem(const UiAction& action, bool checked)
 {
     if (action.code.empty()) {
         return makeSeparatorItem();
@@ -415,7 +409,7 @@ AbstractNoteInputBarItem* NoteInputBarCustomiseModel::makeItem(const mu::actions
 
     ActionNoteInputBarItem* item = new ActionNoteInputBarItem(AbstractNoteInputBarItem::ItemType::ACTION);
     item->setId(QString::fromStdString(action.code));
-    item->setTitle(qtrc("notation", action.title.c_str()));
+    item->setTitle(action.title);
     item->setIcon(action.iconCode);
     item->setChecked(checked);
 
@@ -450,8 +444,8 @@ ActionCodeList NoteInputBarCustomiseModel::customizedActions() const
         result.push_back(actionCode);
     }
 
-    actions::ActionList allNoteInputActions = NotationActions::defaultNoteInputActions();
-    for (const ActionItem& action: allNoteInputActions) {
+    UiActionList allNoteInputActions = NotationUiActions::defaultNoteInputActions();
+    for (const UiAction& action: allNoteInputActions) {
         if (actionFromNoteInputModes(action.code)) {
             continue;
         }
@@ -468,7 +462,7 @@ ActionCodeList NoteInputBarCustomiseModel::customizedActions() const
 
 ActionCodeList NoteInputBarCustomiseModel::defaultActions() const
 {
-    ActionList allNoteInputActions = NotationActions::defaultNoteInputActions();
+    UiActionList allNoteInputActions = NotationUiActions::defaultNoteInputActions();
     ActionCodeList currentWorkspaceNoteInputActions = currentWorkspaceActions();
 
     bool noteInputModeActionExists = false;
@@ -517,7 +511,7 @@ ActionCodeList NoteInputBarCustomiseModel::defaultActions() const
 
         result.push_back(actionCode);
 
-        std::optional<size_t> indexInDefaultActions = indexOf(allNoteInputActions, actionCode);
+        std::optional<size_t> indexInDefaultActions = allNoteInputActions.indexOf(actionCode);
         if (indexInDefaultActions) {
             appendRelatedActions(indexInDefaultActions.value() + 1);
         }

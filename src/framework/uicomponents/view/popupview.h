@@ -1,113 +1,148 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2021 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #ifndef MU_UICOMPONENTS_POPUPVIEW_H
 #define MU_UICOMPONENTS_POPUPVIEW_H
 
 #include <QQuickItem>
-#include <QQuickView>
+#include <QQmlParserStatus>
 
-#include "ui/imainwindow.h"
+#include "ret.h"
 #include "modularity/ioc.h"
+#include "ui/imainwindow.h"
+#include "ui/iuiconfiguration.h"
+#include "ui/inavigationcontroller.h"
+#include "ui/view/navigationcontrol.h"
+#include "popupwindow/ipopupwindow.h"
 
 namespace mu::uicomponents {
-class PopupView : public QQuickItem
+class PopupView : public QObject, public QQmlParserStatus
 {
     Q_OBJECT
+    Q_INTERFACES(QQmlParserStatus)
 
-    Q_PROPERTY(QQuickItem * backgroundItem READ backgroundItem WRITE setBackgroundItem NOTIFY backgroundItemChanged)
+    Q_PROPERTY(QQuickItem * parent READ parentItem WRITE setParentItem NOTIFY parentItemChanged)
     Q_PROPERTY(QQuickItem * contentItem READ contentItem WRITE setContentItem NOTIFY contentItemChanged)
+
+    //! NOTE Local, related parent
+    Q_PROPERTY(qreal x READ localX WRITE setLocalX NOTIFY xChanged)
+    Q_PROPERTY(qreal y READ localY WRITE setLocalY NOTIFY yChanged)
+
+    Q_PROPERTY(bool isOpened READ isOpened NOTIFY isOpenedChanged)
     Q_PROPERTY(ClosePolicy closePolicy READ closePolicy WRITE setClosePolicy NOTIFY closePolicyChanged)
 
-    Q_PROPERTY(QPointF globalPos READ globalPos WRITE setGlobalPos NOTIFY globalPosChanged)
-    Q_PROPERTY(qreal positionDisplacementX READ positionDisplacementX WRITE setPositionDisplacementX NOTIFY positionDisplacementXChanged)
-    Q_PROPERTY(qreal positionDisplacementY READ positionDisplacementY WRITE setPositionDisplacementY NOTIFY positionDisplacementYChanged)
+    //! NOTE We use QObject (instead ui::NavigationControl) for avoid add  UI module dependency at link time.
+    //! Itself not bad for uicomponents, but we have dependency uicomponents - instruments - libmscore - imports - tests
+    //! So, add ui dependency is bad and problems with compilation
+    Q_PROPERTY(QObject * navigationParentControl
+               READ navigationParentControl
+               WRITE setNavigationParentControl
+               NOTIFY navigationParentControlChanged
+               )
 
-    Q_PROPERTY(bool isOpened READ isOpened WRITE setIsOpened NOTIFY isOpenedChanged)
-
-    Q_PROPERTY(qreal padding READ padding WRITE setPadding NOTIFY paddingChanged)
-
-    Q_CLASSINFO("DefaultProperty", "contentItem")
+    //! NOTE Used for dialogs, but be here so that dialogs and just popups have one api
+    Q_PROPERTY(QString title READ title WRITE setTitle NOTIFY titleChanged)
+    Q_PROPERTY(QString objectID READ objectID WRITE setObjectID NOTIFY objectIDChanged)
+    Q_PROPERTY(bool modal READ modal WRITE setModal NOTIFY modalChanged)
+    Q_PROPERTY(bool resizable READ resizable WRITE setResizable NOTIFY resizableChanged)
+    Q_PROPERTY(QVariantMap ret READ ret WRITE setRet NOTIFY retChanged)
 
     Q_ENUMS(ClosePolicy)
 
     INJECT(uicomponents, ui::IMainWindow, mainWindow)
+    INJECT(uicomponents, ui::IUiConfiguration, uiConfiguration)
+    INJECT(uicomponents, ui::INavigationController, navigationController)
 
 public:
+
+    explicit PopupView(QQuickItem* parent = nullptr);
+    ~PopupView() override = default;
+
     enum ClosePolicy {
         NoAutoClose = 0,
         CloseOnPressOutsideParent,
         CloseOnReleaseOutsideParent
     };
 
-    explicit PopupView(QQuickItem* parent = nullptr);
+    QQuickItem* parentItem() const;
+    QQuickItem* contentItem() const;
+
+    qreal localX() const;
+    qreal localY() const;
+    QRect geometry() const;
+
+    Q_INVOKABLE void forceActiveFocus();
 
     Q_INVOKABLE void open();
     Q_INVOKABLE void close();
     Q_INVOKABLE void toggleOpened();
 
-    QQuickItem* backgroundItem() const;
-    QQuickItem* contentItem() const;
     ClosePolicy closePolicy() const;
+    QObject* navigationParentControl() const;
 
     bool isOpened() const;
 
-    qreal padding() const;
-
-    QPointF globalPos() const;
-    qreal positionDisplacementX() const;
-    qreal positionDisplacementY() const;
+    QString objectID() const;
+    QString title() const;
+    bool modal() const;
+    bool resizable() const;
+    QVariantMap ret() const;
 
 public slots:
-    void setBackgroundItem(QQuickItem* backgroundItem);
-    void setContentItem(QQuickItem* contentItem);
+    void setParentItem(QQuickItem* parent);
+    void setContentItem(QQuickItem* content);
+    void setLocalX(qreal x);
+    void setLocalY(qreal y);
     void setClosePolicy(ClosePolicy closePolicy);
-
-    void setIsOpened(bool isOpened);
-    void setPadding(qreal padding);
-
-    void setGlobalPos(QPointF globalPos);
-    void setPositionDisplacementX(qreal positionDisplacementX);
-    void setPositionDisplacementY(qreal positionDisplacementY);
+    void setNavigationParentControl(QObject* parentNavigationControl);
+    void setObjectID(QString objectID);
+    void setTitle(QString title);
+    void setModal(bool modal);
+    void setResizable(bool resizable);
+    void setRet(QVariantMap ret);
 
 signals:
-    void backgroundItemChanged(QQuickItem* backgroundItem);
-    void contentItemChanged(QQuickItem* contentItem);
+    void parentItemChanged();
+    void contentItemChanged();
+    void xChanged(qreal x);
+    void yChanged(qreal y);
     void closePolicyChanged(ClosePolicy closePolicy);
+    void navigationParentControlChanged(QObject* navigationParentControl);
+    void objectIDChanged(QString objectID);
+    void titleChanged(QString title);
+    void modalChanged(bool modal);
+    void resizableChanged(bool resizable);
+    void retChanged(QVariantMap ret);
 
-    void isOpenedChanged(bool isOpened);
-
-    void aboutToShow();
-    void aboutToHide();
+    void isOpenedChanged();
     void opened();
     void closed();
-
-    void paddingChanged(qreal padding);
-
-    void globalPosChanged(QPointF globalPos);
-    void positionDisplacementXChanged(qreal positionDisplacementX);
-    void positionDisplacementYChanged(qreal positionDisplacementY);
 
 private slots:
     void onApplicationStateChanged(Qt::ApplicationState state);
 
-private:
+protected:
+    virtual bool isDialog() const;
+    void classBegin() override;
     void componentComplete() override;
     bool eventFilter(QObject* watched, QEvent* event) override;
     void mousePressEvent(QMouseEvent* event);
@@ -115,22 +150,24 @@ private:
 
     bool isMouseWithinBoundaries(const QPoint& mousePos) const;
 
-    void setupContentComponent(QQmlEngine* engine);
-    void setupContainerView(QQmlEngine* engine);
-    QQuickItem* loadContentItem(QQmlContext* ctx);
+    QWindow* qWindow() const;
+    virtual void beforeShow();
+    virtual void onHidden();
 
-    QQmlComponent* m_contentComponent = nullptr;
-    QQuickView* m_containerView = nullptr;
+    void setErrCode(Ret::Code code);
 
-    QQuickItem* m_backgroundItem = nullptr;
+    IPopupWindow* m_window = nullptr;
     QQuickItem* m_contentItem = nullptr;
 
-    ClosePolicy m_closePolicy = ClosePolicy::CloseOnPressOutsideParent;
-    bool m_isOpened = false;
-    qreal m_padding = 0.0;
+    QPointF m_localPos;
     QPointF m_globalPos;
-    qreal m_positionDisplacementX = 0.0;
-    qreal m_positionDisplacementY = 0.0;
+    ClosePolicy m_closePolicy = ClosePolicy::CloseOnPressOutsideParent;
+    QObject* m_navigationParentControl = nullptr;
+    QString m_objectID;
+    QString m_title;
+    bool m_modal = true;
+    bool m_resizable = false;
+    QVariantMap m_ret;
 };
 }
 

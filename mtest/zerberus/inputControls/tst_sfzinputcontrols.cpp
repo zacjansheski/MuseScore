@@ -1,12 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2
-//  as published by the Free Software Foundation and appearing in
-//  the file LICENCE.GPL
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #include <QtTest/QtTest>
 
@@ -70,7 +82,7 @@ void TestSfzInputControls::testInputKeys()
 
     QCOMPARE(false, (*zoneIterator)->match(channel, 19, 127, Trigger::ATTACK, 0.0f, 0, 0));
     for (int i = 20; i <= 30; i++) {
-        QCOMPARE(true, (*zoneIterator)->match(channel,i, 127, Trigger::ATTACK, 0.0f, 0, 0));
+        QCOMPARE(true, (*zoneIterator)->match(channel, i, 127, Trigger::ATTACK, 0.0f, 0, 0));
     }
     QCOMPARE(false, (*zoneIterator)->match(channel, 31, 127, Trigger::ATTACK, 0.0f, 0, 0));
     zoneIterator++;
@@ -80,7 +92,7 @@ void TestSfzInputControls::testInputVolume()
 {
     QCOMPARE(false, (*zoneIterator)->match(channel, 40, 29, Trigger::ATTACK, 0.0f, 0, 0));
     for (int i = 30; i <= 40; i++) {
-        QCOMPARE(true, (*zoneIterator)->match(channel,40, i, Trigger::ATTACK, 0.0f, 0, 0));
+        QCOMPARE(true, (*zoneIterator)->match(channel, 40, i, Trigger::ATTACK, 0.0f, 0, 0));
     }
     QCOMPARE(false, (*zoneIterator)->match(channel, 40, 41, Trigger::ATTACK, 0.0f, 0, 0));
     zoneIterator++;

@@ -1,3 +1,24 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.12
@@ -5,17 +26,26 @@ import QtQuick.Layouts 1.12
 import MuseScore.Playback 1.0
 import MuseScore.UiComponents 1.0
 import MuseScore.Ui 1.0
-import MuseScore.NotationScene 1.0
+import MuseScore.CommonScene 1.0
 
 import "internal"
 
 Rectangle {
     id: root
 
+    property alias navigation: keynavSub
     property bool floating: false
+
+    color: ui.theme.backgroundPrimaryColor
+
+    NavigationPanel {
+        id: keynavSub
+        name: "PlaybackToolBar"
+    }
 
     PlaybackToolBarModel {
         id: playbackModel
+        isToolbarFloating: root.floating
     }
 
     Component.onCompleted: {
@@ -33,7 +63,7 @@ Rectangle {
         RowLayout {
             id: playbackActions
 
-            spacing: 2
+            spacing: 0
 
             ListView {
                 Layout.preferredWidth: childrenRect.width
@@ -42,53 +72,85 @@ Rectangle {
                 contentHeight: 32
                 contentWidth: contentHeight
 
-                spacing: 2
+                spacing: 4
 
-                model: FilterProxyModel {
-                    sourceModel: playbackModel
-
-                    filters: [
-                        FilterValue {
-                            roleName: "isAdditional"
-                            roleValue: false
-                            compareType: CompareType.Equal
-                            enabled: !root.floating
-                        }
-                    ]
-                }
+                model: playbackModel
 
                 orientation: Qt.Horizontal
                 interactive: false
 
-                delegate: FlatButton {
-                    icon: model.icon
-                    hint: model.hint
-                    enabled: model.enabled
+                delegate: Loader {
+                    id: itemLoader
 
-                    normalStateColor: model.checked || playbackSettings.isOpened ? ui.theme.accentColor : "transparent"
+                    sourceComponent: Boolean(model.code) || model.subitems.length !== 0 ? menuItemComp : separatorComp
 
-                    onClicked: {
-                        if (model.isPlaybackSettings) {
-                            playbackSettings.toggleOpened()
-                            return
-                        }
-
-                        playbackModel.handleAction(model.code)
+                    onLoaded: {
+                        itemLoader.item.modelData = model
                     }
 
-                    PlaybackSettingsPopup {
-                        id: playbackSettings
+                    Component {
+                        id: menuItemComp
+
+                        FlatButton {
+                            id: btn
+                            property var modelData
+                            property var hasSubitems: modelData.subitems.length !== 0
+
+                            icon: modelData.icon
+
+                            toolTipTitle: modelData.title
+                            toolTipDescription: modelData.description
+                            toolTipShortcut: modelData.shortcut
+
+                            iconFont: ui.theme.toolbarIconsFont
+
+                            normalStateColor: modelData.checked || menuLoader.isMenuOpened()
+                                              ? ui.theme.accentColor : "transparent"
+                            accentButton: modelData.checked || menuLoader.isMenuOpened()
+
+                            navigation.panel: keynavSub
+                            navigation.name: modelData.title
+                            navigation.order: modelData.index
+                            navigation.enabled: playbackModel.isPlayAllowed
+
+                            onClicked: {
+                                if (menuLoader.isMenuOpened() || hasSubitems) {
+                                    menuLoader.toggleOpened(modelData.subitems, btn.navigation)
+                                    return
+                                }
+
+                                Qt.callLater(playbackModel.handleAction, modelData.code)
+                            }
+
+                            StyledMenuLoader {
+                                id: menuLoader
+                                onHandleAction: playbackModel.handleAction(actionCode)
+                            }
+                        }
+                    }
+
+                    Component {
+                        id: separatorComp
+
+                        SeparatorLine {
+                            property var modelData
+                            orientation: Qt.Vertical
+                        }
                     }
                 }
             }
 
-            SeparatorLine { orientation: Qt.Vertical }
+            SeparatorLine {
+                Layout.leftMargin: 12
+                orientation: Qt.Vertical
+                visible: !root.floating
+            }
 
             TimeInputField {
                 id: timeField
 
-                Layout.leftMargin: 10
-                Layout.preferredWidth: 90
+                Layout.leftMargin: 24
+                Layout.preferredWidth: 60
 
                 maxTime: playbackModel.maxPlayTime
                 maxMillisecondsNumber: 9
@@ -99,60 +161,41 @@ Rectangle {
                 }
             }
 
-            NumberInputField {
-                Layout.leftMargin: 10
-                Layout.preferredWidth: 10
+            MeasureAndBeatFields {
+                Layout.leftMargin: 24
 
-                minValue: 1
-                maxValue: playbackModel.maxMeasureNumber
-                value: playbackModel.measureNumber
+                measureNumber: playbackModel.measureNumber
+                maxMeasureNumber: playbackModel.maxMeasureNumber
+                beatNumber: playbackModel.beatNumber
+                maxBeatNumber: playbackModel.maxBeatNumber
 
-                onValueEdited: {
+                font: timeField.font
+
+                onMeasureNumberEdited: {
                     playbackModel.measureNumber = newValue
                 }
-            }
 
-            StyledTextLabel {
-                Layout.leftMargin: 4
-                text: "."
-                font: timeField.font
-            }
-
-            NumberInputField {
-                Layout.leftMargin: 4
-                Layout.preferredWidth: 10
-
-                minValue: 1
-                maxValue: playbackModel.maxBeatNumber
-                value: playbackModel.beatNumber
-
-                onValueEdited: {
+                onBeatNumberEdited: {
                     playbackModel.beatNumber = newValue
                 }
             }
 
-            StyledTextLabel {
-                Layout.leftMargin: 10
-                Layout.preferredWidth: 20
-                topPadding: 10
+            TempoView {
+                Layout.leftMargin: 24
+                Layout.preferredWidth: 60
 
-                text: playbackModel.tempo.noteSymbol
+                noteSymbol: playbackModel.tempo.noteSymbol
+                tempoValue: playbackModel.tempo.value
 
-                font.family: ui.theme.musicalFont
-                font.pixelSize: ui.theme.tabFont.pixelSize
-                font.letterSpacing: 1
-
-                lineHeightMode: Text.FixedHeight
+                noteSymbolFont.pixelSize: ui.theme.iconsFont.pixelSize
+                tempoValueFont: timeField.font
             }
 
-            StyledTextLabel {
-                Layout.rightMargin: 10
-
-                text: "= " + playbackModel.tempo.value
-                font: timeField.font
+            SeparatorLine {
+                Layout.leftMargin: 24
+                orientation: Qt.Vertical
+                visible: !root.floating
             }
-
-            SeparatorLine { orientation: Qt.Vertical }
         }
 
         StyledSlider {

@@ -1,16 +1,47 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 import QtQuick 2.15
 import QtQuick.Layouts 1.15
 import QtQuick.Controls 2.15
 
-import MuseScore.NotationScene 1.0
+import MuseScore.Ui 1.0
 import MuseScore.UiComponents 1.0
+import MuseScore.NotationScene 1.0
 
 import "internal"
 
 FocusScope {
     id: root
 
+    property alias isNavigatorVisible: notationNavigator.visible
+
     signal textEdittingStarted()
+
+    NavigationSection {
+        id: navSec
+        name: "NotationView"
+        order: 4
+        enabled: root.visible
+    }
 
     ColumnLayout {
         anchors.fill: parent
@@ -18,11 +49,11 @@ FocusScope {
         spacing: 0
 
         NotationSwitchPanel {
+            id: tabPanel
+
             Layout.fillWidth: true
 
-            //! NOTE: need to hide left and right borders of the panel
-            Layout.leftMargin: -1
-            Layout.rightMargin: -1
+            navigationSection: navSec
         }
 
         SplitView {
@@ -31,7 +62,11 @@ FocusScope {
             Layout.fillWidth: true
             Layout.fillHeight: true
 
-            orientation: notationNavigator.orientation
+            orientation: notationNavigator.orientation === Qt.Horizontal ? Qt.Vertical : Qt.Horizontal
+
+            background: Rectangle {
+                color: notationView.backgroundColor
+            }
 
             NotationPaintView {
                 id: notationView
@@ -78,8 +113,8 @@ FocusScope {
                     orientation: Qt.Vertical
 
                     color: "black"
-                    withBorder: true
-                    borderColor: "white"
+                    border.width: 1
+                    border.color: "white"
 
                     size: notationView.verticalScrollSize
 
@@ -101,8 +136,8 @@ FocusScope {
                     orientation: Qt.Horizontal
 
                     color: "black"
-                    withBorder: true
-                    borderColor: "white"
+                    border.width: 1
+                    border.color: "white"
 
                     size: notationView.horizontalScrollSize
 

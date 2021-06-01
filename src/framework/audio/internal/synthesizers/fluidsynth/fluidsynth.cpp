@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #include "fluidsynth.h"
 
@@ -102,8 +105,11 @@ Ret FluidSynth::init()
     fluid_settings_setint(m_fluid->settings, "synth.audio-channels", 1);
     fluid_settings_setint(m_fluid->settings, "synth.lock-memory", 0);
     fluid_settings_setint(m_fluid->settings, "synth.threadsafe-api", 0);
-    fluid_settings_setnum(m_fluid->settings, "synth.sample-rate", static_cast<double>(m_sampleRate));
     fluid_settings_setint(m_fluid->settings, "synth.midi-channels", 80);
+
+    if (m_sampleRate > 0) {
+        fluid_settings_setnum(m_fluid->settings, "synth.sample-rate", static_cast<double>(m_sampleRate));
+    }
 
     //fluid_settings_setint(_fluid->settings, "synth.min-note-length", 50);
     //fluid_settings_setint(_fluid->settings, "synth.polyphony", conf.polyphony);
@@ -196,7 +202,7 @@ Ret FluidSynth::removeSoundFonts()
     return ok ? make_ret(Err::NoError) : make_ret(Err::SoundFontFailedUnload);
 }
 
-Ret FluidSynth::setupChannels(const std::vector<Event>& events)
+Ret FluidSynth::setupMidiChannels(const std::vector<Event>& events)
 {
     IF_ASSERT_FAILED(m_fluid->synth) {
         return make_ret(Err::SynthNotInited);
@@ -296,7 +302,7 @@ void FluidSynth::flushSound()
     fluid_synth_write_float(m_fluid->synth, size, &m_preallocated[0], 0, 1, &m_preallocated[0], size, 1);
 }
 
-void FluidSynth::channelSoundsOff(channel_t chan)
+void FluidSynth::midiChannelSoundsOff(channel_t chan)
 {
     IF_ASSERT_FAILED(m_fluid->synth) {
         return;
@@ -305,7 +311,7 @@ void FluidSynth::channelSoundsOff(channel_t chan)
     fluid_synth_all_sounds_off(m_fluid->synth, chan);
 }
 
-bool FluidSynth::channelVolume(channel_t chan, float volume)
+bool FluidSynth::midiChannelVolume(channel_t chan, float volume)
 {
     IF_ASSERT_FAILED(m_fluid->synth) {
         return false;
@@ -318,7 +324,7 @@ bool FluidSynth::channelVolume(channel_t chan, float volume)
     return ret == FLUID_OK;
 }
 
-bool FluidSynth::channelBalance(channel_t chan, float balance)
+bool FluidSynth::midiChannelBalance(channel_t chan, float balance)
 {
     IF_ASSERT_FAILED(m_fluid->synth) {
         return false;
@@ -333,7 +339,7 @@ bool FluidSynth::channelBalance(channel_t chan, float balance)
     return ret == FLUID_OK;
 }
 
-bool FluidSynth::channelPitch(channel_t chan, int16_t pitch)
+bool FluidSynth::midiChannelPitch(channel_t chan, int16_t pitch)
 {
     // 0-16383 with 8192 being center
 
@@ -368,35 +374,21 @@ void FluidSynth::writeBuf(float* stream, unsigned int samples)
     }
 
     fluid_synth_write_float(m_fluid->synth, static_cast<int>(samples),
-                            stream, 0, AUDIO_CHANNELS,
-                            stream, 1, AUDIO_CHANNELS);
+                            stream, 0, config()->audioChannelsCount(),
+                            stream, 1, config()->audioChannelsCount());
 }
 
-unsigned int FluidSynth::streamCount() const
+unsigned int FluidSynth::audioChannelsCount() const
 {
-    return synth::AUDIO_CHANNELS;
+    return config()->audioChannelsCount();
 }
 
-void FluidSynth::forward(unsigned int sampleCount)
+void FluidSynth::process(float* buffer, unsigned int sampleCount)
 {
-    writeBuf(m_buffer.data(), sampleCount);
+    writeBuf(buffer, sampleCount);
 }
 
-async::Channel<unsigned int> FluidSynth::streamsCountChanged() const
+async::Channel<unsigned int> FluidSynth::audioChannelsCountChanged() const
 {
     return m_streamsCountChanged;
-}
-
-const float* FluidSynth::data() const
-{
-    return m_buffer.data();
-}
-
-void FluidSynth::setBufferSize(unsigned int samples)
-{
-    auto sc = streamCount();
-    auto targetSize = samples * sc;
-    if (targetSize > 0 && m_buffer.size() < targetSize) {
-        m_buffer.resize(samples * streamCount());
-    }
 }

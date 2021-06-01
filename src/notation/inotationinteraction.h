@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #ifndef MU_NOTATION_INOTATIONINTERACTION_H
 #define MU_NOTATION_INOTATIONINTERACTION_H
 
@@ -42,11 +45,19 @@ public:
     virtual void showShadowNote(const QPointF& pos) = 0;
     virtual void hideShadowNote() = 0;
 
+    // Visibility
+    virtual void toggleVisible() = 0;
+
     // Select
     virtual Element* hitElement(const QPointF& pos, float width) const = 0;
     virtual int hitStaffIndex(const QPointF& pos) const = 0;
+    virtual void addChordToSelection(MoveDirection d) = 0;
+    virtual void moveChordNoteSelection(MoveDirection d) = 0;
     virtual void select(const std::vector<Element*>& elements, SelectType type, int staffIndex = 0) = 0;
     virtual void selectAll() = 0;
+    virtual void selectSection() = 0;
+    virtual void selectFirstElement() = 0;
+    virtual void selectLastElement() = 0;
     virtual INotationSelectionPtr selection() const = 0;
     virtual void clearSelection() = 0;
     virtual async::Notification selectionChanged() const = 0;
@@ -84,6 +95,9 @@ public:
     virtual async::Notification textEditingStarted() const = 0;
     virtual async::Notification textEditingChanged() const = 0;
 
+    // Display
+    virtual async::Channel<ScoreConfigType> scoreConfigChanged() const = 0;
+
     // Grip edit
     virtual bool isGripEditStarted() const = 0;
     virtual bool isHitGrip(const QPointF& pos) const = 0;
@@ -96,17 +110,24 @@ public:
     virtual void addBoxes(BoxType boxType, int count, int beforeBoxIndex = -1) = 0;
 
     virtual void copySelection() = 0;
+    virtual void copyLyrics() = 0;
     virtual void pasteSelection(const Fraction& scale = Fraction(1, 1)) = 0;
     virtual void swapSelection() = 0;
     virtual void deleteSelection() = 0;
     virtual void flipSelection() = 0;
     virtual void addTieToSelection() = 0;
+    virtual void addTiedNoteToChord() = 0;
     virtual void addSlurToSelection() = 0;
     virtual void addOttavaToSelection(OttavaType type) = 0;
     virtual void addHairpinToSelection(HairpinType type) = 0;
     virtual void addAccidentalToSelection(AccidentalType type) = 0;
+    virtual void putRestToSelection() = 0;
+    virtual void putRest(DurationType duration) = 0;
+    virtual void addBracketsToSelection(BracketsType type) = 0;
     virtual void changeSelectedNotesArticulation(SymbolId articulationSymbolId) = 0;
-    virtual void addTupletToSelectedChords(const TupletOptions& options) = 0;
+    virtual void addGraceNotesToSelectedNotes(GraceNoteType type) = 0;
+    virtual void addTupletToSelectedChordRests(const TupletOptions& options) = 0;
+    virtual void addBeamToSelectedChordRests(BeamMode mode) = 0;
 
     virtual void setBreaksSpawnInterval(BreaksSpawnIntervalType intervalType, int interval = 0) = 0;
     virtual void transpose(const TransposeOptions& options) = 0;
@@ -117,6 +138,28 @@ public:
 
     virtual void addText(TextType type) = 0;
     virtual void addFiguredBass() = 0;
+
+    virtual void addStretch(qreal value) = 0;
+
+    virtual void explodeSelectedStaff() = 0;
+    virtual void implodeSelectedStaff() = 0;
+
+    virtual void realizeSelectedChordSymbols() = 0;
+    virtual void removeSelectedRange() = 0;
+    virtual void removeEmptyTrailingMeasures() = 0;
+
+    virtual void fillSelectionWithSlashes() = 0;
+    virtual void replaceSelectedNotesWithSlashes() = 0;
+
+    virtual void spellPitches() = 0;
+    virtual void regroupNotesAndRests() = 0;
+    virtual void resequenceRehearsalMarks() = 0;
+    virtual void unrollRepeats() = 0;
+
+    virtual void resetToDefault(ResettableValueType type) = 0;
+
+    virtual ScoreConfig scoreConfig() const = 0;
+    virtual void setScoreConfig(ScoreConfig config) = 0;
 };
 
 using INotationInteractionPtr = std::shared_ptr<INotationInteraction>;

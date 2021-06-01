@@ -1,3 +1,24 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "templatesmodel.h"
 
 #include "log.h"
@@ -23,20 +44,19 @@ void TemplatesModel::load()
         }
     }
 
-    m_visibleTemplates = m_allTemplates;
-
     for (const Template& templ: m_allTemplates) {
-        m_visibleCategoriesTitles << templ.categoryTitle;
+        if (!m_visibleCategoriesTitles.contains(templ.categoryTitle)) {
+            m_visibleCategoriesTitles << templ.categoryTitle;
+        }
     }
 
+    updateTemplatesByCategory();
     emit categoriesChanged();
-    emit templatesChanged();
-    emit currentTemplateChanged();
 }
 
 QStringList TemplatesModel::categoriesTitles() const
 {
-    return m_visibleCategoriesTitles.values();
+    return m_visibleCategoriesTitles;
 }
 
 QString TemplatesModel::currentTemplatePath() const
@@ -45,7 +65,7 @@ QString TemplatesModel::currentTemplatePath() const
         return QString();
     }
 
-    return m_visibleTemplates[m_currentTemplateIndex].filePath;
+    return m_visibleTemplates[m_currentTemplateIndex].filePath.toQString();
 }
 
 QStringList TemplatesModel::templatesTitles() const
@@ -117,7 +137,9 @@ void TemplatesModel::updateTemplatesAndCategoriesBySearch()
     for (const Template& templ: m_allTemplates) {
         if (titleAccepted(templ.title) || titleAccepted(templ.categoryTitle)) {
             m_visibleTemplates << templ;
-            m_visibleCategoriesTitles << templ.categoryTitle;
+            if (!m_visibleCategoriesTitles.contains(templ.categoryTitle)) {
+                m_visibleCategoriesTitles << templ.categoryTitle;
+            }
         }
     }
 

@@ -1,21 +1,24 @@
-﻿//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "audiomodule.h"
 
 #include <QQmlEngine>
@@ -62,10 +65,10 @@ static std::shared_ptr<IAudioDriver> s_audioDriver = std::shared_ptr<IAudioDrive
 #endif
 
 #ifdef Q_OS_WIN
-#include "internal/platform/win/winmmdriver.h"
-static std::shared_ptr<IAudioDriver> s_audioDriver = std::shared_ptr<IAudioDriver>(new WinmmDriver());
-//#include "internal/platform/win/wincoreaudiodriver.h"
-//static std::shared_ptr<IAudioDriver> s_audioDriver = std::shared_ptr<IAudioDriver>(new CoreAudioDriver());
+//#include "internal/platform/win/winmmdriver.h"
+//static std::shared_ptr<IAudioDriver> s_audioDriver = std::shared_ptr<IAudioDriver>(new WinmmDriver());
+#include "internal/platform/win/wincoreaudiodriver.h"
+static std::shared_ptr<IAudioDriver> s_audioDriver = std::shared_ptr<IAudioDriver>(new CoreAudioDriver());
 #endif
 
 #ifdef Q_OS_MACOS
@@ -160,6 +163,8 @@ void AudioModule::onInit(const framework::IApplication::RunMode&)
     // Init configuration
     s_audioConfiguration->init();
 
+    s_audioBuffer->init();
+
     // Setup rpc system and worker
     s_rpcSequencer->setup();
     s_audioWorker->channel()->setupMainThread();
@@ -184,8 +189,8 @@ void AudioModule::onInit(const framework::IApplication::RunMode&)
     requiredSpec.channels = 2; // stereo
     requiredSpec.samples = s_audioConfiguration->driverBufferSize();
     requiredSpec.callback = [](void* /*userdata*/, uint8_t* stream, int byteCount) {
-        auto samples = byteCount / (2 * sizeof(float));
-        s_audioBuffer->pop(reinterpret_cast<float*>(stream), samples);
+        auto samplesPerChannel = byteCount / (2 * sizeof(float));
+        s_audioBuffer->pop(reinterpret_cast<float*>(stream), samplesPerChannel);
     };
 
     IAudioDriver::Spec activeSpec;
@@ -200,15 +205,8 @@ void AudioModule::onInit(const framework::IApplication::RunMode&)
     s_audioWorker->channel()->send(
         rpc::Msg(
             rpc::TargetName::AudioEngine,
-            "setSampleRate",
-            rpc::Args::make_arg1<int>(activeSpec.sampleRate)
-            ));
-
-    s_audioWorker->channel()->send(
-        rpc::Msg(
-            rpc::TargetName::AudioEngine,
-            "setReadBufferSize",
-            rpc::Args::make_arg1<uint16_t>(activeSpec.samples)
+            "onDriverOpened",
+            rpc::Args::make_arg2<int, uint16_t>(activeSpec.sampleRate, activeSpec.samples)
             ));
 }
 

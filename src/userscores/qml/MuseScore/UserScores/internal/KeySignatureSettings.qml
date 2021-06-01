@@ -1,3 +1,24 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 import QtQuick 2.9
 import QtQuick.Controls 2.2
 import QtQuick.Layouts 1.3
@@ -10,13 +31,14 @@ FlatButton {
     id: root
 
     property var model: null
+    property var mode: bar.currentIndex === 0 ? "major" : "minor"
 
     height: 96
     accentButton: popup.visible
 
     KeySignature {
         icon: model.keySignature.icon
-        text: model.keySignature.title
+        text: mode === "major" ? model.keySignature.titleMajor : model.keySignature.titleMinor
     }
 
     onClicked: {
@@ -36,22 +58,20 @@ FlatButton {
         arrowX: root.x + root.width / 2
         y: root.height
 
-        Column {
-            id: column
+        Item {
+            id: item
 
             anchors.fill: parent
             anchors.topMargin: 10
             anchors.margins: 20
 
-            spacing: 20
-
             TabBar {
                 id: bar
 
+                anchors.top: parent.top
                 anchors.horizontalCenter: parent.horizontalCenter
 
                 implicitHeight: 28
-                spacing: 0
 
                 StyledTabButton {
                     text: qsTrc("userscores", "Major")
@@ -69,14 +89,18 @@ FlatButton {
             StackLayout {
                 id: pagesStack
 
+                anchors.top: bar.bottom
+                anchors.topMargin: 24
                 anchors.left: parent.left
                 anchors.right: parent.right
+                anchors.bottom: parent.bottom
 
                 currentIndex: bar.currentIndex
 
                 KeySignatureListView {
-                    model: root.model.keySignatureMajorList()
+                    model: root.model.keySignatureList()
                     currentSignature: root.model.keySignature
+                    mode: "major"
 
                     onSignatureSelected: {
                         root.model.keySignature = signature
@@ -84,8 +108,9 @@ FlatButton {
                 }
 
                 KeySignatureListView {
-                    model: root.model.keySignatureMinorList()
+                    model: root.model.keySignatureList()
                     currentSignature: root.model.keySignature
+                    mode: "minor"
 
                     onSignatureSelected: {
                         root.model.keySignature = signature

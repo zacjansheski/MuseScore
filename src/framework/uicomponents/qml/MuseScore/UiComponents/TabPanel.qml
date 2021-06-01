@@ -1,4 +1,25 @@
-import QtQuick 2.9
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+import QtQuick 2.15
 import QtQuick.Controls 1.0
 import QtQuick.Controls.Styles 1.4
 import MuseScore.Ui 1.0
@@ -6,13 +27,21 @@ import MuseScore.Ui 1.0
 TabView {
     id: root
 
-    readonly property int tabBarHeight: 24
+    readonly property int tabBarHeight: 32
 
     width: parent.width
+
+    function focusOnFirstTab() {
+        var tabItem = root.getTab(0);
+        if (tabItem && tabItem.navigation) {
+            tabItem.navigation.requestActive()
+        }
+    }
 
     Rectangle {
         id: selectionHighlighting
 
+        y: 4
         x: {
             if (root.currentIndex < 0) {
                 return
@@ -22,11 +51,9 @@ TabView {
         }
 
         height: 3
-        width: parent.width / count
-
-        color: ui.theme.accentColor
-
+        width: root.width / count
         radius: 2
+        color: ui.theme.accentColor
 
         Behavior on x {
             NumberAnimation {
@@ -36,29 +63,41 @@ TabView {
     }
 
     style: TabViewStyle {
+
+        id: style
+
         frameOverlap: 1
 
-        tab: Column {
+        tab: Item {
+            id: tab
 
-            height: tabBarHeight
-            width: styleData.availableWidth / count
+            property var tabItem: root.getTab(styleData.index)
 
-            StyledTextLabel {
-                id: titleLabel
+            implicitWidth: styleData.availableWidth / count
+            implicitHeight: tabBarHeight
 
-                width: parent.width
+            Rectangle {
 
-                text: styleData.title
-                font: ui.theme.bodyBoldFont
+                anchors.fill: parent
+                color:  ui.theme.backgroundPrimaryColor
+                radius: 4
+                anchors.margins: 1
+                border.width: (tab.tabItem.navigation && tab.tabItem.navigation.active) ? 2 : 0
+                border.color: ui.theme.focusColor
                 opacity: styleData.selected ? ui.theme.buttonOpacityHit : ui.theme.buttonOpacityNormal
+
+                StyledTextLabel {
+                    id: titleLabel
+                    anchors.fill: parent
+                    text: styleData.title
+                    font: ui.theme.bodyBoldFont
+                }
             }
         }
 
         frame: Rectangle {
             id: backgroundRect
-
             anchors.fill: parent
-
             color: ui.theme.backgroundPrimaryColor
         }
     }

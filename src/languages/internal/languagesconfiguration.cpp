@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "languagesconfiguration.h"
 
 #include <QDir>
@@ -33,29 +36,48 @@ using namespace mu;
 using namespace mu::framework;
 using namespace mu::languages;
 
+static const QString SYSTEM_LANGUAGE_CODE("system");
 static const std::string module_name("languages");
 static const Settings::Key LANGUAGES_JSON(module_name, "languages/languagesJson");
 static const Settings::Key LANGUAGE("ui", "ui/application/language");
 
+QString correctLanguageCode(const QString& languageCode)
+{
+    QString result = languageCode;
+
+    if (result == SYSTEM_LANGUAGE_CODE) {
+        result = QLocale::system().name();
+    }
+
+    return result;
+}
+
 void LanguagesConfiguration::init()
 {
-    settings()->setDefaultValue(LANGUAGE, Val("system"));
+    settings()->setDefaultValue(LANGUAGE, Val(SYSTEM_LANGUAGE_CODE.toStdString()));
+    settings()->valueChanged(LANGUAGE).onReceive(nullptr, [this](const Val& val) {
+        m_currentLanguageCodeChanged.send(correctLanguageCode(val.toQString()));
+    });
+
     settings()->valueChanged(LANGUAGES_JSON).onReceive(nullptr, [this](const Val& val) {
         LanguagesHash languagesHash = parseLanguagesConfig(val.toQString().toLocal8Bit());
         m_languagesHashChanged.send(languagesHash);
     });
 }
 
-QString LanguagesConfiguration::currentLanguageCode() const
+ValCh<QString> LanguagesConfiguration::currentLanguageCode() const
 {
-    return settings()->value(LANGUAGE).toQString();
+    ValCh<QString> result;
+    result.ch = m_currentLanguageCodeChanged;
+    result.val = correctLanguageCode(settings()->value(LANGUAGE).toQString());
+
+    return result;
 }
 
-Ret LanguagesConfiguration::setCurrentLanguageCode(const QString& languageCode) const
+void LanguagesConfiguration::setCurrentLanguageCode(const QString& languageCode) const
 {
     Val value(languageCode.toStdString());
     settings()->setValue(LANGUAGE, value);
-    return make_ret(Err::NoError);
 }
 
 QUrl LanguagesConfiguration::languagesUpdateUrl() const

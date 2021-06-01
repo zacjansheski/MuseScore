@@ -1,14 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2011 Werner Schweer
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2
-//  as published by the Free Software Foundation and appearing in
-//  the file LICENCE.GPL
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #include "importgtp.h"
 
@@ -300,13 +310,12 @@ Fraction GuitarPro5::readBeat(const Fraction& tick, int voice, Measure* measure,
         d.setDots(dotted ? 1 : 0);
 
         if (dotted) {
-            l = l + (l * Fraction(1,2));
+            l = l + (l * Fraction(1, 2));
         }
 
         if (tuple) {
             Tuplet* tuplet = tuplets[staffIdx * 2 + voice];
-            if ((tuplet == 0)
-                || (tuplet->elementsDuration() == tuplet->baseLen().fraction() * tuplet->ratio().numerator())) {
+            if ((tuplet == 0) || (tuplet->elementsDuration() == tuplet->baseLen().fraction() * tuplet->ratio().numerator())) {
                 tuplet = new Tuplet(score);
                 tuplet->setTick(tick);
                 // int track = staffIdx * 2 + voice;
@@ -436,7 +445,7 @@ Fraction GuitarPro5::readBeat(const Fraction& tick, int voice, Measure* measure,
 void GuitarPro5::readMeasure(Measure* measure, int staffIdx, Tuplet** tuplets, bool mixChange)
 {
     for (int voice = 0; voice < 2; ++voice) {
-        Fraction measureLen = { 0,1 };
+        Fraction measureLen = { 0, 1 };
         Fraction tick       = measure->tick();
         int beats           = readInt();
         if (beats > 100) {
@@ -583,7 +592,7 @@ bool GuitarPro5::readTracks()
             clefId = ClefType::PERC;
             // instr->setUseDrumset(DrumsetKind::GUITAR_PRO);
             instr->setDrumset(gpDrumset);
-            staff->setStaffType(Fraction(0,1), *StaffType::preset(StaffTypes::PERC_DEFAULT));
+            staff->setStaffType(Fraction(0, 1), *StaffType::preset(StaffTypes::PERC_DEFAULT));
         } else {
             clefId = defaultClef(patch);
         }
@@ -591,7 +600,7 @@ bool GuitarPro5::readTracks()
         Clef* clef = new Clef(score);
         clef->setClefType(clefId);
         clef->setTrack(i * VOICES);
-        Segment* segment = measure->getSegment(SegmentType::HeaderClef, Fraction(0,1));
+        Segment* segment = measure->getSegment(SegmentType::HeaderClef, Fraction(0, 1));
         segment->add(clef);
 
         if (capo > 0) {
@@ -926,8 +935,7 @@ bool GuitarPro5::read(QFile* fp)
 //		Note* next = nullptr;
         auto segment = n->chord()->segment();
         auto measure = segment->measure();
-        while ((segment = segment->next1(SegmentType::ChordRest))
-               || ((measure = measure->nextMeasure()) && (segment = measure->first()))) {
+        while ((segment = segment->next1(SegmentType::ChordRest)) || ((measure = measure->nextMeasure()) && (segment = measure->first()))) {
             if (segment->segmentType() != SegmentType::ChordRest) {
                 continue;
             }
@@ -940,8 +948,7 @@ bool GuitarPro5::read(QFile* fp)
                         for (auto e : nt->el()) {
                             if (e->isChordLine()) {
                                 ChordLine* cl = toChordLine(e);
-                                if (cl->chordLineType() == ChordLineType::PLOP
-                                    || cl->chordLineType() == ChordLineType::SCOOP) {
+                                if (cl->chordLineType() == ChordLineType::PLOP || cl->chordLineType() == ChordLineType::SCOOP) {
                                     br = true;
                                     break;
                                 }
@@ -1110,8 +1117,7 @@ bool GuitarPro5::readNoteEffects(Note* note)
         gn->setFret(fret);
         gn->setString(note->string());
 #endif
-        int grace_pitch = note->staff()->part()->instrument()->stringData()->getPitch(
-            note->string(), fret, nullptr, Fraction(0,1));
+        int grace_pitch = note->staff()->part()->instrument()->stringData()->getPitch(note->string(), fret, nullptr, Fraction(0, 1));
 #if 0
         gn->setPitch(grace_pitch);
         gn->setTpcFromPitch();
@@ -1158,8 +1164,8 @@ bool GuitarPro5::readNoteEffects(Note* note)
 #if 0
         else if (transition == 2 && note->fret() >= 0 && note->fret() <= 255 && note->fret() != gn->fret()) {
             QList<PitchValue> points;
-            points.append(PitchValue(0,0, false));
-            points.append(PitchValue(60,(note->fret() - gn->fret()) * 100, false));
+            points.append(PitchValue(0, 0, false));
+            points.append(PitchValue(60, (note->fret() - gn->fret()) * 100, false));
 
             Bend* b = new Bend(note->score());
             b->setPoints(points);
@@ -1340,8 +1346,7 @@ bool GuitarPro5::readNoteEffects(Note* note)
             }
             harmonicNote->setString(note->string());
             harmonicNote->setFret(fret);
-            harmonicNote->setPitch(staff->part()->instrument()->stringData()->getPitch(note->string(), fret, nullptr,
-                                                                                       Fraction(0,1)));
+            harmonicNote->setPitch(staff->part()->instrument()->stringData()->getPitch(note->string(), fret, nullptr, Fraction(0, 1)));
             harmonicNote->setTpcFromPitch();
             addTextToNote("A.H.", Align::CENTER, harmonicNote);
         }
@@ -1503,7 +1508,7 @@ bool GuitarPro5::readNote(int string, Note* note)
         note->setHeadGroup(NoteHead::Group::HEAD_CROSS);
         note->setGhost(true);
     }
-    int pitch = staff->part()->instrument()->stringData()->getPitch(string, fretNumber, nullptr, Fraction(0,1));
+    int pitch = staff->part()->instrument()->stringData()->getPitch(string, fretNumber, nullptr, Fraction(0, 1));
     note->setFret(fretNumber);
     note->setString(string);
     note->setPitch(pitch);

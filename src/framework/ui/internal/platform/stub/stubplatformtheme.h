@@ -1,46 +1,47 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2021 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #ifndef MU_UI_STUBPLATFORMTHEME_H
 #define MU_UI_STUBPLATFORMTHEME_H
 
-#include "iplatformtheme.h"
+#include "internal/iplatformtheme.h"
 
 namespace mu::ui {
 class StubPlatformTheme : public IPlatformTheme
 {
 public:
-    StubPlatformTheme() = default;
-    ~StubPlatformTheme() = default;
-
-    void init() override;
+    void startListening() override;
+    void stopListening() override;
 
     bool isFollowSystemThemeAvailable() const override;
 
-    bool isDarkMode() const override;
-    async::Channel<bool> darkModeSwitched() const override;
+    ThemeCode themeCode() const override;
+    async::Channel<ThemeCode> themeCodeChanged() const override;
 
-    void setAppThemeDark(bool) override;
-    void styleWindow(QWidget*) override;
+    void applyPlatformStyleOnAppForTheme(ThemeCode themeCode) override;
+    void applyPlatformStyleOnWindowForTheme(QWindow* window, ThemeCode themeCode) override;
 
 private:
-    async::Channel<bool> m_darkModeSwitched;
+    async::Channel<ThemeCode> m_channel;
 };
 }
 

@@ -1,10 +1,33 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #ifndef MU_INSPECTOR_SCORESETTINGSMODEL_H
 #define MU_INSPECTOR_SCORESETTINGSMODEL_H
 
 #include "models/abstractinspectormodel.h"
+#include "async/asyncable.h"
+#include "notation/notationtypes.h"
 
 namespace mu::inspector {
-class ScoreSettingsModel : public AbstractInspectorModel
+class ScoreSettingsModel : public AbstractInspectorModel, public mu::async::Asyncable
 {
     Q_OBJECT
 
@@ -12,6 +35,7 @@ class ScoreSettingsModel : public AbstractInspectorModel
     Q_PROPERTY(bool shouldShowUnprintable READ shouldShowUnprintable WRITE setShouldShowUnprintable NOTIFY shouldShowUnprintableChanged)
     Q_PROPERTY(bool shouldShowFrames READ shouldShowFrames WRITE setShouldShowFrames NOTIFY shouldShowFramesChanged)
     Q_PROPERTY(bool shouldShowPageMargins READ shouldShowPageMargins WRITE setShouldShowPageMargins NOTIFY shouldShowPageMarginsChanged)
+
 public:
     explicit ScoreSettingsModel(QObject* parent, IElementRepositoryService* repository);
 
@@ -40,9 +64,21 @@ signals:
     void shouldShowPageMarginsChanged(bool shouldShowPageMargins);
 
 private:
-    bool m_shouldShowInvisible = true;
-    bool m_shouldShowUnprintable = true;
-    bool m_shouldShowFrames = true;
+    void updateShouldShowInvisible(bool isVisible);
+    void updateShouldShowUnprintable(bool isVisible);
+    void updateShouldShowFrames(bool isVisible);
+    void updateShouldShowPageMargins(bool isVisible);
+
+    notation::ScoreConfig scoreConfig() const;
+    async::Channel<notation::ScoreConfigType> scoreConfigChanged() const;
+
+    void updateFromConfig(mu::notation::ScoreConfigType configType);
+    void updateAll();
+    void setupConnections();
+
+    bool m_shouldShowInvisible = false;
+    bool m_shouldShowUnprintable = false;
+    bool m_shouldShowFrames = false;
     bool m_shouldShowPageMargins = false;
 };
 }

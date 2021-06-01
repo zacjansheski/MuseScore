@@ -1,3 +1,23 @@
+# SPDX-License-Identifier: GPL-3.0-only
+# MuseScore-CLA-applies
+#
+# MuseScore
+# Music Composition & Notation
+#
+# Copyright (C) 2021 MuseScore BVBA and others
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 
 # Main
 add_subdirectory(main)
@@ -6,7 +26,7 @@ add_subdirectory(main)
 add_subdirectory(framework)
 
 # Domain model
-add_subdirectory(libmscore)
+add_subdirectory(engraving)
 
 # AppShell
 add_subdirectory(appshell)
@@ -65,6 +85,10 @@ if (BUILD_INSPECTOR_MODULE)
     add_subdirectory(inspector)
 endif (BUILD_INSPECTOR_MODULE)
 
+if (BUILD_AUTOBOT_MODULE)
+    add_subdirectory(autobot)
+endif()
+
 # Stubs
 add_subdirectory(stubs)
 
@@ -72,15 +96,14 @@ if (BUILD_UNIT_TESTS)
 #    add_subdirectory(notation/tests) no tests at moment
     add_subdirectory(userscores/tests)
 
-# needs actualization
-    add_subdirectory(libmscore/tests)
-#    add_subdirectory(importexport/bb/tests)
-#    add_subdirectory(importexport/braille/tests)
-#    add_subdirectory(importexport/bww/tests)
-#    add_subdirectory(importexport/capella/tests)
+    add_subdirectory(engraving/tests)
+    add_subdirectory(importexport/bb/tests)
+    add_subdirectory(importexport/braille/tests)
+    add_subdirectory(importexport/bww/tests)
+    add_subdirectory(importexport/capella/tests)
 #    add_subdirectory(importexport/guitarpro/tests)
-#    add_subdirectory(importexport/midiimport/tests)
-#    add_subdirectory(importexport/musicxml/tests)
+    add_subdirectory(importexport/midiimport/tests)
+    add_subdirectory(importexport/musicxml/tests)
 endif(BUILD_UNIT_TESTS)
 
 if (OS_IS_WASM)

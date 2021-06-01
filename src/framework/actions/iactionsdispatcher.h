@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #ifndef MU_ACTIONS_IACTIONSDISPATCHER_H
 #define MU_ACTIONS_IACTIONSDISPATCHER_H
 
@@ -33,6 +36,7 @@ public:
 
     using ActionCallBack = std::function<void ()>;
     using ActionCallBackWithName = std::function<void (const ActionCode&)>;
+    using ActionCallBackWithData = std::function<void (const ActionData& data)>;
     using ActionCallBackWithNameAndData = std::function<void (const ActionCode&, const ActionData& data)>;
 
     virtual void dispatch(const ActionCode& actionCode) = 0;
@@ -49,6 +53,11 @@ public:
     void reg(Actionable* client, const ActionCode& action, const ActionCallBackWithName& call)
     {
         reg(client, action, [call](const ActionCode& action, const ActionData&) { call(action); });
+    }
+
+    void reg(Actionable* client, const ActionCode& action, const ActionCallBackWithData& call)
+    {
+        reg(client, action, [call](const ActionCode&, const ActionData& data) { call(data); });
     }
 
     template<typename T>

@@ -1,7 +1,29 @@
-import QtQuick 2.9
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+import QtQuick 2.15
 import QtQuick.Controls 2.2
 import QtQuick.Layouts 1.3
 
+import MuseScore.Ui 1.0
 import MuseScore.UiComponents 1.0
 import MuseScore.Extensions 1.0
 import MuseScore.Languages 1.0
@@ -11,17 +33,33 @@ FocusScope {
     id: root
 
     property var color: ui.theme.backgroundSecondaryColor
+    property string item: ""
+
+    signal requestActiveFocus()
+
+    NavigationSection {
+        id: navSec
+        name: "Addons"
+        enabled: root.visible
+        order: 3
+        onActiveChanged: {
+            if (active) {
+                root.requestActiveFocus()
+            }
+        }
+    }
+
+    onItemChanged: {
+        if (!Boolean(root.item)) {
+            return
+        }
+
+        bar.selectPage(root.item)
+    }
 
     Rectangle {
         anchors.fill: parent
         color: root.color
-
-        MouseArea {
-            anchors.fill: parent
-            onClicked: {
-                forceActiveFocus()
-            }
-        }
     }
 
     RowLayout {
@@ -32,6 +70,14 @@ FocusScope {
         anchors.right: parent.right
 
         spacing: 12
+
+        NavigationPanel {
+            id: navSearchPanel
+            name: "AddonsSearch"
+            section: navSec
+            order: 1
+            accessible.name: qsTrc("appshell", "Addons")
+        }
 
         StyledTextLabel {
             id: addonsLabel
@@ -52,6 +98,11 @@ FocusScope {
             SearchField {
                 id: searchField
 
+                navigation.name: "AddonsSearch"
+                navigation.panel: navSearchPanel
+                navigation.order: 1
+                accessible.name: qsTrc("appshell", "Addons search")
+
                 onSearchTextChanged: {
                     categoryComboBox.selectedCategory = ""
                 }
@@ -61,6 +112,10 @@ FocusScope {
                 id: categoryComboBox
 
                 width: searchField.width
+
+                navigation.name: "CategoryComboBox"
+                navigation.panel: navSearchPanel
+                navigation.order: 2
 
                 textRoleName: "text"
                 valueRoleName: "value"
@@ -104,7 +159,7 @@ FocusScope {
         anchors.topMargin: 54
         anchors.horizontalCenter: parent.horizontalCenter
 
-        contentHeight: 28
+        contentHeight: 32
         spacing: 0
 
         property bool canFilterByCategories: bar.currentIndex === 0 || bar.currentIndex === 1
@@ -119,23 +174,68 @@ FocusScope {
             return result
         }
 
+        function pageIndex(pageName) {
+            switch (pageName) {
+            case "plugins": return 0
+            case "extensions": return 1
+            case "languages": return 2
+            }
+
+            return 0
+        }
+
+        function selectPage(pageName) {
+            currentIndex = pageIndex(pageName)
+        }
+
+        NavigationPanel {
+            id: navTabPanel
+            name: "AddonsTabs"
+            section: navSec
+            order: 2
+            accessible.name: qsTrc("appshell", "Addons tabs")
+
+            onNavigationEvent: {
+                if (event.type === NavigationEvent.AboutActive) {
+                    event.setData("controlName", bar.currentItem.navigation.name)
+                }
+            }
+        }
+
         StyledTabButton {
             text: qsTrc("appshell", "Plugins")
             sideMargin: 22
             isCurrent: bar.currentIndex === 0
             backgroundColor: root.color
+
+            navigation.name: "Plugins"
+            navigation.panel: navTabPanel
+            navigation.order: 1
+            onNavigationTriggered: bar.currentIndex = 0
         }
+
         StyledTabButton {
             text: qsTrc("appshell", "Extensions")
             sideMargin: 22
             isCurrent: bar.currentIndex === 1
             backgroundColor: root.color
+
+            navigation.name: "Extensions"
+            navigation.panel: navTabPanel
+            navigation.order: 2
+            onNavigationTriggered: bar.currentIndex = 1
         }
+
         StyledTabButton {
             text: qsTrc("appshell", "Languages")
             sideMargin: 22
             isCurrent: bar.currentIndex === 2
             backgroundColor: root.color
+
+            navigation.name: "Languages"
+            navigation.panel: navTabPanel
+            navigation.order: 3
+            onNavigationTriggered: bar.currentIndex = 2
         }
     }
 
@@ -165,7 +265,8 @@ FocusScope {
 
         LanguagesPage {
             id: languagesComp
-
+            navigation.section: navSec
+            navigation.order: 3
             search: searchField.searchText
             backgroundColor: root.color
         }

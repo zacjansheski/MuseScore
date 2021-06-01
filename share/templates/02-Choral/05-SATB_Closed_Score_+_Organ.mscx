@@ -6,7 +6,6 @@
     <Division>480</Division>
     <Style>
       <enableVerticalSpread>1</enableVerticalSpread>
-      <useStandardNoteNames>0</useStandardNoteNames>
       <Spatium>1.75</Spatium>
       </Style>
     <showInvisible>1</showInvisible>
@@ -223,14 +222,13 @@
         <Channel>
           <controller ctrl="0" value="0"/>
           <controller ctrl="32" value="17"/>
-          <program value="75"/>
+          <program value="19"/>
           </Channel>
         </Instrument>
       </Part>
     <Staff id="1">
       <VBox>
         <height>10</height>
-        <boxAutoSize>0</boxAutoSize>
         <Text>
           <style>Title</style>
           <text>SATB Closed Score + Organ</text>

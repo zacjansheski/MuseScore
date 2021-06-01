@@ -1,56 +1,70 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #ifndef MU_NOTATION_NOTATIONACTIONCONTROLLER_H
 #define MU_NOTATION_NOTATIONACTIONCONTROLLER_H
 
 #include "modularity/ioc.h"
 #include "actions/iactionsdispatcher.h"
 #include "actions/actionable.h"
+#include "async/asyncable.h"
 #include "context/iglobalcontext.h"
 #include "inotation.h"
 #include "iinteractive.h"
 #include "audio/isequencer.h"
+#include "playback/iplaybackcontroller.h"
+#include "playback/iplaybackconfiguration.h"
 #include "inotationconfiguration.h"
 
 namespace mu::notation {
-class NotationActionController : public actions::Actionable
+class NotationActionController : public actions::Actionable, public async::Asyncable
 {
     INJECT(notation, actions::IActionsDispatcher, dispatcher)
     INJECT(notation, context::IGlobalContext, globalContext)
     INJECT(notation, framework::IInteractive, interactive)
     INJECT(notation, audio::ISequencer, sequencer)
+    INJECT(notation, playback::IPlaybackController, playbackController)
+    INJECT(notation, playback::IPlaybackConfiguration, playbackConfiguration)
     INJECT(notation, INotationConfiguration, configuration)
 
 public:
     void init();
 
+    bool canReceiveAction(const actions::ActionCode& code) const override;
+
+    async::Notification currentNotationChanged() const;
+
+    INotationNoteInputPtr currentNotationNoteInput() const;
+    async::Notification currentNotationNoteInputChanged() const;
+
+    INotationInteractionPtr currentNotationInteraction() const;
+
 private:
-    bool canReceiveAction(const actions::ActionCode& actionCode) const override;
 
     INotationPtr currentNotation() const;
-    INotationInteractionPtr currentNotationInteraction() const;
     INotationElementsPtr currentNotationElements() const;
     INotationSelectionPtr currentNotationSelection() const;
-    INotationNoteInputPtr currentNotationNoteInput() const;
+    INotationUndoStackPtr currentNotationUndoStack() const;
 
-    void resetState();
-
+    void toggleNoteInput();
     void toggleNoteInputMethod(NoteInputMethod method);
     void addNote(NoteName note, NoteAddingMode addingMode);
     void addText(TextType type);
@@ -58,12 +72,19 @@ private:
     void padNote(const Pad& pad);
     void putNote(const actions::ActionData& data);
 
+    void toggleVisible();
+
     void toggleAccidental(AccidentalType type);
+    void putRestToSelection();
+    void putRest(DurationType duration);
     void addArticulation(SymbolId articulationSymbolId);
 
     void putTuplet(int tupletCount);
+    void addBeamToSelectedChordRests(BeamMode mode);
+    void addBracketsToSelection(BracketsType type);
 
     void moveAction(const actions::ActionCode& actionCode);
+    void moveChord(MoveDirection direction);
     void moveText(INotationInteractionPtr interaction, const actions::ActionCode& actionCode);
 
     void swapVoices(int voiceIndex1, int voiceIndex2);
@@ -75,17 +96,22 @@ private:
     void swapSelection();
     void flipSelection();
     void addTie();
+    void chordTie();
     void addSlur();
     void addInterval(int interval);
 
     void undo();
     void redo();
 
+    void addChordToSelection(MoveDirection direction);
     void selectAllSimilarElements();
     void selectAllSimilarElementsInStaff();
     void selectAllSimilarElementsInRange();
     void openSelectionMoreOptions();
     void selectAll();
+    void selectSection();
+    void firstElement();
+    void lastElement();
 
     void splitMeasure();
     void joinSelectedMeasures();
@@ -102,7 +128,30 @@ private:
     void addHairpin(HairpinType type);
     void addAnchoredNoteLine();
 
-    void openPageStyle();
+    void addStretch(qreal value);
+
+    void explodeSelectedStaff();
+    void implodeSelectedStaff();
+    void realizeSelectedChordSymbols();
+    void removeSelectedRange();
+    void removeEmptyTrailingMeasures();
+    void fillSelectionWithSlashes();
+    void replaceSelectedNotesWithSlashes();
+    void spellPitches();
+    void regroupNotesAndRests();
+    void resequenceRehearsalMarks();
+    void unrollRepeats();
+    void copyLyrics();
+    void addGraceNotesToSelectedNotes(GraceNoteType type);
+
+    void resetState();
+    void resetStretch();
+    void resetTextStyleOverrides();
+    void resetBeamMode();
+    void resetShapesAndPosition();
+
+    void openEditStyleDialog();
+    void openPageSettingsDialog();
     void openStaffProperties();
     void openBreaksDialog();
     void openScoreProperties();
@@ -110,16 +159,13 @@ private:
     void openPartsDialog();
     void openTupletOtherDialog();
 
+    void toggleScoreConfig(ScoreConfigType configType);
     void toggleNavigator();
+    void toggleMixer();
+
+    void playSelectedElement(bool playChord = true);
 
     bool isTextEditting() const;
-
-    enum class PastingType {
-        Default,
-        Half,
-        Double,
-        Special
-    };
 
     void pasteSelection(PastingType type = PastingType::Default);
     Fraction resolvePastingScale(const INotationInteractionPtr& interaction, PastingType type) const;
@@ -127,6 +173,13 @@ private:
     FilterElementsOptions elementsFilterOptions(const Element* element) const;
 
     void startNoteInputIfNeed();
+
+    bool hasSelection() const;
+    bool canUndo() const;
+    bool canRedo() const;
+    bool isNotationPage() const;
+
+    async::Notification m_currentNotationNoteInputChanged;
 };
 }
 

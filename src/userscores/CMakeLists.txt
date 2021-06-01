@@ -1,21 +1,22 @@
-#=============================================================================
-#  MuseScore
-#  Music Composition & Notation
+# SPDX-License-Identifier: GPL-3.0-only
+# MuseScore-CLA-applies
 #
-#  Copyright (C) 2020 MuseScore BVBA and others
+# MuseScore
+# Music Composition & Notation
 #
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License version 2.
+# Copyright (C) 2021 MuseScore BVBA and others
 #
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as
+# published by the Free Software Foundation.
 #
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-#=============================================================================
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 set(MODULE userscores)
 
@@ -28,6 +29,8 @@ set(MODULE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/userscoresmodule.h
     ${CMAKE_CURRENT_LIST_DIR}/iuserscoresconfiguration.h
     ${CMAKE_CURRENT_LIST_DIR}/iuserscoresservice.h
+    ${CMAKE_CURRENT_LIST_DIR}/ifilescorecontroller.h
+    ${CMAKE_CURRENT_LIST_DIR}/iexportscorescenario.h
     ${CMAKE_CURRENT_LIST_DIR}/userscorestypes.h
     ${CMAKE_CURRENT_LIST_DIR}/view/recentscoresmodel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/view/recentscoresmodel.h
@@ -41,6 +44,8 @@ set(MODULE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/view/templatesmodel.h
     ${CMAKE_CURRENT_LIST_DIR}/view/templatepaintview.cpp
     ${CMAKE_CURRENT_LIST_DIR}/view/templatepaintview.h
+    ${CMAKE_CURRENT_LIST_DIR}/view/exportdialogmodel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/view/exportdialogmodel.h
     ${CMAKE_CURRENT_LIST_DIR}/internal/filescorecontroller.cpp
     ${CMAKE_CURRENT_LIST_DIR}/internal/filescorecontroller.h
     ${CMAKE_CURRENT_LIST_DIR}/internal/userscoresconfiguration.cpp
@@ -50,8 +55,12 @@ set(MODULE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/internal/itemplatesrepository.h
     ${CMAKE_CURRENT_LIST_DIR}/internal/templatesrepository.cpp
     ${CMAKE_CURRENT_LIST_DIR}/internal/templatesrepository.h
-    ${CMAKE_CURRENT_LIST_DIR}/internal/userscoresactions.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/internal/userscoresactions.h
+    ${CMAKE_CURRENT_LIST_DIR}/internal/userscoresuiactions.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/internal/userscoresuiactions.h
+    ${CMAKE_CURRENT_LIST_DIR}/internal/exporttype.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/internal/exporttype.h
+    ${CMAKE_CURRENT_LIST_DIR}/internal/exportscorescenario.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/internal/exportscorescenario.h
     )
 
 set(MODULE_LINK notation)

@@ -1,10 +1,33 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "scoreappearancesettingsmodel.h"
 
 #include <QPageSize>
 #include <QSize>
 
-#include "types/scoreappearancetypes.h"
+#include "log.h"
+#include "translation.h"
 #include "dataformatter.h"
+#include "types/scoreappearancetypes.h"
 
 using namespace mu::inspector;
 
@@ -41,9 +64,8 @@ void ScoreAppearanceSettingsModel::loadProperties()
 
     m_pageTypeListModel->setCurrentPageSizeId(static_cast<int>(QPageSize::id(pageSize, QPageSize::Inch, QPageSize::FuzzyOrientationMatch)));
 
-    ScoreAppearanceTypes::OrientationType pageOrientationType = pageSize.width()
-                                                                > pageSize.height() ? ScoreAppearanceTypes::OrientationType::
-                                                                ORIENTATION_LANDSCAPE
+    ScoreAppearanceTypes::OrientationType pageOrientationType = pageSize.width() > pageSize.height()
+                                                                ? ScoreAppearanceTypes::OrientationType::ORIENTATION_LANDSCAPE
                                                                 : ScoreAppearanceTypes::OrientationType::ORIENTATION_PORTRAIT;
 
     setOrientationType(static_cast<int>(pageOrientationType));
@@ -62,12 +84,12 @@ PageTypeListModel* ScoreAppearanceSettingsModel::pageTypeListModel() const
 
 void ScoreAppearanceSettingsModel::showPageSettings()
 {
-    adapter()->showPageSettingsDialog();
+    dispatcher()->dispatch("page-settings");
 }
 
 void ScoreAppearanceSettingsModel::showStyleSettings()
 {
-    adapter()->showStyleSettingsDialog();
+    dispatcher()->dispatch("edit-style");
 }
 
 int ScoreAppearanceSettingsModel::orientationType() const
@@ -94,6 +116,10 @@ void ScoreAppearanceSettingsModel::setPageTypeListModel(PageTypeListModel* pageT
 
         updateStyleValue(Ms::Sid::pageWidth, pageSize.width());
         updateStyleValue(Ms::Sid::pageHeight, pageSize.height());
+
+        double oddLeftMargin = styleValue(Ms::Sid::pageOddLeftMargin).toDouble();
+        double evenLeftMargin = styleValue(Ms::Sid::pageEvenLeftMargin).toDouble();
+        updateStyleValue(Ms::Sid::pagePrintableWidth, pageSize.width() - (oddLeftMargin + evenLeftMargin));
     });
 }
 
@@ -109,6 +135,11 @@ void ScoreAppearanceSettingsModel::setOrientationType(int orientationType)
 
     updateStyleValue(Ms::Sid::pageWidth, pageSize.height());
     updateStyleValue(Ms::Sid::pageHeight, pageSize.width());
+
+    double oddLeftMargin = styleValue(Ms::Sid::pageOddLeftMargin).toDouble();
+    double evenLeftMargin = styleValue(Ms::Sid::pageEvenLeftMargin).toDouble();
+    updateStyleValue(Ms::Sid::pagePrintableWidth, pageSize.height() - (oddLeftMargin + evenLeftMargin));
+
     emit orientationTypeChanged(m_orientationType);
 }
 

@@ -1,29 +1,29 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "globalcontext.h"
 
 using namespace mu::context;
 using namespace mu::notation;
-using namespace mu::shortcuts;
 using namespace mu::async;
-
-static const mu::Uri NOTATION_PAGE_URI("musescore://notation");
 
 void GlobalContext::addMasterNotation(const IMasterNotationPtr& notation)
 {
@@ -57,10 +57,12 @@ void GlobalContext::setCurrentMasterNotation(const IMasterNotationPtr& masterNot
     }
 
     m_currentMasterNotation = masterNotation;
-    m_currentMasterNotationChanged.notify();
 
     INotationPtr notation = masterNotation ? masterNotation->notation() : nullptr;
-    setCurrentNotation(notation);
+    doSetCurrentNotation(notation);
+
+    m_currentMasterNotationChanged.notify();
+    m_currentNotationChanged.notify();
 }
 
 IMasterNotationPtr GlobalContext::currentMasterNotation() const
@@ -75,16 +77,7 @@ Notification GlobalContext::currentMasterNotationChanged() const
 
 void GlobalContext::setCurrentNotation(const INotationPtr& notation)
 {
-    if (m_currentNotation == notation) {
-        return;
-    }
-
-    m_currentNotation = notation;
-
-    if (m_currentNotation) {
-        m_currentNotation->setOpened(true);
-    }
-
+    doSetCurrentNotation(notation);
     m_currentNotationChanged.notify();
 }
 
@@ -98,12 +91,15 @@ Notification GlobalContext::currentNotationChanged() const
     return m_currentNotationChanged;
 }
 
-ShortcutContext GlobalContext::currentShortcutContext() const
+void GlobalContext::doSetCurrentNotation(const INotationPtr& notation)
 {
-    if (playbackController()->isPlaying()) {
-        return ShortcutContext::Playing;
-    } else if (interactive()->currentUri().val == NOTATION_PAGE_URI) {
-        return ShortcutContext::NotationActive;
+    if (m_currentNotation == notation) {
+        return;
     }
-    return ShortcutContext::Undefined;
+
+    m_currentNotation = notation;
+
+    if (m_currentNotation) {
+        m_currentNotation->setOpened(true);
+    }
 }

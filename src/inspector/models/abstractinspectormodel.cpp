@@ -1,9 +1,31 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "abstractinspectormodel.h"
 
 #include "libmscore/musescoreCore.h"
 #include "log.h"
 
 using namespace mu::inspector;
+using namespace mu::notation;
 
 static const QList<Ms::ElementType> NOTATION_ELEMENT_TYPES = {
     Ms::ElementType::NOTE,
@@ -149,7 +171,7 @@ void AbstractInspectorModel::onPropertyValueChanged(const Ms::Pid pid, const QVa
         return;
     }
 
-    adapter()->beginCommand();
+    beginCommand();
 
     QVariant convertedValue;
 
@@ -169,8 +191,8 @@ void AbstractInspectorModel::onPropertyValueChanged(const Ms::Pid pid, const QVa
         element->undoChangeProperty(pid, convertedValue, ps);
     }
 
-    adapter()->updateNotation();
-    adapter()->endCommand();
+    updateNotation();
+    endCommand();
 
     emit elementsModified();
 }
@@ -213,14 +235,16 @@ Ms::Sid AbstractInspectorModel::styleIdByPropertyId(const Ms::Pid pid) const
 
 void AbstractInspectorModel::updateStyleValue(const Ms::Sid& sid, const QVariant& newValue)
 {
-    adapter()->beginCommand();
-    adapter()->updateStyleValue(sid, newValue);
-    adapter()->endCommand();
+    if (style()) {
+        beginCommand();
+        style()->setStyleValue(sid, newValue);
+        endCommand();
+    }
 }
 
 QVariant AbstractInspectorModel::styleValue(const Ms::Sid& sid) const
 {
-    return adapter()->styleValue(sid);
+    return style() ? style()->styleValue(sid) : QVariant();
 }
 
 void AbstractInspectorModel::onResetToDefaults(const QList<Ms::Pid>& pidList)
@@ -229,7 +253,7 @@ void AbstractInspectorModel::onResetToDefaults(const QList<Ms::Pid>& pidList)
         return;
     }
 
-    adapter()->beginCommand();
+    beginCommand();
 
     for (Ms::Element* element : m_elementList) {
         IF_ASSERT_FAILED(element) {
@@ -241,9 +265,8 @@ void AbstractInspectorModel::onResetToDefaults(const QList<Ms::Pid>& pidList)
         }
     }
 
-    adapter()->endCommand();
-
-    adapter()->updateNotation();
+    endCommand();
+    updateNotation();
 
     emit elementsModified();
     emit modelReseted();
@@ -430,10 +453,64 @@ void AbstractInspectorModel::loadPropertyItem(PropertyItem* propertyItem, std::f
 
 bool AbstractInspectorModel::isNotationExisting() const
 {
-    return adapter()->isNotationExisting();
+    return !context()->masterNotations().empty();
 }
 
 bool AbstractInspectorModel::hasAcceptableElements() const
 {
     return !m_elementList.isEmpty();
+}
+
+INotationStylePtr AbstractInspectorModel::style() const
+{
+    if (!context() || !context()->currentNotation()) {
+        return nullptr;
+    }
+
+    return context()->currentNotation()->style();
+}
+
+INotationUndoStackPtr AbstractInspectorModel::undoStack() const
+{
+    if (!context() || !context()->currentNotation()) {
+        return nullptr;
+    }
+
+    return context()->currentNotation()->undoStack();
+}
+
+void AbstractInspectorModel::beginCommand()
+{
+    if (undoStack()) {
+        undoStack()->prepareChanges();
+    }
+}
+
+void AbstractInspectorModel::endCommand()
+{
+    if (undoStack()) {
+        undoStack()->commitChanges();
+    }
+}
+
+mu::async::Notification AbstractInspectorModel::currentNotationChanged() const
+{
+    IF_ASSERT_FAILED(context()) {
+        return mu::async::Notification();
+    }
+
+    return context()->currentNotationChanged();
+}
+
+void AbstractInspectorModel::updateNotation()
+{
+    IF_ASSERT_FAILED(context()) {
+        return;
+    }
+
+    if (!context()->currentNotation()) {
+        return;
+    }
+
+    context()->currentNotation()->notationChanged().notify();
 }

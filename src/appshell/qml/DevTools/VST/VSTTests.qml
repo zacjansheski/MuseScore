@@ -1,100 +1,76 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 import QtQuick 2.7
 import MuseScore.UiComponents 1.0
-import MuseScore.VST 1.0
+import MuseScore.Vst 1.0
 
 Rectangle {
 
-    color: "#0fb9b1"
+    color: ui.theme.backgroundPrimaryColor
 
-    VSTDevTools {
-        id: devtools
+    VstPluginListModelExample {
+        id: pluginListModel
+
+        Component.onCompleted: {
+            load()
+        }
     }
 
     Column {
-        id: column
-        padding: 5
-        anchors.fill: parent
-        spacing: 2
+        anchors {
+            top: parent.top
+            topMargin: 24
+            left: parent.left
+            leftMargin: 24
+        }
 
-        Row {
-            id: selector
-            height: 75
-            anchors.right: parent.right
-            anchors.left: parent.left
+        ListView {
 
-            StyledComboBox {
-                id: pluginSelector
-                width: parent.width / 2
+            width: 560
+            height: 226
 
-                valueRoleName: "uid"
-                textRoleName: "name"
+            model: pluginListModel
 
-                model: devtools.plugins
-            }
+            spacing: 12
 
-            FlatButton {
-                text: "Add instance"
-                onClicked: devtools.addInstance(pluginSelector.currentIndex)
+            delegate: RoundedRadioButton {
+                width: parent.width
+
+                checked: pluginListModel.selectedItemIndex === model.index
+                text: nameRole
+
+                onClicked: {
+                    pluginListModel.selectedItemIndex = index
+                }
             }
         }
 
-        Row {
-            id: instances
-            anchors.top: selector.bottom
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
+        FlatButton {
+            width: 560
+            height: 80
+            text: "Show editor"
 
-            Column {
-                anchors.fill: parent
-
-                Repeater {
-                    anchors.fill: parent
-                    model: devtools.instances
-                    Row {
-                        height: 50
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-
-                        StyledTextLabel {
-                            id: element
-                            text: modelData.name;
-                            width: parent.width - 240
-                        }
-
-                        FlatButton {
-                            width: 120
-                            text: "edit"
-                            onClicked: devtools.showEditor(index)
-
-                        }
-
-                        FlatButton {
-                            width: 120
-                            text: "play"
-                            onClicked: devtools.play(index)
-                        }
-
-                    }
-                }
+            onClicked: {
+                pluginListModel.showPluginEditor()
             }
         }
     }

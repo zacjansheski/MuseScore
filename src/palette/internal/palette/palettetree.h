@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2019 Werner Schweer and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #ifndef __PALETTETREE_H__
 #define __PALETTETREE_H__
@@ -27,8 +30,8 @@
 #include "libmscore/xml.h"
 
 #include "modularity/ioc.h"
-#include "ipaletteadapter.h"
-#include "ipaletteconfiguration.h"
+#include "../../ipaletteadapter.h"
+#include "../../ipaletteconfiguration.h"
 #include "async/asyncable.h"
 #include "iinteractive.h"
 
@@ -45,8 +48,8 @@ struct PaletteCell
 {
     INJECT_STATIC(palette, mu::palette::IPaletteAdapter, adapter)
 
-    std::shared_ptr<Element> element;
-    std::shared_ptr<Element> untranslatedElement;
+    ElementPtr element;
+    ElementPtr untranslatedElement;
     QString id;
     QString name;             // used for tool tip
     QString tag;
@@ -62,7 +65,7 @@ struct PaletteCell
     bool active    { false };
 
     explicit PaletteCell() = default;
-    PaletteCell(std::shared_ptr<Element> e, const QString& _name, qreal _mag = 1.0);
+    PaletteCell(ElementPtr e, const QString& _name, qreal _mag = 1.0);
 
     static constexpr const char* mimeDataFormat = "application/musescore/palette/cell";
 
@@ -94,12 +97,12 @@ class PaletteCellIconEngine : public QIconEngine
     INJECT_STATIC(palette, mu::palette::IPaletteConfiguration, configuration)
 
 private:
-    void paintCell(QPainter& p, const QRect& r, bool selected, bool current) const;
-    void paintScoreElement(QPainter& p, Element* e, qreal spatium, bool alignToStaff) const;
+    void paintCell(mu::draw::Painter& painter, const QRect& rect, bool selected, bool current) const;
+    void paintScoreElement(mu::draw::Painter& painter, Element* element, qreal spatium, bool alignToStaff) const;
 
-    static qreal paintStaff(QPainter& p, const QRect& rect, qreal spatium);
-    static void paintTag(QPainter& painter, const QRect& rect, QString tag);
-    static void paintBackground(QPainter& p, const QRect& r, bool selected, bool current);
+    static qreal paintStaff(mu::draw::Painter& painter, const QRect& rect, qreal spatium);
+    static void paintTag(mu::draw::Painter& painter, const QRect& rect, QString tag);
+    static void paintBackground(mu::draw::Painter& painter, const QRect& rect, bool selected, bool current);
 
 public:
     PaletteCellIconEngine(PaletteCellConstPtr cell, qreal extraMag = 1.0)
@@ -107,7 +110,7 @@ public:
 
     QIconEngine* clone() const override { return new PaletteCellIconEngine(cell(), _extraMag); }
 
-    void paint(QPainter* painter, const QRect& r, QIcon::Mode mode, QIcon::State state) override;
+    void paint(QPainter* painter, const QRect& rect, QIcon::Mode mode, QIcon::State state) override;
 };
 
 //---------------------------------------------------------
@@ -174,15 +177,15 @@ private:
     bool _expanded = false;
 
     Type guessType() const;
-    std::function<void(PaletteCell*)> cellHandlerByPaletteType(const Type& type) const;
+    std::function<void(PaletteCellPtr)> cellHandlerByPaletteType(const Type& type) const;
 
     void showWritingPaletteError(const QString& path) const;
 
 public:
     PalettePanel(Type t = Type::Custom);
 
-    PaletteCell* insert(int idx, Element* e, const QString& name, qreal mag = 1.0);
-    PaletteCell* append(Element* e, const QString& name, qreal mag = 1.0);
+    PaletteCellPtr insert(int idx, ElementPtr element, const QString& name, qreal mag = 1.0);
+    PaletteCellPtr append(ElementPtr element, const QString& name, qreal mag = 1.0);
 
     QString id() const;
 

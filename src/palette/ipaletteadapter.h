@@ -1,41 +1,37 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #ifndef MU_PALETTE_IPALETTEADAPTER_H
 #define MU_PALETTE_IPALETTEADAPTER_H
 
 #include "modularity/imoduleexport.h"
 
 #include <QString>
-#include <QPointF>
 
 #include "retval.h"
-#include "async/notification.h"
 
-class QAction;
+#include "async/notification.h"
+#include "ui/uitypes.h"
 
 namespace Ms {
-class InstrumentChange;
-class Score;
-class ScriptRecorder;
-enum class ViewState;
-class Slur;
-class Score;
 class Element;
 class PaletteWorkspace;
 }
@@ -50,8 +46,7 @@ class IPaletteAdapter : MODULE_EXPORT_INTERFACE
 public:
     virtual ~IPaletteAdapter() = default;
 
-    virtual QAction* getAction(const char* id) const = 0;
-    virtual QString actionHelp(const char* id) const = 0;
+    virtual const ui::UiAction& getAction(const actions::ActionCode& code) const = 0;
 
     virtual void showMasterPalette(const QString&) = 0;
 

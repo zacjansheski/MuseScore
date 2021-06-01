@@ -1,29 +1,32 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "parttreeitem.h"
 
 using namespace mu::instruments;
 using namespace mu::notation;
-using ItemType = InstrumentTreeItemType::ItemType;
+using ItemType = InstrumentsTreeItemType::ItemType;
 
 PartTreeItem::PartTreeItem(INotationPartsPtr notationParts, QObject* parent)
-    : AbstractInstrumentPanelTreeItem(ItemType::PART, notationParts, parent)
+    : AbstractInstrumentsPanelTreeItem(ItemType::PART, notationParts, parent)
 {
 }
 
@@ -57,7 +60,7 @@ void PartTreeItem::setInstrumentAbbreviature(const QString& abbreviature)
     m_instrumentAbbreviature = abbreviature;
 }
 
-void PartTreeItem::moveChildren(const int sourceRow, const int count, AbstractInstrumentPanelTreeItem* destinationParent,
+void PartTreeItem::moveChildren(const int sourceRow, const int count, AbstractInstrumentsPanelTreeItem* destinationParent,
                                 const int destinationRow)
 {
     IDList stavesIds;
@@ -75,10 +78,10 @@ void PartTreeItem::moveChildren(const int sourceRow, const int count, AbstractIn
         moveMode = INotationParts::InsertMode::After;
     }
 
-    AbstractInstrumentPanelTreeItem* destinationStaffItem = destinationParent->childAtRow(destinationRowLast);
+    AbstractInstrumentsPanelTreeItem* destinationStaffItem = destinationParent->childAtRow(destinationRowLast);
     notationParts()->moveStaves(stavesIds, destinationStaffItem->id(), moveMode);
 
-    AbstractInstrumentPanelTreeItem::moveChildren(sourceRow, count, destinationParent, destinationRow);
+    AbstractInstrumentsPanelTreeItem::moveChildren(sourceRow, count, destinationParent, destinationRow);
 }
 
 void PartTreeItem::removeChildren(const int row, const int count, const bool deleteChild)
@@ -93,5 +96,5 @@ void PartTreeItem::removeChildren(const int row, const int count, const bool del
         notationParts()->removeStaves(stavesIds);
     }
 
-    AbstractInstrumentPanelTreeItem::removeChildren(row, count, deleteChild);
+    AbstractInstrumentsPanelTreeItem::removeChildren(row, count, deleteChild);
 }

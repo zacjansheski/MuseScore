@@ -1,21 +1,22 @@
-#=============================================================================
-#  MuseScore
-#  Linux Music Score Editor
+# SPDX-License-Identifier: GPL-3.0-only
+# MuseScore-CLA-applies
 #
-#  Copyright (C) 2002-2016 by Werner Schweer and others
+# MuseScore
+# Music Composition & Notation
 #
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License version 2.
+# Copyright (C) 2021 MuseScore BVBA and others
 #
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as
+# published by the Free Software Foundation.
 #
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-#=============================================================================
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 cmake_minimum_required(VERSION 3.16)
 
@@ -68,6 +69,9 @@ option(BUILD_PLAYBACK_MODULE "Build playback module" ON)
 option(BUILD_PALETTE_MODULE "Build palette module" ON)
 option(BUILD_INSTRUMENTS_MODULE "Build instruments module" ON)
 option(BUILD_INSPECTOR_MODULE "Build inspector module" ON)
+option(BUILD_AUTOBOT_MODULE "Build autobot module" OFF)
+
+option(USE_SCORE_ACCESSIBLE_TREE "Use score accessible tree" OFF)
 
 option(SOUNDFONT3    "Ogg Vorbis compressed fonts"        ON)  # Enable Ogg Vorbis compressed fonts, requires Ogg & Vorbis
 option(DOWNLOAD_SOUNDFONT "Download the latest soundfont version as part of the build process" ON)
@@ -80,6 +84,7 @@ option(BUILD_PCH "Build using precompiled headers." ON)
 option(BUILD_UNITY "Build using unity build." ON)
 option(TRY_BUILD_SHARED_LIBS_IN_DEBUG "Build shared libs if possible in debug" OFF)
 option(QML_LOAD_FROM_SOURCE "Load qml files from source (not resource)" OFF)
+option(TRACE_DRAW_OBJ_ENABLED "Trace draw objects" OFF)
 
 option(USE_SYSTEM_FREETYPE "Use system FreeType" OFF) # requires freetype >= 2.5.2, does not work on win
 option(BUILD_WEBENGINE "Built in webengine support" ON)
@@ -219,6 +224,17 @@ add_subdirectory(share)
 add_subdirectory(src/framework/global) # should be first to work pch
 add_subdirectory(thirdparty/qzip)
 add_subdirectory(src)
+
+###########################################
+# Setup the KDDockWidgets lib
+###########################################
+if (NOT BUILD_SHARED_LIBS)
+    set(KDDockWidgets_STATIC ON CACHE BOOL "Build static versions of the libraries" FORCE)
+endif(NOT BUILD_SHARED_LIBS)
+
+set(KDDockWidgets_QTQUICK ON CACHE BOOL "Build for QtQuick instead of QtWidgets" FORCE)
+set(KDDockWidgets_EXAMPLES OFF CACHE BOOL "Build the examples" FORCE)
+add_subdirectory(thirdparty/KDDockWidgets)
 
 ###########################################
 # Setup Packaging

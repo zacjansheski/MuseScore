@@ -1,6 +1,26 @@
-import QtQuick 2.9
-import QtQuick.Layouts 1.3
-import QtGraphicalEffects 1.0
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+import QtQuick 2.15
+import QtQuick.Layouts 1.15
 
 import MuseScore.Ui 1.0
 import MuseScore.UiComponents 1.0
@@ -14,23 +34,28 @@ Item {
     property string filterKey
     property bool isSelected: false
     property bool isDragAvailable: false
-    property var type: InstrumentTreeItemType.UNDEFINED
+    property int type: InstrumentsTreeItemType.UNDEFINED
+
+    property int keynavRow: 0
+    property NavigationPanel navigationPanel: null
 
     property int sideMargin: 0
 
     signal clicked(var mouse)
+    signal doubleClicked(var mouse)
+    signal focusActived()
 
     signal popupOpened(var popupX, var popupY, var popupHeight)
     signal popupClosed()
 
     QtObject {
-        id: privateProperties
+        id: prv
 
         property bool dragged: mouseArea.drag.active && mouseArea.pressed
 
         onDraggedChanged: {
             if (dragged && styleData.isExpanded) {
-                attachedControl.collapse(styleData.index)
+                root.attachedControl.collapse(styleData.index)
             }
         }
 
@@ -40,11 +65,9 @@ Item {
         function openPopup(popup, item) {
             if (Boolean(popup)) {
                 openedPopup = popup
-
-                popup.open()
                 popup.load(item)
-
                 root.popupOpened(popup.x, popup.y, popup.height)
+                popup.open()
             }
         }
 
@@ -56,15 +79,13 @@ Item {
         }
 
         function resetOpenedPopup() {
-            openedPopup = null
             root.popupClosed()
+            openedPopup = null
         }
     }
 
-    anchors {
-        verticalCenter: parent ? parent.verticalCenter : undefined
-        horizontalCenter: parent ? parent.horizontalCenter : undefined
-    }
+    anchors.verticalCenter: parent ? parent.verticalCenter : undefined
+    anchors.horizontalCenter: parent ? parent.horizontalCenter : undefined
 
     height: parent ? parent.height : implicitHeight
     width: parent ? parent.width : implicitWidth
@@ -73,10 +94,25 @@ Item {
     implicitWidth: 248
 
     Drag.keys: [ root.filterKey ]
-    Drag.active: privateProperties.dragged && isDragAvailable
+    Drag.active: prv.dragged && isDragAvailable
     Drag.source: root
     Drag.hotSpot.x: width / 2
     Drag.hotSpot.y: height / 2
+
+    NavigationControl {
+        id: keynavItem
+        name: "ItemInstrumentsTree"
+        panel: root.navigationPanel
+        row: root.keynavRow
+        column: 0
+        enabled: root.visible
+
+        onActiveChanged: {
+            if (active) {
+                root.focusActived()
+            }
+        }
+    }
 
     Rectangle {
         id: background
@@ -86,10 +122,13 @@ Item {
         color: ui.theme.backgroundPrimaryColor
         opacity: 1
 
+        border.color: ui.theme.focusColor
+        border.width: keynavItem.active ? 2 : 0
+
         states: [
             State {
                 name: "HOVERED"
-                when: mouseArea.containsMouse && !mouseArea.containsPress && !root.isSelected && !privateProperties.dragged
+                when: mouseArea.containsMouse && !mouseArea.containsPress && !root.isSelected && !prv.dragged
 
                 PropertyChanges {
                     target: background
@@ -100,7 +139,7 @@ Item {
 
             State {
                 name: "PRESSED"
-                when: mouseArea.containsPress && !root.isSelected && !privateProperties.dragged
+                when: mouseArea.containsPress && !root.isSelected && !prv.dragged
 
                 PropertyChanges {
                     target: background
@@ -123,7 +162,7 @@ Item {
             State {
                 name: "PART_EXPANDED"
                 when: styleData.isExpanded && !root.isSelected &&
-                      delegateType === InstrumentTreeItemType.PART
+                      root.type === InstrumentsTreeItemType.PART
 
                 PropertyChanges {
                     target: background
@@ -135,8 +174,8 @@ Item {
             State {
                 name: "PARENT_EXPANDED"
                 when: root.visible && !root.isSelected &&
-                      (delegateType === InstrumentTreeItemType.INSTRUMENT ||
-                       delegateType === InstrumentTreeItemType.STAFF)
+                      (root.type === InstrumentsTreeItemType.INSTRUMENT ||
+                       root.type === InstrumentsTreeItemType.STAFF)
 
                 PropertyChanges {
                     target: background
@@ -147,14 +186,11 @@ Item {
         ]
     }
 
-    DropShadow {
+    StyledDropShadow {
         id: shadow
 
         anchors.fill: parent
         source: background
-        color: "#75000000"
-        verticalOffset: 4
-        samples: 30
         visible: false
     }
 
@@ -173,26 +209,42 @@ Item {
 
         onClicked: {
             root.clicked(mouse)
-            privateProperties.closeOpenedPopup()
+        }
+
+        onDoubleClicked: {
+            root.doubleClicked(mouse)
         }
     }
 
-    InstrumentSettingsPopup {
-        id: instrumentSettings
-
-        y: settingsButton.y + settingsButton.height + 2
-        arrowX: width - settingsButton.width / 2 - root.sideMargin
-
-        onClosed: privateProperties.resetOpenedPopup()
+    Loader {
+        id: popupLoader
+        function createPopup(comp, btn) {
+            popupLoader.sourceComponent = comp
+            popupLoader.item.parent = btn
+            return popupLoader.item
+        }
     }
 
-    StaffSettingsPopup {
-        id: staffSettings
+    Component {
+        id: instrumentSettingsComp
+        InstrumentSettingsPopup {
+            navigationParentControl: settingsButton.navigation
+            onClosed: {
+                prv.resetOpenedPopup()
+                popupLoader.sourceComponent = null
+            }
+        }
+    }
 
-        y: settingsButton.y + settingsButton.height + 2
-        arrowX: width - settingsButton.width / 2 - root.sideMargin
-
-        onClosed: privateProperties.resetOpenedPopup()
+    Component {
+        id: staffSettingsComp
+        StaffSettingsPopup {
+            navigationParentControl: settingsButton.navigation
+            onClosed: {
+                prv.resetOpenedPopup()
+                popupLoader.sourceComponent = null
+            }
+        }
     }
 
     RowLayout {
@@ -206,11 +258,16 @@ Item {
             Layout.alignment: Qt.AlignLeft
             Layout.preferredWidth: width
 
+            objectName: "VisibleBtnInstrument"
+            navigation.panel: root.navigationPanel
+            navigation.row: root.keynavRow
+            navigation.column: 1
+
             normalStateColor: "transparent"
             pressedStateColor: ui.theme.accentColor
 
             icon: model && model.itemRole.isVisible ? IconCode.VISIBILITY_ON : IconCode.VISIBILITY_OFF
-            enabled: model && model.itemRole.canChangeVisibility
+            enabled: root.visible && model && model.itemRole.canChangeVisibility
 
             onClicked: {
                 if (!model) {
@@ -231,37 +288,41 @@ Item {
 
                 anchors.left: parent.left
 
+                objectName: "ExpandBtnInstrument"
+                enabled: expandButton.visible
+                navigation.panel: root.navigationPanel
+                navigation.row: root.keynavRow
+                navigation.column: 2
+
                 normalStateColor: "transparent"
                 pressedStateColor: ui.theme.accentColor
 
                 icon: styleData.isExpanded ? IconCode.SMALL_ARROW_DOWN : IconCode.SMALL_ARROW_RIGHT
 
-                visible: styleData.hasChildren && (delegateType === InstrumentTreeItemType.INSTRUMENT ? styleData.index.row === 0 : true)
+                visible: styleData.hasChildren && (root.type === InstrumentsTreeItemType.INSTRUMENT ? styleData.index.row === 0 : true)
 
                 onClicked: {
                     if (!styleData.isExpanded) {
-                        attachedControl.expand(styleData.index)
+                        root.attachedControl.expand(styleData.index)
                     } else {
-                        attachedControl.collapse(styleData.index)
+                        root.attachedControl.collapse(styleData.index)
                     }
                 }
             }
 
             StyledTextLabel {
-                anchors {
-                    left: expandButton.right
-                    leftMargin: 4
-                    right: parent.right
-                    rightMargin: 8
-                    verticalCenter: expandButton.verticalCenter
-                }
-                horizontalAlignment: Text.AlignLeft
+                anchors.left: expandButton.right
+                anchors.leftMargin: 4
+                anchors.right: parent.right
+                anchors.rightMargin: 8
+                anchors.verticalCenter: expandButton.verticalCenter
 
                 text: model ? model.itemRole.title : ""
+                horizontalAlignment: Text.AlignLeft
                 opacity: model && model.itemRole.isVisible ? 1 : 0.75
 
                 font: {
-                    if (Boolean(model) && delegateType === InstrumentTreeItemType.PART && model.itemRole.isVisible) {
+                    if (Boolean(model) && root.type === InstrumentsTreeItemType.PART && model.itemRole.isVisible) {
                         return ui.theme.bodyBoldFont
                     }
 
@@ -276,32 +337,41 @@ Item {
             Layout.alignment: Qt.AlignRight
             Layout.preferredWidth: width
 
+            objectName: "SettingsBtnInstrument"
+            enabled: root.visible
+            navigation.panel: root.navigationPanel
+            navigation.row: root.keynavRow
+            navigation.column: 3
+
             pressedStateColor: ui.theme.accentColor
 
-            visible: model ? delegateType === InstrumentTreeItemType.PART ||
-                             delegateType === InstrumentTreeItemType.STAFF : false
+            visible: model ? root.type === InstrumentsTreeItemType.PART ||
+                             root.type === InstrumentsTreeItemType.STAFF : false
 
             icon: IconCode.SETTINGS_COG
 
             onClicked: {
-                if (privateProperties.isPopupOpened) {
-                    privateProperties.closeOpenedPopup()
+                if (prv.isPopupOpened) {
+                    prv.closeOpenedPopup()
                     return
                 }
 
                 var popup = null
                 var item = {}
 
-                if (root.type === InstrumentTreeItemType.PART) {
-                    popup = instrumentSettings
+                if (root.type === InstrumentsTreeItemType.PART) {
+
+                    popup = popupLoader.createPopup(instrumentSettingsComp, this)
 
                     item["partId"] = model.itemRole.id()
                     item["partName"] = model.itemRole.title
                     item["instrumentId"] = model.itemRole.instrumentId()
                     item["instrumentName"] = model.itemRole.instrumentName()
                     item["abbreviature"] = model.itemRole.instrumentAbbreviature()
-                } else if (root.type === InstrumentTreeItemType.STAFF) {
-                    popup = staffSettings
+
+                } else if (root.type === InstrumentsTreeItemType.STAFF) {
+
+                    popup = popupLoader.createPopup(staffSettingsComp, this)
 
                     item["staffId"] = model.itemRole.id()
                     item["isSmall"] = model.itemRole.isSmall()
@@ -310,7 +380,7 @@ Item {
                     item["voicesVisibility"] = model.itemRole.voicesVisibility()
                 }
 
-                privateProperties.openPopup(popup, item)
+                prv.openPopup(popup, item)
             }
 
             Behavior on opacity {
@@ -334,11 +404,11 @@ Item {
 
     states: [
         State {
-            when: privateProperties.dragged
+            when: prv.dragged
 
             ParentChange {
                 target: root
-                parent: attachedControl.contentItem
+                parent: root.attachedControl.contentItem
             }
 
             PropertyChanges {

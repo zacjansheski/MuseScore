@@ -1,124 +1,245 @@
-import QtQuick 2.7
-import QtQuick.Controls 2.2
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+import QtQuick 2.15
+import QtQuick.Controls 2.15
+
 import MuseScore.Ui 1.0
 import MuseScore.Dock 1.0
+import MuseScore.AppShell 1.0
+
 import MuseScore.NotationScene 1.0
 import MuseScore.Palette 1.0
 import MuseScore.Inspector 1.0
 import MuseScore.Instruments 1.0
+import MuseScore.Playback 1.0
+
+import "../dockwindow"
 
 DockPage {
-    id: notationPage
+    id: root
+
     objectName: "Notation"
+    uri: "musescore://notation"
 
     property var color: ui.theme.backgroundPrimaryColor
     property var borderColor: ui.theme.strokeColor
 
-    toolbar: DockToolBar {
-        id: notationNoteInputBar
-        objectName: "notationNoteInputBar"
+    property bool isNotationToolBarVisible: false
+    property bool isPlaybackToolBarVisible: false
+    property bool isUndoRedoToolBarVisible: false
+    property bool isNotationNavigatorVisible: false
 
-        minimumWidth: orientation == Qt.Horizontal ? 900 : 96
-        minimumHeight: orientation == Qt.Horizontal ? 48 : 0
+    property var topToolKeyNavSec
 
-        color: notationPage.color
+    property NotationPageModel pageModel: NotationPageModel {}
 
-        content: NoteInputBar {
-            color: notationNoteInputBar.color
-            orientation: notationNoteInputBar.orientation
-        }
+    property NavigationSection noteInputKeyNavSec: NavigationSection {
+        id: keynavSec
+        name: "NoteInputSection"
+        order: 2
     }
 
-    readonly property int defaultPanelWidth: 272
-    readonly property int minimumPanelWidth: 200
+    function updatePageState() {
+        var states = [
+                    {"Palette": palettePanel.visible},
+                    {"Instruments": instrumentsPanel.visible},
+                    {"Inspector": inspectorPanel.visible},
+                    {"NotationToolBar": isNotationToolBarVisible},
+                    {"PlaybackToolBar": isPlaybackToolBarVisible},
+                    {"UndoRedoToolBar": isUndoRedoToolBarVisible}
+                ]
+
+        pageModel.setPanelsState(states)
+    }
+
+    Component.onCompleted: {
+        updatePageState()
+
+        palettePanel.visible = Qt.binding(function() { return pageModel.isPalettePanelVisible })
+        instrumentsPanel.visible = Qt.binding(function() { return pageModel.isInstrumentsPanelVisible })
+        inspectorPanel.visible = Qt.binding(function() { return pageModel.isInspectorPanelVisible })
+
+        pageModel.init()
+    }
+
+    readonly property int defaultPanelWidth: 260
+    readonly property int toolBarHeight: 48
+
+    mainToolBars: [
+        DockToolBar {
+            id: notationToolBar
+
+            objectName: "notationToolBar"
+            title: qsTrc("appshell", "Notation Toolbar")
+
+            minimumWidth: 198
+
+            contentComponent: NotationToolBar {
+                navigation.section: root.topToolKeyNavSec
+                navigation.order: 2
+
+                onActiveFocusRequested: {
+                    if (navigation.active) {
+                        notationToolBar.forceActiveFocus()
+                    }
+                }
+            }
+        },
+
+        DockToolBar {
+            id: playbackToolBar
+
+            objectName: "playbackToolBar"
+            title: qsTrc("appshell", "Playback Controls")
+
+            width: root.width / 3
+            minimumWidth: floating ? 526 : 476
+            minimumHeight: floating ? 56 : root.toolBarHeight
+
+            contentComponent: PlaybackToolBar {
+                navigation.section: root.topToolKeyNavSec
+                navigation.order: 3
+
+                floating: playbackToolBar.floating
+            }
+        },
+
+        DockToolBar {
+            id: undoRedoToolBar
+
+            objectName: "undoRedoToolBar"
+            title: qsTrc("appshell", "Undo/Redo Toolbar")
+
+            minimumWidth: 74
+            maximumWidth: 74
+
+            movable: false
+
+            contentComponent: UndoRedoToolBar {}
+        }
+    ]
+
+    toolBars: [
+        DockToolBar {
+            id: noteInputBar
+
+            objectName: "noteInputBar"
+            title: qsTrc("appshell", "Note Input")
+
+            horizontalPreferredSize: Qt.size(720, root.toolBarHeight)
+            verticalPreferredSize: Qt.size(root.toolBarHeight, 400)
+
+            allowedAreas: { Qt.AllDockWidgetAreas }
+
+            contentComponent: NoteInputBar {
+                orientation: noteInputBar.orientation
+
+                navigation.section: noteInputKeyNavSec
+                navigation.order: 1
+            }
+        }
+    ]
 
     panels: [
         DockPanel {
             id: palettePanel
-            objectName: "palettePanel"
 
+            objectName: "palettePanel"
             title: qsTrc("appshell", "Palette")
 
-            width: defaultPanelWidth
-            minimumWidth: minimumPanelWidth
+            width: root.defaultPanelWidth
+            minimumWidth: root.defaultPanelWidth
+            maximumWidth: root.defaultPanelWidth
 
-            color: notationPage.color
-            borderColor: notationPage.borderColor
+            tabifyPanel: instrumentsPanel
 
-            floatable: true
-            closable: true
+            onClosed: {
+                root.pageModel.isPalettePanelVisible = false
+            }
 
             PalettesWidget {}
         },
 
         DockPanel {
             id: instrumentsPanel
-            objectName: "instrumentsPanel"
 
+            objectName: "instrumentsPanel"
             title: qsTrc("appshell", "Instruments")
 
-            width: defaultPanelWidth
-            minimumWidth: minimumPanelWidth
+            width: root.defaultPanelWidth
+            minimumWidth: root.defaultPanelWidth
+            maximumWidth: root.defaultPanelWidth
 
-            color: notationPage.color
-            borderColor: notationPage.borderColor
+            tabifyPanel: inspectorPanel
 
-            tabifyObjectName: "palettePanel"
-
-            floatable: true
-            closable: true
-
-            InstrumentsPanel {
-                anchors.fill: parent
+            onClosed: {
+                root.pageModel.isInstrumentsPanelVisible = false
             }
+
+            InstrumentsPanel {}
         },
 
         DockPanel {
             id: inspectorPanel
-            objectName: "inspectorPanel"
 
+            objectName: "inspectorPanel"
             title: qsTrc("appshell", "Inspector")
 
-            width: defaultPanelWidth
-            minimumWidth: minimumPanelWidth
+            width: root.defaultPanelWidth
+            minimumWidth: root.defaultPanelWidth
+            maximumWidth: root.defaultPanelWidth
 
-            color: notationPage.color
-            borderColor: notationPage.borderColor
-
-            tabifyObjectName: "instrumentsPanel"
-
-            floatable: true
-            closable: true
-
-            InspectorForm {
-                anchors.fill: parent
+            onClosed: {
+                root.pageModel.isInspectorPanelVisible = false
             }
+
+            InspectorForm {}
         }
     ]
 
-    central: DockCentral {
-        id: notationCentral
-        objectName: "notationCentral"
+    central: NotationView {
+        id: notationView
 
-        NotationView {
-            id: notationView
+        isNavigatorVisible: root.pageModel.isNotationNavigatorVisible
 
-            onTextEdittingStarted: {
-                notationCentral.forceActiveFocus()
+        onTextEdittingStarted: {
+            notationView.forceActiveFocus()
+        }
+    }
+
+    statusBars: [
+        DockStatusBar {
+            id: notationStatusBar
+
+            objectName: "notationStatusBar"
+
+            height: root.toolBarHeight
+            minimumHeight: root.toolBarHeight
+            maximumHeight: root.toolBarHeight
+
+            NotationStatusBar {
+                color: root.color
+                visible: root.pageModel.isStatusBarVisible
             }
         }
-    }
-
-    statusbar: DockStatusBar {
-        id: notationStatusBar
-        objectName: "notationStatusBar"
-
-        width: notationPage.width
-        color: notationPage.color
-
-        NotationStatusBar {
-            anchors.fill: parent
-            color: notationStatusBar.color
-        }
-    }
+    ]
 }

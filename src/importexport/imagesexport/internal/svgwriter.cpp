@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #include "svgwriter.h"
 
@@ -30,16 +33,23 @@
 #include "libmscore/measure.h"
 #include "libmscore/stafflines.h"
 
-#include <QPainter>
+#include "engraving/draw/qpainterprovider.h"
 
 using namespace mu::iex::imagesexport;
+using namespace mu::notation;
 using namespace mu::system;
 
-mu::Ret SvgWriter::write(const notation::INotationPtr notation, IODevice& destinationDevice, const Options& options)
+std::vector<INotationWriter::UnitType> SvgWriter::supportedUnitTypes() const
+{
+    return { UnitType::PER_PAGE };
+}
+
+mu::Ret SvgWriter::write(INotationPtr notation, IODevice& destinationDevice, const Options& options)
 {
     IF_ASSERT_FAILED(notation) {
         return make_ret(Ret::Code::UnknownError);
     }
+
     Ms::Score* score = notation->elements()->msScore();
     IF_ASSERT_FAILED(score) {
         return make_ret(Ret::Code::UnknownError);
@@ -78,9 +88,8 @@ mu::Ret SvgWriter::write(const notation::INotationPtr notation, IODevice& destin
     printer.setSize(QSize(width, height));
     printer.setViewBox(QRectF(0, 0, width, height));
 
-    QPainter painter(&printer);
-    painter.setRenderHint(QPainter::Antialiasing, true);
-    painter.setRenderHint(QPainter::TextAntialiasing, true);
+    mu::draw::Painter painter(&printer, "svgwriter");
+    painter.setAntialiasing(true);
     if (TRIM_MARGINS_SIZE >= 0) {
         painter.translate(-pageRect.topLeft());
     }
@@ -96,7 +105,7 @@ mu::Ret SvgWriter::write(const notation::INotationPtr notation, IODevice& destin
         int stavesCount = system->staves()->size();
 
         for (int staffIndex = 0; staffIndex < stavesCount; ++staffIndex) {
-            if (score->staff(staffIndex)->invisible(Ms::Fraction(0,1)) || !score->staff(staffIndex)->show()) {
+            if (score->staff(staffIndex)->invisible(Ms::Fraction(0, 1)) || !score->staff(staffIndex)->show()) {
                 continue; // ignore invisible staves
             }
 
@@ -206,7 +215,7 @@ mu::Ret SvgWriter::write(const notation::INotationPtr notation, IODevice& destin
         }
     }
 
-    painter.end(); // Writes MuseScore SVG file to disk, finally
+    painter.endDraw(); // Writes MuseScore SVG file to disk, finally
 
     // Clean up and return
     Ms::MScore::pixelRatio = pixelRationBackup;

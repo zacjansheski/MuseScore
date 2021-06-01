@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "workspacemodule.h"
 
 #include <QQmlEngine>
@@ -24,14 +27,19 @@
 
 #include "framework/ui/iinteractiveuriregister.h"
 #include "framework/ui/iuiengine.h"
+#include "framework/ui/iuiactionsregister.h"
 
 #include "internal/workspaceconfiguration.h"
 #include "internal/workspacemanager.h"
 #include "internal/workspacedatastreamregister.h"
 #include "internal/workspacecreator.h"
+#include "internal/workspaceactioncontroller.h"
+#include "internal/workspaceuiactions.h"
 
 #include "internal/workspacesettingsstream.h"
 #include "internal/workspacetoolbarstream.h"
+
+#include "internal/workspacesettings.h"
 
 #include "view/workspacelistmodel.h"
 #include "view/currentworkspacemodel.h"
@@ -44,6 +52,8 @@ using namespace mu::ui;
 static std::shared_ptr<WorkspaceManager> s_manager = std::make_shared<WorkspaceManager>();
 static std::shared_ptr<WorkspaceDataStreamRegister> s_streamRegister = std::make_shared<WorkspaceDataStreamRegister>();
 static std::shared_ptr<WorkspaceConfiguration> s_configuration = std::make_shared<WorkspaceConfiguration>();
+static std::shared_ptr<WorkspaceSettings> s_settings = std::make_shared<WorkspaceSettings>();
+static std::shared_ptr<WorkspaceActionController> s_actionController = std::make_shared<WorkspaceActionController>();
 
 static void workspace_init_qrc()
 {
@@ -61,12 +71,19 @@ void WorkspaceModule::registerExports()
     ioc()->registerExport<IWorkspaceManager>(moduleName(), s_manager);
     ioc()->registerExport<WorkspaceDataStreamRegister>(moduleName(), s_streamRegister);
     ioc()->registerExport<IWorkspaceCreator>(moduleName(), std::make_shared<WorkspaceCreator>());
+    ioc()->registerExport<IWorkspaceSettings>(moduleName(), s_settings);
 }
 
 void WorkspaceModule::resolveImports()
 {
-    s_streamRegister->regStream(std::make_shared<WorkspaceSettingsStream>());
+    s_streamRegister->regStream(std::make_shared<WorkspaceSettingsStream>(WorkspaceTag::Settings));
+    s_streamRegister->regStream(std::make_shared<WorkspaceSettingsStream>(WorkspaceTag::UiArrangement));
     s_streamRegister->regStream(std::make_shared<WorkspaceToolbarStream>());
+
+    auto ar = ioc()->resolve<ui::IUiActionsRegister>(moduleName());
+    if (ar) {
+        ar->reg(std::make_shared<WorkspaceUiActions>(s_actionController));
+    }
 
     auto ir = ioc()->resolve<IInteractiveUriRegister>(moduleName());
     if (ir) {
@@ -100,6 +117,8 @@ void WorkspaceModule::onInit(const IApplication::RunMode& mode)
 
     s_configuration->init();
     s_manager->init();
+    s_settings->init();
+    s_actionController->init();
 }
 
 void WorkspaceModule::onDeinit()

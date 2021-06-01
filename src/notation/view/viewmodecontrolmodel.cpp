@@ -1,98 +1,103 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #include "viewmodecontrolmodel.h"
 
 #include "translation.h"
 
 using namespace mu::notation;
+using namespace mu::ui;
+
+static QMap<ViewMode, mu::actions::ActionCode> viewModes = {
+    { ViewMode::PAGE, "view-mode-page" },
+    { ViewMode::LINE, "view-mode-continuous" },
+    { ViewMode::SYSTEM, "view-mode-single" }
+};
 
 ViewModeControlModel::ViewModeControlModel(QObject* parent)
-    : QAbstractListModel(parent)
+    : QObject(parent)
 {
-    m_viewModeOptions << ViewModeOption { qtrc("notation", "Page View"), "view-mode-page", ViewMode::PAGE }
-                      << ViewModeOption { qtrc("notation", "Continuous View"), "view-mode-continuous", ViewMode::LINE }
-                      << ViewModeOption { qtrc("notation", "Single Page"), "view-mode-single", ViewMode::SYSTEM };
+}
+
+QVariant ViewModeControlModel::currentViewMode()
+{
+    auto notation = context()->currentNotation();
+    if (!notation) {
+        return QVariant();
+    }
+
+    auto correctedTitle = [](ViewMode viewMode, const QString& title) {
+        switch (viewMode) {
+        case ViewMode::PAGE:
+            return title;
+        case ViewMode::LINE:
+        case ViewMode::SYSTEM:
+            return qtrc("notation", "Continuous View");
+        default:
+            return title;
+        }
+    };
+
+    ViewMode viewMode = notation->viewMode();
+    MenuItem viewModeItem = findItem(viewModeActionCode(viewMode));
+    QVariantMap viewModeObj;
+    viewModeObj["title"] = correctedTitle(viewMode, viewModeItem.title);
+    viewModeObj["icon"] = static_cast<int>(viewModeItem.iconCode);
+
+    return viewModeObj;
 }
 
 void ViewModeControlModel::load()
 {
-    updateState();
+    appendItem(makeAction("view-mode-page"));
+    appendItem(makeAction("view-mode-continuous"));
+    appendItem(makeAction("view-mode-single"));
 
     context()->currentNotationChanged().onNotify(this, [this]() {
+        auto notation = context()->currentNotation();
+        if (!notation) {
+            return;
+        }
+
+        notation->notationChanged().onNotify(this, [this]() {
+            updateState();
+        });
+
         updateState();
     });
+
+    updateState();
+
+    listenActionsStateChanges();
 }
 
-int ViewModeControlModel::viewModeToId(const ViewMode& viewMode)
+void ViewModeControlModel::selectViewMode(const QString& actionCode)
 {
-    for (int i = 0; i < m_viewModeOptions.length(); ++i) {
-        if (m_viewModeOptions[i].viewMode == viewMode) {
-            return i;
-        }
-    }
-
-    return -1;
+    dispatcher()->dispatch(actions::codeFromQString(actionCode));
 }
 
-int ViewModeControlModel::rowCount(const QModelIndex&) const
+mu::actions::ActionCode ViewModeControlModel::viewModeActionCode(ViewMode viewMode) const
 {
-    return m_viewModeOptions.count();
-}
-
-QVariant ViewModeControlModel::data(const QModelIndex& index, int role) const
-{
-    if (!index.isValid() || index.row() >= rowCount() || m_viewModeOptions.isEmpty()) {
-        return QVariant();
-    }
-
-    int viewModeId = index.row();
-
-    switch (role) {
-    case IdRole: return viewModeId;
-    case NameRole: return m_viewModeOptions[viewModeId].displayString;
-    }
-
-    return QVariant();
-}
-
-QHash<int, QByteArray> ViewModeControlModel::roleNames() const
-{
-    static const QHash<int, QByteArray> roles {
-        { IdRole, "idRole" },
-        { NameRole, "nameRole" }
-    };
-
-    return roles;
-}
-
-int ViewModeControlModel::currentViewModeId() const
-{
-    return m_currentViewModeId;
-}
-
-void ViewModeControlModel::setCurrentViewModeId(int newViewModeId)
-{
-    if (m_currentViewModeId != newViewModeId) {
-        dispatcher()->dispatch(actions::codeFromQString(m_viewModeOptions.at(newViewModeId).actionString));
-        m_currentViewModeId = newViewModeId; // can remove once notify works
-    }
+    return viewModes[viewMode];
 }
 
 void ViewModeControlModel::updateState()
@@ -102,10 +107,13 @@ void ViewModeControlModel::updateState()
         return;
     }
 
-    int newViewModeId = viewModeToId(notation->viewMode());
-    if (m_currentViewModeId != newViewModeId) {
-        m_currentViewModeId = newViewModeId;
+    actions::ActionCode currentViewModeActionCode = viewModeActionCode(notation->viewMode());
+    for (const actions::ActionCode& actionCode: viewModes.values()) {
+        MenuItem& viewModeItem = findItem(actionCode);
+        viewModeItem.selectable = true;
+        viewModeItem.selected = viewModeItem.code == currentViewModeActionCode;
     }
 
-    emit currentViewModeIdChanged(m_currentViewModeId);
+    emit itemsChanged();
+    emit currentViewModeChanged();
 }

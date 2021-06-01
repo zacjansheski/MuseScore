@@ -1,4 +1,25 @@
-import QtQuick 2.0
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+import QtQuick 2.15
 import MuseScore.Ui 1.0
 
 Item {
@@ -35,22 +56,24 @@ Item {
 
                 preventStealing: true
 
+                pressAndHoldInterval: 200
+
                 onClicked: {
                     root.increaseButtonClicked()
                 }
 
                 onPressAndHold: {
-                    continiousIncreaseTimer.running = true
+                    continuousIncreaseTimer.running = true
                 }
 
                 onReleased: {
-                    continiousIncreaseTimer.running = false
+                    continuousIncreaseTimer.running = false
                 }
 
                 Timer {
-                    id: continiousIncreaseTimer
+                    id: continuousIncreaseTimer
 
-                    interval: 300
+                    interval: 100
 
                     repeat: true
 
@@ -74,25 +97,28 @@ Item {
 
                 anchors.fill: parent
 
+                preventStealing: true
+
+                pressAndHoldInterval: 200
+
                 onClicked: {
                     root.decreaseButtonClicked()
                 }
 
                 onPressAndHold: {
-                    continiousDecreaseTimer.running = true
+                    continuousDecreaseTimer.running = true
                 }
 
                 onReleased: {
-                    continiousDecreaseTimer.running = false
+                    continuousDecreaseTimer.running = false
                 }
 
                 Timer {
-                    id: continiousDecreaseTimer
+                    id: continuousDecreaseTimer
 
-                    interval: 300
+                    interval: 100
+
                     repeat: true
-
-                    running: decreaseMouseArea.pressed
 
                     onTriggered: {
                         root.decreaseButtonClicked()

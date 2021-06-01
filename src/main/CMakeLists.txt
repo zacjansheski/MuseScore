@@ -1,21 +1,22 @@
-#=============================================================================
-#  MuseScore
-#  Music Composition & Notation
+# SPDX-License-Identifier: GPL-3.0-only
+# MuseScore-CLA-applies
 #
-#  Copyright (C) 2019 MuseScore BVBA
+# MuseScore
+# Music Composition & Notation
 #
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License version 2.
+# Copyright (C) 2021 MuseScore BVBA and others
 #
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as
+# published by the Free Software Foundation.
 #
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-#=============================================================================
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 ###########################################
 # Setup main application
@@ -140,8 +141,9 @@ if (BUILD_TELEMETRY_MODULE)
 endif(BUILD_TELEMETRY_MODULE)
 
 set(LINK_LIB ${LINK_LIB}
-    libmscore
+    engraving
     actions
+    accessibility
     appshell
     context
     shortcuts
@@ -176,6 +178,10 @@ if (NOT CC_IS_EMSCRIPTEN)
     list(APPEND LINK_LIB iex_audioexport)
     list(APPEND LINK_LIB iex_imagesexport)
     list(APPEND LINK_LIB plugins)
+endif()
+
+if (BUILD_AUTOBOT_MODULE)
+    list(APPEND LINK_LIB autobot)
 endif()
 
 if (BUILD_VST)
@@ -452,24 +458,29 @@ elseif(OS_IS_MAC)
     install(FILES "${PROJECT_SOURCE_DIR}/src/main/res/musescoreDocument.icns" DESTINATION ${Mscore_SHARE_NAME}${Mscore_INSTALL_NAME})
 
     install(FILES
-            ${PROJECT_SOURCE_DIR}/fonts/gootville/GootvilleText.otf
-            ${PROJECT_SOURCE_DIR}/fonts/mscore/MScoreText.ttf
-            ${PROJECT_SOURCE_DIR}/fonts/mscore/MusescoreIcon.ttf
-            ${PROJECT_SOURCE_DIR}/fonts/musejazz/MuseJazzText.otf
+            ${PROJECT_SOURCE_DIR}/fonts/bravura/BravuraText.otf
             ${PROJECT_SOURCE_DIR}/fonts/campania/Campania.otf
+            ${PROJECT_SOURCE_DIR}/fonts/edwin/Edwin-BdIta.otf
+            ${PROJECT_SOURCE_DIR}/fonts/edwin/Edwin-Bold.otf
+            ${PROJECT_SOURCE_DIR}/fonts/edwin/Edwin-Italic.otf
+            ${PROJECT_SOURCE_DIR}/fonts/edwin/Edwin-Roman.otf
+            ${PROJECT_SOURCE_DIR}/fonts/firasans/FiraSans-Regular.ttf
+            ${PROJECT_SOURCE_DIR}/fonts/firasans/FiraSans-SemiBold.ttf
+            ${PROJECT_SOURCE_DIR}/fonts/gootville/GootvilleText.otf
+            ${PROJECT_SOURCE_DIR}/fonts/FreeSans.ttf
             ${PROJECT_SOURCE_DIR}/fonts/FreeSerif.ttf
             ${PROJECT_SOURCE_DIR}/fonts/FreeSerifBold.ttf
             ${PROJECT_SOURCE_DIR}/fonts/FreeSerifItalic.ttf
             ${PROJECT_SOURCE_DIR}/fonts/FreeSerifBoldItalic.ttf
-            ${PROJECT_SOURCE_DIR}/fonts/FreeSans.ttf
-            ${PROJECT_SOURCE_DIR}/fonts/mscoreTab.ttf
-            ${PROJECT_SOURCE_DIR}/fonts/mscore-BC.ttf
-            ${PROJECT_SOURCE_DIR}/fonts/bravura/BravuraText.otf
             ${PROJECT_SOURCE_DIR}/fonts/leland/Leland.otf
-            ${PROJECT_SOURCE_DIR}/fonts/petaluma/PetalumaText.otf
+            ${PROJECT_SOURCE_DIR}/fonts/leland/LelandText.otf
+            ${PROJECT_SOURCE_DIR}/fonts/mscore-BC.ttf
+            ${PROJECT_SOURCE_DIR}/fonts/mscoreTab.ttf
+            ${PROJECT_SOURCE_DIR}/fonts/mscore/MScoreText.ttf
+            ${PROJECT_SOURCE_DIR}/fonts/mscore/MusescoreIcon.ttf
+            ${PROJECT_SOURCE_DIR}/fonts/musejazz/MuseJazzText.otf
             ${PROJECT_SOURCE_DIR}/fonts/petaluma/PetalumaScript.otf
-            ${PROJECT_SOURCE_DIR}/fonts/firasans/FiraSans-Regular.ttf
-            ${PROJECT_SOURCE_DIR}/fonts/firasans/FiraSans-SemiBold.ttf
+            ${PROJECT_SOURCE_DIR}/fonts/petaluma/PetalumaText.otf
             DESTINATION ${Mscore_SHARE_NAME}${Mscore_INSTALL_NAME}fonts
     )
 

@@ -1,21 +1,22 @@
-#=============================================================================
-#  MuseScore
-#  Music Composition & Notation
+# SPDX-License-Identifier: GPL-3.0-only
+# MuseScore-CLA-applies
 #
-#  Copyright (C) 2020 MuseScore BVBA and others
+# MuseScore
+# Music Composition & Notation
 #
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License version 2.
+# Copyright (C) 2021 MuseScore BVBA and others
 #
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as
+# published by the Free Software Foundation.
 #
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-#=============================================================================
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 set(MODULE palette)
 
@@ -35,6 +36,7 @@ set(MODULE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/palettemodule.h
     ${CMAKE_CURRENT_LIST_DIR}/ipaletteadapter.h
     ${CMAKE_CURRENT_LIST_DIR}/ipaletteconfiguration.h
+    ${CMAKE_CURRENT_LIST_DIR}/palettetypes.h
     ${CMAKE_CURRENT_LIST_DIR}/internal/palette_config.h
     ${CMAKE_CURRENT_LIST_DIR}/internal/mu4paletteadapter.cpp
     ${CMAKE_CURRENT_LIST_DIR}/internal/mu4paletteadapter.h
@@ -44,8 +46,8 @@ set(MODULE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/internal/paletteconfiguration.h
     ${CMAKE_CURRENT_LIST_DIR}/internal/paletteworkspacesetup.cpp
     ${CMAKE_CURRENT_LIST_DIR}/internal/paletteworkspacesetup.h
-    ${CMAKE_CURRENT_LIST_DIR}/internal/paletteactions.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/internal/paletteactions.h
+    ${CMAKE_CURRENT_LIST_DIR}/internal/paletteuiactions.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/internal/paletteuiactions.h
     ${CMAKE_CURRENT_LIST_DIR}/internal/paletteactionscontroller.cpp
     ${CMAKE_CURRENT_LIST_DIR}/internal/paletteactionscontroller.h
     ${CMAKE_CURRENT_LIST_DIR}/view/paletterootmodel.cpp
@@ -68,7 +70,7 @@ set(MODULE_INCLUDE
 
 set(MODULE_LINK
     qzip
-    libmscore
+    engraving
     commonscene
     )
 

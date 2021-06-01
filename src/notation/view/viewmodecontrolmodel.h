@@ -1,26 +1,29 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #ifndef MU_NOTATION_VIEWMODECONTROLMODEL_H
 #define MU_NOTATION_VIEWMODECONTROLMODEL_H
 
-#include <QAbstractListModel>
+#include <QObject>
 
 #include "modularity/ioc.h"
 #include "actions/iactionsdispatcher.h"
@@ -28,51 +31,36 @@
 #include "async/asyncable.h"
 #include "notation/notationtypes.h"
 
+#include "ui/view/abstractmenumodel.h"
+
 namespace mu::notation {
-class ViewModeControlModel : public QAbstractListModel, public async::Asyncable
+class ViewModeControlModel : public QObject, public ui::AbstractMenuModel
 {
     Q_OBJECT
 
     INJECT(notation, actions::IActionsDispatcher, dispatcher)
     INJECT(notation, context::IGlobalContext, context)
 
-    Q_PROPERTY(int currentViewModeId READ currentViewModeId WRITE setCurrentViewModeId NOTIFY currentViewModeIdChanged)
+    Q_PROPERTY(QVariant currentViewMode READ currentViewMode NOTIFY currentViewModeChanged)
+    Q_PROPERTY(QVariantList items READ items NOTIFY itemsChanged)
 
 public:
     explicit ViewModeControlModel(QObject* parent = nullptr);
 
-    int rowCount(const QModelIndex& parent = QModelIndex()) const override;
-    QVariant data(const QModelIndex& index, int role) const override;
-    QHash<int, QByteArray> roleNames() const override;
-
-    int currentViewModeId() const;
+    QVariant currentViewMode();
 
     Q_INVOKABLE void load();
+    Q_INVOKABLE void selectViewMode(const QString& actionCode);
 
 signals:
-    void currentViewModeIdChanged(int viewModeId);
-
-public slots:
-    void setCurrentViewModeId(int newViewModeId);
+    void currentViewModeChanged();
+    void itemsChanged();
 
 private:
     void updateState();
+    actions::ActionCode viewModeActionCode(ViewMode viewMode) const;
 
-    enum RoleNames {
-        IdRole = Qt::UserRole + 1,
-        NameRole
-    };
-
-    struct ViewModeOption {
-        QString displayString;
-        QString actionString;
-        ViewMode viewMode;
-    };
-
-    int viewModeToId(const ViewMode& viewMode);
-    int m_currentViewModeId = 0;  // default to page view
-
-    QList<ViewModeOption> m_viewModeOptions;
+    ui::MenuItem m_currentViewMode;
 };
 }
 

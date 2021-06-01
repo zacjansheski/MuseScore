@@ -1,9 +1,30 @@
-import QtQuick 2.9
-import QtQuick.Layouts 1.3
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+import QtQuick 2.15
+import QtQuick.Controls 2.15
 import QtQuick.Controls 1.4
-import QtQuick.Controls 2.2
 import QtQuick.Controls.Styles 1.4
-import QtQml.Models 2.3
+import QtQuick.Layouts 1.15
+import QtQml.Models 2.15
 
 import MuseScore.Ui 1.0
 import MuseScore.UiComponents 1.0
@@ -13,6 +34,8 @@ import "internal"
 
 Item {
     id: root
+
+    property NavigationSection navigationSection: null
 
     Rectangle {
         id: background
@@ -25,9 +48,18 @@ Item {
             anchors.fill: parent
 
             onClicked: {
-                instrumentTreeModel.selectionModel.clear()
+                instrumentsTreeModel.selectionModel.clear()
             }
         }
+    }
+
+    NavigationPanel {
+        id: navigationTreePanel
+        name: "InstrumentsTree"
+        section: root.navigationSection
+        direction: NavigationPanel.Both
+        enabled: root.visible
+        order: 3
     }
 
     ColumnLayout {
@@ -39,31 +71,36 @@ Item {
         spacing: sideMargin
 
         InstrumentsControlPanel {
+            id: controlPanel
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignTop
 
             Layout.leftMargin: contentColumn.sideMargin
             Layout.rightMargin: contentColumn.sideMargin
 
-            isMovingUpAvailable: instrumentTreeModel.isMovingUpAvailable
-            isMovingDownAvailable: instrumentTreeModel.isMovingDownAvailable
-            isAddingAvailable: instrumentTreeModel.isAddingAvailable
-            isRemovingAvailable: instrumentTreeModel.isRemovingAvailable
+            navigation.section: root.navigationSection
+            navigation.enabled: root.visible
+            navigation.order: 2
+
+            isMovingUpAvailable: instrumentsTreeModel.isMovingUpAvailable
+            isMovingDownAvailable: instrumentsTreeModel.isMovingDownAvailable
+            isAddingAvailable: instrumentsTreeModel.isAddingAvailable
+            isRemovingAvailable: instrumentsTreeModel.isRemovingAvailable
 
             onAddRequested: {
-                instrumentTreeModel.addInstruments()
+                instrumentsTreeModel.addInstruments()
             }
 
             onMoveUpRequested: {
-                instrumentTreeModel.moveSelectedRowsUp()
+                instrumentsTreeModel.moveSelectedRowsUp()
             }
 
             onMoveDownRequested: {
-                instrumentTreeModel.moveSelectedRowsDown()
+                instrumentsTreeModel.moveSelectedRowsDown()
             }
 
             onRemovingRequested: {
-                instrumentTreeModel.removeSelectedRows()
+                instrumentsTreeModel.removeSelectedRows()
             }
         }
 
@@ -75,7 +112,7 @@ Item {
             Layout.rightMargin: 20
 
             text: qsTrc("instruments", "There are no instruments in your score. To choose some, press <b>Add</b>, or use the shortcut <b>‘i’</b>")
-            visible: instrumentTreeModel.isEmpty && instrumentTreeModel.isAddingAvailable
+            visible: instrumentsTreeModel.isEmpty && instrumentsTreeModel.isAddingAvailable
 
             verticalAlignment: Qt.AlignTop
             wrapMode: Text.WordWrap
@@ -106,26 +143,27 @@ Item {
                 anchors.top: parent.top
                 anchors.left: parent.left
                 anchors.right: parent.right
-                height: flickableItem.contentHeight
+                height: flickableItem.contentHeight + 2 //! HACK +2 needs for correct show focus border
 
-                visible: !instrumentTreeModel.isEmpty
+                visible: !instrumentsTreeModel.isEmpty
 
-                model: InstrumentPanelTreeModel {
-                    id: instrumentTreeModel
+                model: InstrumentsPanelTreeModel {
+                    id: instrumentsTreeModel
                 }
 
-                selection: instrumentTreeModel ? instrumentTreeModel.selectionModel : null
+                selection: instrumentsTreeModel ? instrumentsTreeModel.selectionModel : null
 
                 alternatingRowColors: false
                 headerVisible: false
+                frameVisible: false
 
                 TableViewColumn {
                     role: "itemRole"
                 }
 
                 function isControl(itemType) {
-                    return itemType === InstrumentTreeItemType.CONTROL_ADD_STAFF ||
-                           itemType === InstrumentTreeItemType.CONTROL_ADD_DOUBLE_INSTRUMENT
+                    return itemType === InstrumentsTreeItemType.CONTROL_ADD_STAFF ||
+                            itemType === InstrumentsTreeItemType.CONTROL_ADD_DOUBLE_INSTRUMENT
                 }
 
                 style: TreeViewStyle {
@@ -157,22 +195,22 @@ Item {
                     Loader {
                         id: treeItemDelegateLoader
 
-                        property var delegateType: model ? model.itemRole.type : InstrumentTreeItemType.UNDEFINED
+                        property var delegateType: model ? model.itemRole.type : InstrumentsTreeItemType.UNDEFINED
 
                         height: parent.height
                         width: parent.width
 
                         sourceComponent: instrumentsTreeView.isControl(delegateType) ?
-                                         controlItemDelegateComponent : treeItemDelegateComponent
+                                             controlItemDelegateComponent : treeItemDelegateComponent
 
                         property bool isSelected: false
 
                         function updateIsSelected() {
-                            treeItemDelegateLoader.isSelected = instrumentTreeModel.isSelected(styleData.index)
+                            treeItemDelegateLoader.isSelected = instrumentsTreeModel.isSelected(styleData.index)
                         }
 
                         Connections {
-                            target: instrumentTreeModel
+                            target: instrumentsTreeModel
 
                             function onSelectionChanged() {
                                 treeItemDelegateLoader.updateIsSelected()
@@ -186,19 +224,38 @@ Item {
                                 attachedControl: instrumentsTreeView
                                 isSelected: treeItemDelegateLoader.isSelected
 
+                                keynavRow: model ? model.index : 0
+                                navigationPanel: navigationTreePanel
+
                                 isDragAvailable: dropArea.isSelectable
                                 type: treeItemDelegateLoader.delegateType
                                 sideMargin: contentColumn.sideMargin
 
                                 onClicked: {
-                                    instrumentTreeModel.selectRow(styleData.index)
+                                    instrumentsTreeModel.selectRow(styleData.index)
+                                }
+
+                                onDoubleClicked: {
+                                    if (styleData.hasChildren
+                                            && (root.type === InstrumentsTreeItemType.INSTRUMENT
+                                                    ? styleData.index.row === 0 : true)) {
+                                        if (!styleData.isExpanded) {
+                                            instrumentsTreeView.expand(styleData.index)
+                                        } else {
+                                            instrumentsTreeView.collapse(styleData.index)
+                                        }
+                                    }
+                                }
+
+                                onFocusActived: {
+                                    instrumentsTreeModel.selectRow(styleData.index)
                                 }
 
                                 onVisibleChanged: {
                                     treeItemDelegateLoader.updateIsSelected()
                                 }
 
-                                property var contentYBackup: 0
+                                property real contentYBackup: 0
 
                                 onPopupOpened: {
                                     contentYBackup = flickable.contentY
@@ -224,6 +281,9 @@ Item {
                             InstrumentsTreeItemControl {
                                 isHighlighted: treeItemDelegateLoader.isSelected
 
+                                keynavRow: model ? model.index : 0
+                                navigationPanel: navigationTreePanel
+
                                 onClicked: {
                                     styleData.value.appendNewItem()
                                 }
@@ -240,7 +300,7 @@ Item {
                             return
                         }
 
-                        instrumentTreeModel.moveRows(drag.source.index.parent,
+                        instrumentsTreeModel.moveRows(drag.source.index.parent,
                                                      drag.source.index.row,
                                                      1,
                                                      styleData.index.parent,

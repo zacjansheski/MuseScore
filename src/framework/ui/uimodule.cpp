@@ -1,3 +1,24 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "uimodule.h"
 
 #include <QtQml>
@@ -7,6 +28,9 @@
 #include "internal/uiengine.h"
 #include "internal/uiconfiguration.h"
 #include "internal/interactiveuriregister.h"
+#include "internal/uiactionsregister.h"
+#include "internal/navigationcontroller.h"
+#include "internal/navigationuiactions.h"
 
 #ifdef Q_OS_MAC
 #include "internal/platform/macos/macosplatformtheme.h"
@@ -19,15 +43,28 @@
 #include "view/qmltooltip.h"
 #include "view/iconcodes.h"
 #include "view/musicalsymbolcodes.h"
-#include "view/qmldialog.h"
+#include "view/navigationsection.h"
+#include "view/navigationpanel.h"
+#include "view/navigationpopuppanel.h"
+#include "view/navigationcontrol.h"
+#include "view/navigationevent.h"
+#include "view/qmlaccessible.h"
 
 #include "dev/interactivetestsmodel.h"
 #include "dev/testdialog.h"
+#include "dev/keynav/keynavdevmodel.h"
+#include "dev/keynav/abstractkeynavdevitem.h"
+#include "dev/keynav/keynavdevsection.h"
+#include "dev/keynav/keynavdevsubsection.h"
+#include "dev/keynav/keynavdevcontrol.h"
 
 using namespace mu::ui;
 using namespace mu::framework;
 
 static std::shared_ptr<UiConfiguration> s_configuration = std::make_shared<UiConfiguration>();
+static std::shared_ptr<UiActionsRegister> s_uiactionsRegister = std::make_shared<UiActionsRegister>();
+static std::shared_ptr<NavigationController> s_keyNavigationController = std::make_shared<NavigationController>();
+static std::shared_ptr<NavigationUiActions> s_keyNavigationUiActions = std::make_shared<NavigationUiActions>();
 
 #ifdef Q_OS_MAC
 static std::shared_ptr<MacOSPlatformTheme> s_platformTheme = std::make_shared<MacOSPlatformTheme>();
@@ -51,20 +88,25 @@ void UiModule::registerExports()
 {
     ioc()->registerExport<IUiConfiguration>(moduleName(), s_configuration);
     ioc()->registerExportNoDelete<IUiEngine>(moduleName(), UiEngine::instance());
-    ioc()->registerExportNoDelete<ITheme>(moduleName(), UiEngine::instance()->theme());
     ioc()->registerExport<IInteractiveProvider>(moduleName(), UiEngine::instance()->interactiveProvider());
     ioc()->registerExport<IInteractiveUriRegister>(moduleName(), new InteractiveUriRegister());
     ioc()->registerExport<IPlatformTheme>(moduleName(), s_platformTheme);
+    ioc()->registerExport<IUiActionsRegister>(moduleName(), s_uiactionsRegister);
+    ioc()->registerExport<INavigationController>(moduleName(), s_keyNavigationController);
 }
 
 void UiModule::resolveImports()
 {
+    auto ar = ioc()->resolve<IUiActionsRegister>(moduleName());
+    if (ar) {
+        ar->reg(s_keyNavigationUiActions);
+    }
+
     auto ir = framework::ioc()->resolve<IInteractiveUriRegister>(moduleName());
     if (ir) {
-        ir->registerUri(Uri("musescore://devtools/interactive/testdialog"),
-                        ContainerMeta(ContainerType::QWidgetDialog, TestDialog::static_metaTypeId()));
-        ir->registerUri(Uri("musescore://devtools/interactive/sample"),
-                        ContainerMeta(ContainerType::QmlDialog, "DevTools/Interactive/SampleDialog.qml"));
+        ir->registerWidgetUri(Uri("musescore://devtools/interactive/testdialog"), TestDialog::static_metaTypeId());
+        ir->registerQmlUri(Uri("musescore://devtools/interactive/sample"), "DevTools/Interactive/SampleDialog.qml");
+        ir->registerQmlUri(Uri("musescore://devtools/keynav/controls"), "MuseScore/Ui/KeyNavDevDialog.qml");
     }
 }
 
@@ -76,7 +118,7 @@ void UiModule::registerResources()
 void UiModule::registerUiTypes()
 {
     qmlRegisterUncreatableType<UiEngine>("MuseScore.Ui", 1, 0, "UiEngine", "Cannot create an UiEngine");
-    qmlRegisterUncreatableType<Theme>("MuseScore.Ui", 1, 0, "QmlTheme", "Cannot create a QmlTheme");
+    qmlRegisterUncreatableType<UiTheme>("MuseScore.Ui", 1, 0, "QmlTheme", "Cannot create a QmlTheme");
     qmlRegisterUncreatableType<QmlToolTip>("MuseScore.Ui", 1, 0, "QmlToolTip", "Cannot create a QmlToolTip");
     qmlRegisterUncreatableType<IconCode>("MuseScore.Ui", 1, 0, "IconCode", "Cannot create an IconCode");
     qmlRegisterUncreatableType<MusicalSymbolCodes>("MuseScore.Ui", 1, 0, "MusicalSymbolCodes",
@@ -84,19 +126,35 @@ void UiModule::registerUiTypes()
     qmlRegisterUncreatableType<InteractiveProvider>("MuseScore.Ui", 1, 0, "QmlInteractiveProvider", "Cannot create");
     qmlRegisterUncreatableType<ContainerType>("MuseScore.Ui", 1, 0, "ContainerType", "Cannot create a ContainerType");
 
-    qmlRegisterType<QmlDialog>("MuseScore.Ui", 1, 0, "QmlDialog");
-    qmlRegisterType<InteractiveTestsModel>("MuseScore.Ui", 1, 0, "InteractiveTestsModel");
+    qmlRegisterUncreatableType<AbstractNavigation>("MuseScore.Ui", 1, 0, "AbstractNavigation", "Cannot create a AbstractType");
+    qmlRegisterUncreatableType<NavigationEvent>("MuseScore.Ui", 1, 0, "NavigationEvent", "Cannot create a KeyNavigationEvent");
+    qmlRegisterType<NavigationSection>("MuseScore.Ui", 1, 0, "NavigationSection");
+    qmlRegisterType<NavigationPanel>("MuseScore.Ui", 1, 0, "NavigationPanel");
+    qmlRegisterType<NavigationPopupPanel>("MuseScore.Ui", 1, 0, "NavigationPopupPanel");
+    qmlRegisterType<NavigationControl>("MuseScore.Ui", 1, 0, "NavigationControl");
+    qmlRegisterType<AccessibleItem>("MuseScore.Ui", 1, 0, "AccessibleItem");
+    qmlRegisterUncreatableType<MUAccessible>("MuseScore.Ui", 1, 0, "MUAccessible", "Cannot create a enum type");
 
+    qmlRegisterType<InteractiveTestsModel>("MuseScore.Ui", 1, 0, "InteractiveTestsModel");
     qRegisterMetaType<TestDialog>("TestDialog");
+
+    qmlRegisterType<KeyNavDevModel>("MuseScore.Ui", 1, 0, "KeyNavDevModel");
+    qmlRegisterUncreatableType<AbstractKeyNavDevItem>("MuseScore.Ui", 1, 0, "AbstractKeyNavDevItem", "Cannot create a Abstract");
+    qmlRegisterUncreatableType<KeyNavDevSubSection>("MuseScore.Ui", 1, 0, "KeyNavDevSubSection", "Cannot create a KeyNavDevSubSection");
+    qmlRegisterUncreatableType<KeyNavDevSection>("MuseScore.Ui", 1, 0, "KeyNavDevSection", "Cannot create a KeyNavDevSection");
+    qmlRegisterUncreatableType<KeyNavDevControl>("MuseScore.Ui", 1, 0, "KeyNavDevControl", "Cannot create a KeyNavDevControl");
 
     framework::ioc()->resolve<ui::IUiEngine>(moduleName())->addSourceImportPath(ui_QML_IMPORT);
 }
 
-void UiModule::onInit(const IApplication::RunMode& runMode)
+void UiModule::onInit(const IApplication::RunMode&)
 {
-    //! NOTE It is also needed in converter mode, because it defines the notation rendering settings
     s_configuration->init();
-    if (runMode == IApplication::RunMode::Editor) {
-        s_platformTheme->init();
-    }
+    s_uiactionsRegister->init();
+    s_keyNavigationController->init();
+}
+
+void UiModule::onDeinit()
+{
+    s_configuration->deinit();
 }

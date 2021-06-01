@@ -1,3 +1,24 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 import QtQuick 2.9
 import QtQuick.Layouts 1.3
 import QtQuick.Controls 2.12
@@ -9,7 +30,7 @@ import MuseScore.Instruments 1.0
 Item {
     id: root
 
-    property var instruments: null
+    property alias instruments: instrumentsView.model
     property var instrumentOrderTypes: null
 
     property bool canLiftInstrument: currentInstrumentIndex > 0
@@ -18,11 +39,20 @@ Item {
     property bool isInstrumentSelected: currentInstrumentIndex != -1
     property int currentInstrumentIndex: -1
 
+    property alias navigation: navPanel
+
     signal unselectInstrumentRequested(string id)
     signal orderChanged(string id)
 
     function scrollViewToEnd() {
         instrumentsView.positionViewAtEnd()
+    }
+
+    NavigationPanel {
+        id: navPanel
+        name: "SelectedInstrumentsView"
+        direction: NavigationPanel.Vertical
+        enabled: root.visible
     }
 
     StyledTextLabel {
@@ -46,12 +76,16 @@ Item {
         StyledComboBox {
             Layout.fillWidth: true
 
+            navigation.name: "Orders"
+            navigation.panel: navPanel
+            navigation.row: 1
+
             textRoleName: "text"
             valueRoleName: "value"
 
             model: {
                 var resultList = []
-                var orders = instrumentOrderTypes
+                var orders = root.instrumentOrderTypes
 
                 for (var i = 0; i < orders.length; ++i) {
                     resultList.push({"text" : qsTrc("instruments", "Order: ") + orders[i].name, "value" : orders[i].id})
@@ -61,26 +95,34 @@ Item {
             }
 
             onValueChanged: {
-                orderChanged(value)
+                root.orderChanged(value)
             }
         }
 
         FlatButton {
             Layout.preferredWidth: width
 
-            enabled: isInstrumentSelected
+            navigation.name: "Make soloist"
+            navigation.panel: navPanel
+            navigation.row: 2
+
+            enabled: root.isInstrumentSelected
             text: qsTrc("instruments", "Make soloist")
         }
 
         FlatButton {
             Layout.preferredWidth: width
 
-            enabled: isInstrumentSelected
+            navigation.name: "Delete"
+            navigation.panel: navPanel
+            navigation.row: 3
+
+            enabled: root.isInstrumentSelected
             icon: IconCode.DELETE_TANK
 
             onClicked: {
-                unselectInstrumentRequested(instruments[currentInstrumentIndex].id)
-                currentInstrumentIndex--
+                root.unselectInstrumentRequested(instruments[root.currentInstrumentIndex].id)
+                root.currentInstrumentIndex--
             }
         }
     }
@@ -94,8 +136,6 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
 
-        model: instruments
-
         boundsBehavior: ListView.StopAtBounds
         clip: true
 
@@ -106,7 +146,14 @@ Item {
         }
 
         delegate: ListItemBlank {
-            isSelected: root.currentInstrumentIndex === index
+            id: item
+
+            isSelected: root.currentInstrumentIndex === model.index
+
+            navigation.name: modelData.name
+            navigation.panel: navPanel
+            navigation.row: 4 + model.index
+            onNavigationActived: item.clicked()
 
             StyledTextLabel {
                 anchors.left: parent.left
@@ -121,7 +168,7 @@ Item {
             }
 
             onClicked: {
-                root.currentInstrumentIndex = index
+                root.currentInstrumentIndex = model.index
             }
 
             onDoubleClicked: {

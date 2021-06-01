@@ -1,34 +1,41 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #include "appshell.h"
 
+#include "config.h"
+
 #include <QApplication>
 #include <QQmlApplicationEngine>
+#include <QQuickWindow>
 #ifndef Q_OS_WASM
 #include <QThreadPool>
 #endif
+#include "view/dockwindow/docksetup.h"
+
 #include "log.h"
 #include "modularity/ioc.h"
 #include "ui/internal/uiengine.h"
 #include "version.h"
-#include "config.h"
 
 #include "commandlinecontroller.h"
 
@@ -137,14 +144,21 @@ int AppShell::run(int argc, char** argv)
         // Setup Qml Engine
         // ====================================================
         QQmlApplicationEngine* engine = new QQmlApplicationEngine();
+
+        dock::DockSetup::setup(engine);
+
+#if defined(Q_OS_WIN)
+        const QString mainQmlFile = "/platform/win/Main.qml";
+#elif defined(Q_OS_MACOS)
+        const QString mainQmlFile = "/platform/mac/Main.qml";
+#elif defined(Q_OS_LINUX)
+        const QString mainQmlFile = "/platform/linux/Main.qml";
+#elif defined(Q_OS_WASM)
+        const QString mainQmlFile = "/Main.wasm.qml";
+#endif
         //! NOTE Move ownership to UiEngine
         ui::UiEngine::instance()->moveQQmlEngine(engine);
 
-#ifndef Q_OS_WASM
-        const QString mainQmlFile = "/Main.qml";
-#else
-        const QString mainQmlFile = "/main.wasm.qml";
-#endif
 #ifdef QML_LOAD_FROM_SOURCE
         const QUrl url(QString(appshell_QML_IMPORT) + mainQmlFile);
 #else
@@ -168,6 +182,11 @@ int AppShell::run(int argc, char** argv)
         // ====================================================
         // Load Main qml
         // ====================================================
+
+        //! Needs to be set because we use transparent windows for PopupView.
+        //! Needs to be called before any QQuickWindows are shown.
+        QQuickWindow::setDefaultAlphaBuffer(true);
+
         engine->load(url);
     }
     }
@@ -180,6 +199,8 @@ int AppShell::run(int argc, char** argv)
     // ====================================================
     // Quit
     // ====================================================
+
+    PROFILER_PRINT;
 
     // Wait Thread Poll
 #ifndef Q_OS_WASM
@@ -196,8 +217,6 @@ int AppShell::run(int argc, char** argv)
     for (mu::framework::IModuleSetup* m : m_modules) {
         m->onDeinit();
     }
-
-    PROFILER_PRINT;
 
     globalModule.onDeinit();
 

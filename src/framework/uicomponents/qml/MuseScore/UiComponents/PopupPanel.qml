@@ -1,4 +1,25 @@
-import QtQuick 2.9
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+import QtQuick 2.15
 import QtGraphicalEffects 1.0
 
 import MuseScore.Ui 1.0
@@ -10,6 +31,12 @@ Rectangle {
     property alias background: effectSource.sourceItem
     property alias canClose: closeButton.visible
 
+    property alias navigation: navPanel
+    property NavigationControl navigationParentControl: null
+
+    property alias accessible: navPanel.accessible
+
+    signal opened()
     signal closed()
 
     color: ui.theme.popupBackgroundColor
@@ -25,18 +52,62 @@ Rectangle {
         }
     }
 
-    function open() {
-        visible = true
+    function open(navigationCtrl) {
+        root.navigationParentControl = navigationCtrl
+        root.visible = true
+        root.opened()
     }
 
     function close() {
-        if (!canClose) {
+        if (!root.canClose) {
             return
         }
 
-        visible = false
+        root.visible = false
 
-        closed()
+        if (root.navigationParentControl) {
+            root.navigationParentControl.requestActive()
+        }
+
+        root.closed()
+    }
+
+    NavigationPanel {
+        id: navPanel
+        name: root.objectName != "" ? root.objectName : "PopupPanel"
+
+        enabled: root.visible
+        order: {
+            var pctrl = root.navigationParentControl;
+            if (pctrl) {
+                if (pctrl.panel) {
+                    return pctrl.panel.order + 1
+                }
+            }
+            return -1
+        }
+
+        section: {
+            var pctrl = root.navigationParentControl;
+            if (pctrl) {
+                if (pctrl.panel) {
+                    return pctrl.panel.section
+                }
+            }
+            return null
+        }
+
+        onActiveChanged: {
+            if (navPanel.active) {
+                root.forceActiveFocus()
+            }
+        }
+
+        onNavigationEvent: {
+            if (event.type === NavigationEvent.Escape) {
+                root.close()
+            }
+        }
     }
 
     Loader {

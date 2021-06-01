@@ -1,21 +1,24 @@
-//=============================================================================
-//  MuseScore
-//  Music Composition & Notation
-//
-//  Copyright (C) 2020 MuseScore BVBA and others
-//
-//  This program is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License version 2.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FIT-0NESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-//=============================================================================
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * MuseScore-CLA-applies
+ *
+ * MuseScore
+ * Music Composition & Notation
+ *
+ * Copyright (C) 2021 MuseScore BVBA and others
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "notationparts.h"
 
 #include "libmscore/score.h"
@@ -135,10 +138,6 @@ void NotationParts::setInstruments(const mu::instruments::InstrumentList& instru
 
     removeMissingInstruments(instruments);
     appendNewInstruments(instruments);
-
-    if (score()->measures()->empty()) {
-        score()->insertMeasure(ElementType::MEASURE, 0, false);
-    }
 
     sortParts(instruments);
 
@@ -443,7 +442,7 @@ void NotationParts::doSetStaffVisible(Staff* staff, bool visible)
         return;
     }
 
-    staff->setInvisible(Fraction(0,1), !visible);
+    staff->setInvisible(Fraction(0, 1), !visible);
     score()->undo(new Ms::ChangeStaff(staff));
 }
 
@@ -509,7 +508,7 @@ void NotationParts::setStaffConfig(const ID& staffId, const StaffConfig& config)
 
     staff->setVisible(config.visible);
     staff->undoChangeProperty(Ms::Pid::COLOR, config.linesColor);
-    staff->setInvisible(Fraction(0,1), config.visibleLines);
+    staff->setInvisible(Fraction(0, 1), config.visibleLines);
     staff->setUserDist(config.userDistance);
     staff->undoChangeProperty(Ms::Pid::MAG, config.scale);
     staff->setShowIfEmpty(config.showIfEmpty);
