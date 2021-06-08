@@ -24,12 +24,10 @@
 
 #include <memory>
 
-#include <QPoint>
-#include <QPointF>
 #include <QPen>
 #include <QColor>
-#include <QFont>
 
+#include "geometry.h"
 #include "drawtypes.h"
 #include "font.h"
 
@@ -47,14 +45,14 @@ public:
     virtual void beginTarget(const std::string& name) = 0;
     virtual void beforeEndTargetHook(Painter* painter) = 0;
     virtual bool endTarget(bool endDraw = false) = 0;
-    virtual void beginObject(const std::string& name, const QPointF& pagePos) = 0;
+    virtual void beginObject(const std::string& name, const PointF& pagePos) = 0;
     virtual void endObject() = 0;
 
     virtual void setAntialiasing(bool arg) = 0;
     virtual void setCompositionMode(CompositionMode mode) = 0;
 
     virtual void setFont(const Font& font) = 0;
-    virtual Font font() const = 0;
+    virtual const Font& font() const = 0;
 
     virtual void setPen(const QPen& pen) = 0;
     virtual void setNoPen() = 0;
@@ -71,14 +69,16 @@ public:
 
     // drawing functions
     virtual void drawPath(const QPainterPath& path) = 0;
-    virtual void drawPolygon(const QPointF* points, int pointCount, PolygonMode mode) = 0;
+    virtual void drawPolygon(const PointF* points, int pointCount, PolygonMode mode) = 0;
 
-    virtual void drawText(const QPointF& point, const QString& text) = 0;
-    virtual void drawText(const QRectF& rect, int flags, const QString& text) = 0;
-    virtual void drawTextWorkaround(mu::draw::Font& f, const QPointF& pos, const QString& text) = 0; // see Painter::drawTextWorkaround .h file
+    virtual void drawText(const PointF& point, const QString& text) = 0;
+    virtual void drawText(const RectF& rect, int flags, const QString& text) = 0;
+    virtual void drawTextWorkaround(const Font& f, const PointF& pos, const QString& text) = 0; // see Painter::drawTextWorkaround .h file
 
-    virtual void drawPixmap(const QPointF& point, const QPixmap& pm) = 0;
-    virtual void drawTiledPixmap(const QRectF& rect, const QPixmap& pm, const QPointF& offset = QPointF()) = 0;
+    virtual void drawSymbol(const PointF& point, uint ucs4Code) = 0;
+
+    virtual void drawPixmap(const PointF& point, const QPixmap& pm) = 0;
+    virtual void drawTiledPixmap(const RectF& rect, const QPixmap& pm, const PointF& offset = PointF()) = 0;
 };
 
 using IPaintProviderPtr = std::shared_ptr<IPaintProvider>;

@@ -30,10 +30,11 @@
 #include "xml.h"
 #include "utils.h"
 #include "score.h"
-#include "sym.h"
 #include "text.h"
 #include "mscore.h"
 #include "staff.h"
+
+using namespace mu::draw;
 
 namespace Ms {
 //---------------------------------------------------------
@@ -180,7 +181,7 @@ void TextLineBaseSegment::draw(mu::draw::Painter* painter) const
             QVector<qreal> nDashes { dash, newGap };
             if (tl->beginHookType() == HookType::HOOK_45 || tl->beginHookType() == HookType::HOOK_90) {
                 qreal absD
-                    = sqrt(QPointF::dotProduct(points[start + 1] - points[start], points[start + 1] - points[start])) / textlineLineWidth;
+                    = sqrt(PointF::dotProduct(points[start + 1] - points[start], points[start + 1] - points[start])) / textlineLineWidth;
                 numPairs = std::max(qreal(1), absD / (dash + gap));
                 nDashes[1] = (absD - dash * (numPairs + 1)) / numPairs;
                 pen.setDashPattern(nDashes);
@@ -189,7 +190,7 @@ void TextLineBaseSegment::draw(mu::draw::Painter* painter) const
                 start++;
             }
             if (tl->endHookType() == HookType::HOOK_45 || tl->endHookType() == HookType::HOOK_90) {
-                qreal absD = sqrt(QPointF::dotProduct(points[end] - points[end - 1], points[end] - points[end - 1])) / textlineLineWidth;
+                qreal absD = sqrt(PointF::dotProduct(points[end] - points[end - 1], points[end] - points[end - 1])) / textlineLineWidth;
                 numPairs = std::max(qreal(1), absD / (dash + gap));
                 nDashes[1] = (absD - dash * (numPairs + 1)) / numPairs;
                 pen.setDashPattern(nDashes);

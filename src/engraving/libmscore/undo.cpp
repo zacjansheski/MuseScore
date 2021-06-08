@@ -82,7 +82,7 @@
 #include "stafftext.h"
 #include "chordline.h"
 #include "tremolo.h"
-#include "sym.h"
+#include "scorefont.h"
 #include "utils.h"
 #include "glissando.h"
 #include "stafflines.h"
@@ -1030,6 +1030,26 @@ void RemovePart::redo(EditData*)
 }
 
 //---------------------------------------------------------
+//   SetSoloist
+//---------------------------------------------------------
+
+SetSoloist::SetSoloist(Part* p, bool b)
+{
+    part = p;
+    soloist  = b;
+}
+
+void SetSoloist::undo(EditData*)
+{
+    part->setSoloist(!soloist);
+}
+
+void SetSoloist::redo(EditData*)
+{
+    part->setSoloist(soloist);
+}
+
+//---------------------------------------------------------
 //   InsertStaff
 //---------------------------------------------------------
 
@@ -1750,7 +1770,7 @@ void ChangeStyle::flip(EditData*)
         score->cmdConcertPitchChanged(style.value(Sid::concertPitch).toBool());
     }
     if (score->styleV(Sid::MusicalSymbolFont) != style.value(Sid::MusicalSymbolFont)) {
-        score->setScoreFont(ScoreFont::fontFactory(style.value(Sid::MusicalSymbolFont).toString()));
+        score->setScoreFont(ScoreFont::fontByName(style.value(Sid::MusicalSymbolFont).toString()));
     }
 
     score->setStyle(style, overlap);

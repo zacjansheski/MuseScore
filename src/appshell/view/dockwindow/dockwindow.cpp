@@ -59,12 +59,12 @@ void DockWindow::componentComplete()
         resetWindowState();
     });
 
-    mainWindow()->changeToolBarOrientationRequested().onReceive(this, [this](std::pair<QString, mu::framework::Orientation> orientation) {
+    mainWindow()->changeToolBarOrientationRequested().onReceive(this, [this](QString name, mu::framework::Orientation orientation) {
         const DockPage* page = currentPage();
-        DockToolBar* toolBar = page ? dynamic_cast<DockToolBar*>(page->dockByName(orientation.first)) : nullptr;
+        DockToolBar* toolBar = page ? dynamic_cast<DockToolBar*>(page->dockByName(name)) : nullptr;
 
         if (toolBar) {
-            toolBar->setOrientation(static_cast<Qt::Orientation>(orientation.second));
+            toolBar->setOrientation(static_cast<Qt::Orientation>(orientation));
         }
     });
 
@@ -193,11 +193,8 @@ void DockWindow::loadPageContent(const DockPage* page)
 
     loadPageToolbars(page);
 
-    const DockStatusBar* prevStatusBar = nullptr;
-    for (DockStatusBar* statusBar : page->statusBars()) {
-        auto location = prevStatusBar ? KDDockWidgets::Location_OnRight : KDDockWidgets::Location_OnBottom;
-        addDock(statusBar, location, prevStatusBar);
-        prevStatusBar = statusBar;
+    if (page->statusBar()) {
+        addDock(page->statusBar(), KDDockWidgets::Location_OnBottom);
     }
 
     QList<DockToolBar*> allToolBars = m_toolBars.list();

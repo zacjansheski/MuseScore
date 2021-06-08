@@ -29,8 +29,9 @@
 #include "scoreElement.h"
 #include "shape.h"
 #include "sig.h"
-#include "sym.h"
+#include "symid.h"
 
+#include "draw/geometry.h"
 #include "draw/painter.h"
 
 namespace mu {
@@ -53,10 +54,11 @@ namespace Ms {
 // Defined in Windows headers, conflicts with member functions named small().
 #undef small
 
+enum class Pid;
+enum class SmuflAnchorId;
+class StaffType;
 class XmlReader;
 class XmlWriter;
-enum class Pid;
-class StaffType;
 
 //---------------------------------------------------------
 //   Grip
@@ -346,7 +348,7 @@ public:
     virtual int subtype() const { return -1; }                    // for select gui
 
     virtual void draw(mu::draw::Painter*) const {}
-    void drawAt(mu::draw::Painter* p, const QPointF& pt) const { p->translate(pt); draw(p); p->translate(-pt); }
+    void drawAt(mu::draw::Painter* p, const mu::draw::PointF& pt) const { p->translate(pt); draw(p); p->translate(-pt); }
 
     virtual void writeProperties(XmlWriter& xml) const;
     virtual bool readProperties(XmlReader&);
@@ -530,7 +532,9 @@ public:
     bool custom(Pid) const;
     virtual bool isUserModified() const;
 
-    void drawSymbol(SymId id, mu::draw::Painter* p, const QPointF& o = QPointF(), qreal scale = 1.0) const;
+    void drawSymbol(SymId id, mu::draw::Painter* p, const mu::draw::PointF& o = mu::draw::PointF(), qreal scale = 1.0) const;
+    void drawSymbol(SymId id, mu::draw::Painter* p, const mu::draw::PointF& o, int n) const;
+    void drawSymbol(SymId id, mu::draw::Painter* p, const QPointF& o, qreal scale = 1.0) const;
     void drawSymbol(SymId id, mu::draw::Painter* p, const QPointF& o, int n) const;
     void drawSymbols(const std::vector<SymId>&, mu::draw::Painter* p, const QPointF& o = QPointF(), qreal scale = 1.0) const;
     void drawSymbols(const std::vector<SymId>&, mu::draw::Painter* p, const QPointF& o, const QSizeF& scale) const;

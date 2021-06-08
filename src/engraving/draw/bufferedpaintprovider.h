@@ -48,14 +48,14 @@ public:
     void beforeEndTargetHook(Painter* painter) override;
     bool endTarget(bool endDraw = false) override;
 
-    void beginObject(const std::string& name, const QPointF& pagePos) override;
+    void beginObject(const std::string& name, const PointF& pagePos) override;
     void endObject() override;
 
     void setAntialiasing(bool arg) override;
     void setCompositionMode(CompositionMode mode) override;
 
     void setFont(const Font& font) override;
-    Font font() const override;
+    const Font& font() const override;
 
     void setPen(const QPen& pen) override;
     void setNoPen() override;
@@ -72,14 +72,16 @@ public:
 
     // drawing functions
     void drawPath(const QPainterPath& path) override;
-    void drawPolygon(const QPointF* points, int pointCount, PolygonMode mode) override;
+    void drawPolygon(const PointF* points, int pointCount, PolygonMode mode) override;
 
-    void drawText(const QPointF& point, const QString& text) override;
-    void drawText(const QRectF& rect, int flags, const QString& text) override;
-    void drawTextWorkaround(mu::draw::Font& f, const QPointF& pos, const QString& text) override;
+    void drawText(const PointF& point, const QString& text) override;
+    void drawText(const RectF& rect, int flags, const QString& text) override;
+    void drawTextWorkaround(const Font& f, const PointF& pos, const QString& text) override;
 
-    void drawPixmap(const QPointF& p, const QPixmap& pm) override;
-    void drawTiledPixmap(const QRectF& rect, const QPixmap& pm, const QPointF& offset = QPointF()) override;
+    void drawSymbol(const PointF& point, uint ucs4Code) override;
+
+    void drawPixmap(const PointF& p, const QPixmap& pm) override;
+    void drawTiledPixmap(const RectF& rect, const QPixmap& pm, const PointF& offset = PointF()) override;
 
     // ---
 

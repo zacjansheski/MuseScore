@@ -40,16 +40,18 @@ NICE-TO-HAVE TODO:
 #include "note.h"
 #include "notedot.h"
 #include "score.h"
+#include "scorefont.h"
 #include "segment.h"
 #include "staff.h"
 #include "system.h"
 #include "measure.h"
 #include "style.h"
-#include "sym.h"
 #include "xml.h"
 #include "accidental.h"
 
 #include "draw/fontmetrics.h"
+
+using namespace mu::draw;
 
 namespace Ms {
 static const ElementStyle glissandoElementStyle {
@@ -110,7 +112,7 @@ void GlissandoSegment::draw(mu::draw::Painter* painter) const
     painter->rotate(-wi);
 
     if (glissando()->glissandoType() == GlissandoType::STRAIGHT) {
-        painter->drawLine(QLineF(0.0, 0.0, l, 0.0));
+        painter->drawLine(LineF(0.0, 0.0, l, 0.0));
     } else if (glissando()->glissandoType() == GlissandoType::WAVY) {
         QRectF b = symBbox(SymId::wiggleTrill);
         qreal a  = symAdvance(SymId::wiggleTrill);

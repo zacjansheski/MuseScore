@@ -19,18 +19,32 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-import QtQuick 2.7
-import MuseScore.NotationScene 1.0
-import MuseScore.UiComponents 1.0
+#ifndef MU_DRAW_FONTENGINEFT_H
+#define MU_DRAW_FONTENGINEFT_H
 
-StyledTextLabel {
-    NotationAccessibilityModel {
-        id: model
-    }
+#include <QString>
+#include <QByteArray>
 
-    Component.onCompleted: {
-        model.load()
-    }
+namespace mu::draw {
+struct FTData;
+struct FTGlyphMetrics;
+class FontEngineFT
+{
+public:
+    FontEngineFT();
+    ~FontEngineFT();
 
-    text: model.accessibilityInfo
+    bool load(const QString& path);
+
+    QRectF bbox(uint ucs4, qreal DPI_F) const;
+    qreal advance(uint ucs4, qreal DPI_F) const;
+
+private:
+
+    FTGlyphMetrics* glyphMetrics(uint ucs4) const;
+
+    FTData* m_data = nullptr;
+};
 }
+
+#endif // MU_DRAW_FONTENGINEFT_H
