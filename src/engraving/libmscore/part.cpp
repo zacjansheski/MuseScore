@@ -35,6 +35,8 @@
 #include "chordrest.h"
 #include "fret.h"
 
+using namespace mu;
+
 namespace Ms {
 //---------------------------------------------------------
 //   Part
@@ -70,6 +72,20 @@ void Part::initFromInstrTemplate(const InstrumentTemplate* t)
 Staff* Part::staff(int idx) const
 {
     return _staves[idx];
+}
+
+//---------------------------------------------------------
+//   family
+//---------------------------------------------------------
+
+QString Part::familyId() const
+{
+    if (_instruments.size() <= 0) {
+        return QString("");
+    }
+
+    InstrumentIndex ii = searchTemplateIndexForId(instrumentId());
+    return ii.instrTemplate && ii.instrTemplate->family ? ii.instrTemplate->family->id : QString();
 }
 
 //---------------------------------------------------------

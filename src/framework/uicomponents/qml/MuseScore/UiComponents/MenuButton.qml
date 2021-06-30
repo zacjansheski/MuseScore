@@ -27,14 +27,24 @@ FlatButton {
     id: root
 
     property var menuModel
+    property alias isMenuOpened: menuLoader.isMenuOpened
 
     signal handleAction(string actionCode, int actionIndex)
 
+    function toggleMenu(item, x, y) {
+        menuLoader.parent = item
+        menuLoader.toggleOpened(menuModel, null, x, y)
+    }
+
+    enabled: visible
+
     icon: IconCode.MENU_THREE_DOTS
-    normalStateColor: "transparent"
+    normalStateColor: isMenuOpened ? ui.theme.accentColor : "transparent"
 
     StyledMenuLoader {
         id: menuLoader
+
+        menuAnchorItem: ui.rootItem
 
         onHandleAction: {
             root.handleAction(actionCode, actionIndex)
@@ -42,6 +52,7 @@ FlatButton {
     }
 
     onClicked: {
-        menuLoader.toggleOpened(root.menuModel, navigation)
+        menuLoader.parent = root
+        menuLoader.toggleOpened(root.menuModel, root.navigation)
     }
 }

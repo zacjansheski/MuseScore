@@ -38,7 +38,6 @@ StyledPopupView {
     y: parent.height
 
     contentWidth: prv.itemWidth
-    contentHeight: view.childrenRect.height
 
     padding: 8
     margins: 0
@@ -73,14 +72,21 @@ StyledPopupView {
         prv.hasItemsWithSubmenu = false
         prv.hasItemsWithShortcut = false
 
+        //! NOTE Policy:
+        //! - if the menu contains checkable items, space for the checkmarks is reserved
+        //! - if the menu contains items with an icon, space for icons is reserved
+        //! - selectable items that don't have an icon are treated as checkable
+        //! - selectable items that do have an icon are treated as non-checkable
+        //! - all selectable items that are selected get an accent color background
+
         for (let i = 0; i < model.length; i++) {
             let item = model[i]
             let hasIcon = (Boolean(item.icon) && item.icon !== IconCode.NONE)
 
-            if ((item.checkable || item.selectable) && hasIcon) {
+            if (item.checkable && hasIcon) {
                 prv.hasItemsWithIconAndCheckable = true
                 prv.hasItemsWithIconOrCheckable = true
-            } else if (item.checkable || item.selectable || hasIcon) {
+            } else if (item.checkable || hasIcon || item.selectable) {
                 prv.hasItemsWithIconOrCheckable = true
             }
 
@@ -104,6 +110,21 @@ StyledPopupView {
 
         prv.itemLeftPartWidth = leftWidth
         prv.itemRightPartWidth = rightWidth
+
+        //! NOTE: Due to the fact that the view has a dynamic delegate,
+        //  the height calculation occurs with an error
+        //  (by default, the delegate height is taken as the menu item height).
+        //  Let's manually adjust the height of the content
+        var sepCount = 0
+        for (let k = 0; k < model.length; k++) {
+            if (!Boolean(model[k].title)) {
+                sepCount++
+            }
+        }
+
+        var itemHeight = (view.contentHeight - view.spacing * (model.length - 1)) / model.length
+        root.contentHeight = view.contentHeight - sepCount * (itemHeight - prv.separatorHeight) +
+                prv.viewVerticalMargin * 2
     }
 
     QtObject {
@@ -118,6 +139,9 @@ StyledPopupView {
         property int itemRightPartWidth: 100
         readonly property int itemWidth:
             Math.max(itemLeftPartWidth + itemRightPartWidth, root.minimumMenuWidth)
+
+        readonly property int separatorHeight: 1
+        readonly property int viewVerticalMargin: 4
 
         readonly property int iconAndCheckMarkMode: {
             if (prv.hasItemsWithIconAndCheckable) {
@@ -138,14 +162,20 @@ StyledPopupView {
 
     ListView {
         id: view
+
         anchors.fill: parent
-        spacing: 2
+        anchors.topMargin: prv.viewVerticalMargin
+        anchors.bottomMargin: prv.viewVerticalMargin
+
+        spacing: 0
         interactive: false
 
         delegate: Loader {
             id: loader
 
-            sourceComponent: Boolean(modelData.title) ? menuItemComp : separatorComp
+            property bool isSeparator: Boolean(modelData.title)
+
+            sourceComponent: isSeparator ? menuItemComp : separatorComp
 
             onLoaded: {
                 loader.item.modelData = Qt.binding(() => (modelData))
@@ -194,7 +224,7 @@ StyledPopupView {
                 id: separatorComp
 
                 Rectangle {
-                    height: 1
+                    height: prv.separatorHeight
                     color: ui.theme.strokeColor
 
                     property var modelData

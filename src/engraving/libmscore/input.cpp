@@ -35,6 +35,8 @@
 #include "select.h"
 #include "articulation.h"
 
+using namespace mu;
+
 namespace Ms {
 class DrumSet;
 
@@ -210,6 +212,8 @@ void InputState::update(Selection& selection)
 
     Element* e = selection.element();
     if (e == 0) {
+        setTrack(selection.activeTrack());
+        setSegment(selection.startSegment());
         return;
     }
 

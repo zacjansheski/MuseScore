@@ -70,6 +70,7 @@ option(BUILD_PALETTE_MODULE "Build palette module" ON)
 option(BUILD_INSTRUMENTS_MODULE "Build instruments module" ON)
 option(BUILD_INSPECTOR_MODULE "Build inspector module" ON)
 option(BUILD_AUTOBOT_MODULE "Build autobot module" OFF)
+option(BUILD_MULTIINSTANCES_MODULE "Build multiinstances module" OFF) # Temporary off
 
 option(USE_SCORE_ACCESSIBLE_TREE "Use score accessible tree" OFF)
 
@@ -87,7 +88,6 @@ option(QML_LOAD_FROM_SOURCE "Load qml files from source (not resource)" OFF)
 option(TRACE_DRAW_OBJ_ENABLED "Trace draw objects" OFF)
 
 option(USE_SYSTEM_FREETYPE "Use system FreeType" OFF) # requires freetype >= 2.5.2, does not work on win
-option(BUILD_WEBENGINE "Built in webengine support" ON)
 set(SCRIPT_INTERFACE  TRUE)
 
 set(VST3_SDK_VERSION "3.7")
@@ -137,17 +137,6 @@ configure_file (
 ###########################################
 # Setup external dependencies
 ###########################################
-
-# We need this early, before FindQt5
-if (BUILD_WEBENGINE)
-   if (CC_IS_MINGW)
-      set(USE_WEBENGINE 0)
-   else (CC_IS_MINGW)
-      set(USE_WEBENGINE 1)
-   endif(CC_IS_MINGW)
-else (BUILD_WEBENGINE)
-   set(USE_WEBENGINE 0)
-endif (BUILD_WEBENGINE)
 
 set(QT_MIN_VERSION    "5.15.0")
 include(FindQt5)

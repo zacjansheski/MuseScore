@@ -40,6 +40,8 @@
 #include "notationaccessibility.h"
 #include "notationmidiinput.h"
 #include "notationparts.h"
+#include "notationtypes.h"
+#include "scoreorderconverter.h"
 
 using namespace mu::notation;
 
@@ -225,6 +227,14 @@ void Notation::setMetaInfo(const Meta& meta)
     score()->setMetaTags(tags);
 }
 
+mu::instruments::ScoreOrder Notation::scoreOrder() const
+{
+    if (!m_score) {
+        return mu::instruments::ScoreOrder();
+    }
+    return ScoreOrderConverter::convertScoreOrder(m_score->scoreOrder());
+}
+
 INotationPtr Notation::clone() const
 {
     return std::make_shared<Notation>(score()->clone());
@@ -255,7 +265,7 @@ ViewMode Notation::viewMode() const
     return score()->layoutMode();
 }
 
-void Notation::paint(mu::draw::Painter* painter, const QRectF& frameRect)
+void Notation::paint(mu::draw::Painter* painter, const RectF& frameRect)
 {
     const QList<Ms::Page*>& pages = score()->pages();
     if (pages.empty()) {
@@ -279,10 +289,10 @@ void Notation::paint(mu::draw::Painter* painter, const QRectF& frameRect)
     static_cast<NotationInteraction*>(m_interaction.get())->paint(painter);
 }
 
-void Notation::paintPages(draw::Painter* painter, const QRectF& frameRect, const QList<Ms::Page*>& pages, bool paintBorders) const
+void Notation::paintPages(draw::Painter* painter, const RectF& frameRect, const QList<Ms::Page*>& pages, bool paintBorders) const
 {
     for (Ms::Page* page : pages) {
-        QRectF pageRect(page->abbox().translated(page->pos()));
+        RectF pageRect(page->abbox().translated(page->pos()));
 
         if (pageRect.right() < frameRect.left()) {
             continue;
@@ -296,7 +306,7 @@ void Notation::paintPages(draw::Painter* painter, const QRectF& frameRect, const
             paintPageBorder(painter, page);
         }
 
-        QPointF pagePosition(page->pos());
+        PointF pagePosition(page->pos());
         painter->translate(pagePosition);
         paintForeground(painter, page->bbox());
 
@@ -309,7 +319,7 @@ void Notation::paintPages(draw::Painter* painter, const QRectF& frameRect, const
 
 void Notation::paintPageBorder(draw::Painter* painter, const Ms::Page* page) const
 {
-    QRectF boundingRect(page->canvasBoundingRect());
+    RectF boundingRect(page->canvasBoundingRect());
 
     painter->setBrush(Qt::NoBrush);
     painter->setPen(QPen(configuration()->borderColor(), configuration()->borderWidth()));
@@ -329,7 +339,7 @@ void Notation::paintPageBorder(draw::Painter* painter, const Ms::Page* page) con
     }
 }
 
-void Notation::paintForeground(mu::draw::Painter* painter, const QRectF& pageRect) const
+void Notation::paintForeground(mu::draw::Painter* painter, const RectF& pageRect) const
 {
     if (score()->printing()) {
         painter->fillRect(pageRect, Qt::white);

@@ -49,7 +49,7 @@
 #include "mscore.h"
 #include "stafftype.h"
 #include "sym.h"
-#include "scoreOrder.h"
+#include "scoreorder.h"
 
 #include "preferences.h"
 
@@ -65,6 +65,8 @@
 #endif
 
 #include "draw/qpainterprovider.h"
+
+using namespace mu;
 
 namespace Ms {
 //---------------------------------------------------------
@@ -187,11 +189,10 @@ void Score::writeMovement(XmlWriter& xml, bool selectionOnly)
         }
     }
 
-    if (_scoreOrder && !_scoreOrder->isCustom()) {
-        ScoreOrder* order = _scoreOrder->clone();
-        order->updateInstruments(this);
-        order->write(xml);
-        delete order;
+    if (_scoreOrder.isValid()) {
+        ScoreOrder order = _scoreOrder;
+        order.updateInstruments(this);
+        order.write(xml);
     }
 
     xml.setCurTrack(0);
@@ -554,7 +555,7 @@ QImage Score::createThumbnail()
     doLayout();
 
     Page* page = pages().at(0);
-    QRectF fr  = page->abbox();
+    RectF fr  = page->abbox();
     qreal mag  = 256.0 / qMax(fr.width(), fr.height());
     int w      = int(fr.width() * mag);
     int h      = int(fr.height() * mag);
@@ -1047,7 +1048,7 @@ void Score::print(mu::draw::Painter* painter, int pageNo)
     _printing  = true;
     MScore::pdfPrinting = true;
     Page* page = pages().at(pageNo);
-    QRectF fr  = page->abbox();
+    RectF fr  = page->abbox();
 
     QList<Element*> ell = page->items(fr);
     std::stable_sort(ell.begin(), ell.end(), elementLessThan);

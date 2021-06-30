@@ -22,6 +22,8 @@
 
 #include "scorediff.h"
 
+#include <QRegularExpression>
+
 #include "duration.h"
 #include "measure.h"
 #include "score.h"
@@ -32,6 +34,8 @@
 
 #include <algorithm>
 #include <utility>
+
+using namespace mu;
 
 namespace Ms {
 //---------------------------------------------------------

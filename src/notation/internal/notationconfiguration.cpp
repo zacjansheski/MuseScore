@@ -75,7 +75,6 @@ static const Settings::Key TOOLBAR_KEY(module_name, "ui/toolbar/");
 static const Settings::Key IS_CANVAS_ORIENTATION_VERTICAL_KEY(module_name, "ui/canvas/scroll/verticalOrientation");
 static const Settings::Key IS_LIMIT_CANVAS_SCROLL_AREA_KEY(module_name, "ui/canvas/scroll/limitScrollArea");
 
-static const Settings::Key ADVANCE_TO_NEXT_NOTE_ON_KEY_RELEASE(module_name, "io/midi/advanceOnRelease");
 static const Settings::Key COLOR_NOTES_OUTSIDE_OF_USABLE_PITCH_RANGE(module_name, "score/note/warnPitchRange");
 static const Settings::Key REALTIME_DELAY(module_name, "io/midi/realtimeDelay");
 static const Settings::Key NOTE_DEFAULT_PLAY_DURATION(module_name, "score/note/defaultPlayDuration");
@@ -133,7 +132,7 @@ void NotationConfiguration::init()
         m_currentZoomChanged.send(val.toInt());
     });
 
-    settings()->setDefaultValue(USER_STYLES_PATH, Val(globalConfiguration()->sharePath().toStdString() + "Styles"));
+    settings()->setDefaultValue(USER_STYLES_PATH, Val(globalConfiguration()->appDataPath().toStdString() + "Styles"));
     settings()->valueChanged(USER_STYLES_PATH).onReceive(nullptr, [this](const Val& val) {
         m_stylesPathChanged.send(val.toString());
     });
@@ -152,7 +151,6 @@ void NotationConfiguration::init()
 
     settings()->setDefaultValue(IS_LIMIT_CANVAS_SCROLL_AREA_KEY, Val(false));
 
-    settings()->setDefaultValue(ADVANCE_TO_NEXT_NOTE_ON_KEY_RELEASE, Val(true));
     settings()->setDefaultValue(COLOR_NOTES_OUTSIDE_OF_USABLE_PITCH_RANGE, Val(true));
     settings()->setDefaultValue(REALTIME_DELAY, Val(750));
     settings()->setDefaultValue(NOTE_DEFAULT_PLAY_DURATION, Val(300));
@@ -178,7 +176,7 @@ void NotationConfiguration::init()
     fileSystem()->makePath(stylesPath().val);
 
     // libmscore
-    preferences().setBackupDirPath(globalConfiguration()->backupPath().toQString());
+    preferences().setBackupDirPath(globalConfiguration()->userBackupPath().toQString());
     preferences().setDefaultStyleFilePath(defaultStyleFilePath().toQString());
 
     Ms::MScore::warnPitchRange = colorNotesOusideOfUsablePitchRange();
@@ -197,7 +195,7 @@ QColor NotationConfiguration::backgroundColor() const
 
 void NotationConfiguration::setBackgroundColor(const QColor& color)
 {
-    settings()->setValue(BACKGROUND_COLOR, Val(color));
+    settings()->setSharedValue(BACKGROUND_COLOR, Val(color));
 }
 
 io::path NotationConfiguration::backgroundWallpaperPath() const
@@ -207,7 +205,7 @@ io::path NotationConfiguration::backgroundWallpaperPath() const
 
 void NotationConfiguration::setBackgroundWallpaperPath(const io::path& path)
 {
-    settings()->setValue(BACKGROUND_WALLPAPER_PATH, Val(path.toStdString()));
+    settings()->setSharedValue(BACKGROUND_WALLPAPER_PATH, Val(path.toStdString()));
 }
 
 bool NotationConfiguration::backgroundUseColor() const
@@ -217,7 +215,7 @@ bool NotationConfiguration::backgroundUseColor() const
 
 void NotationConfiguration::setBackgroundUseColor(bool value)
 {
-    settings()->setValue(BACKGROUND_USE_COLOR, Val(value));
+    settings()->setSharedValue(BACKGROUND_USE_COLOR, Val(value));
 }
 
 async::Notification NotationConfiguration::backgroundChanged() const
@@ -232,7 +230,7 @@ QColor NotationConfiguration::foregroundColor() const
 
 void NotationConfiguration::setForegroundColor(const QColor& color)
 {
-    settings()->setValue(FOREGROUND_COLOR, Val(color));
+    settings()->setSharedValue(FOREGROUND_COLOR, Val(color));
 }
 
 io::path NotationConfiguration::foregroundWallpaperPath() const
@@ -242,7 +240,7 @@ io::path NotationConfiguration::foregroundWallpaperPath() const
 
 void NotationConfiguration::setForegroundWallpaperPath(const io::path& path)
 {
-    return settings()->setValue(FOREGROUND_WALLPAPER_PATH, Val(path.toStdString()));
+    return settings()->setSharedValue(FOREGROUND_WALLPAPER_PATH, Val(path.toStdString()));
 }
 
 bool NotationConfiguration::foregroundUseColor() const
@@ -252,7 +250,7 @@ bool NotationConfiguration::foregroundUseColor() const
 
 void NotationConfiguration::setForegroundUseColor(bool value)
 {
-    settings()->setValue(FOREGROUND_USE_COLOR, Val(value));
+    settings()->setSharedValue(FOREGROUND_USE_COLOR, Val(value));
 }
 
 async::Notification NotationConfiguration::foregroundChanged() const
@@ -262,7 +260,7 @@ async::Notification NotationConfiguration::foregroundChanged() const
 
 io::path NotationConfiguration::wallpapersDefaultDirPath() const
 {
-    return globalConfiguration()->sharePath() + "/wallpapers";
+    return globalConfiguration()->appDataPath() + "/wallpapers";
 }
 
 QColor NotationConfiguration::borderColor() const
@@ -310,7 +308,7 @@ void NotationConfiguration::setSelectionColor(int voiceIndex, const QColor& colo
         return;
     }
 
-    settings()->setValue(voicesKeys[voiceIndex], Val(color));
+    settings()->setSharedValue(voicesKeys[voiceIndex], Val(color));
 }
 
 async::Channel<int> NotationConfiguration::selectionColorChanged()
@@ -325,7 +323,7 @@ int NotationConfiguration::selectionProximity() const
 
 void NotationConfiguration::setSelectionProximity(int proxymity)
 {
-    settings()->setValue(SELECTION_PROXIMITY, Val(proxymity));
+    settings()->setSharedValue(SELECTION_PROXIMITY, Val(proxymity));
 }
 
 ZoomType NotationConfiguration::defaultZoomType() const
@@ -335,7 +333,7 @@ ZoomType NotationConfiguration::defaultZoomType() const
 
 void NotationConfiguration::setDefaultZoomType(ZoomType zoomType)
 {
-    settings()->setValue(DEFAULT_ZOOM_TYPE, Val(static_cast<int>(zoomType)));
+    settings()->setSharedValue(DEFAULT_ZOOM_TYPE, Val(static_cast<int>(zoomType)));
 }
 
 int NotationConfiguration::defaultZoom() const
@@ -345,7 +343,7 @@ int NotationConfiguration::defaultZoom() const
 
 void NotationConfiguration::setDefaultZoom(int zoomPercentage)
 {
-    settings()->setValue(DEFAULT_ZOOM, Val(zoomPercentage));
+    settings()->setSharedValue(DEFAULT_ZOOM, Val(zoomPercentage));
 }
 
 mu::ValCh<int> NotationConfiguration::currentZoom() const
@@ -359,7 +357,7 @@ mu::ValCh<int> NotationConfiguration::currentZoom() const
 
 void NotationConfiguration::setCurrentZoom(int zoomPercentage)
 {
-    settings()->setValue(CURRENT_ZOOM, Val(zoomPercentage));
+    settings()->setSharedValue(CURRENT_ZOOM, Val(zoomPercentage));
 }
 
 QList<int> NotationConfiguration::possibleZoomPercentageList() const
@@ -376,7 +374,7 @@ int NotationConfiguration::mouseZoomPrecision() const
 
 void NotationConfiguration::setMouseZoomPrecision(int precision)
 {
-    settings()->setValue(MOUSE_ZOOM_PRECISION, Val(precision));
+    settings()->setSharedValue(MOUSE_ZOOM_PRECISION, Val(precision));
 }
 
 std::string NotationConfiguration::fontFamily() const
@@ -400,7 +398,7 @@ ValCh<io::path> NotationConfiguration::stylesPath() const
 
 void NotationConfiguration::setStylesPath(const io::path& path)
 {
-    settings()->setValue(USER_STYLES_PATH, Val(path.toStdString()));
+    settings()->setSharedValue(USER_STYLES_PATH, Val(path.toStdString()));
 }
 
 io::path NotationConfiguration::defaultStyleFilePath() const
@@ -411,7 +409,7 @@ io::path NotationConfiguration::defaultStyleFilePath() const
 void NotationConfiguration::setDefaultStyleFilePath(const io::path& path)
 {
     preferences().setDefaultStyleFilePath(path.toQString());
-    settings()->setValue(DEFAULT_STYLE_FILE_PATH, Val(path.toStdString()));
+    settings()->setSharedValue(DEFAULT_STYLE_FILE_PATH, Val(path.toStdString()));
 }
 
 io::path NotationConfiguration::partStyleFilePath() const
@@ -421,7 +419,7 @@ io::path NotationConfiguration::partStyleFilePath() const
 
 void NotationConfiguration::setPartStyleFilePath(const io::path& path)
 {
-    settings()->setValue(PART_STYLE_FILE_PATH, Val(path.toStdString()));
+    settings()->setSharedValue(PART_STYLE_FILE_PATH, Val(path.toStdString()));
 }
 
 bool NotationConfiguration::isMidiInputEnabled() const
@@ -431,7 +429,7 @@ bool NotationConfiguration::isMidiInputEnabled() const
 
 void NotationConfiguration::setIsMidiInputEnabled(bool enabled)
 {
-    settings()->setValue(IS_MIDI_INPUT_ENABLED, Val(enabled));
+    settings()->setSharedValue(IS_MIDI_INPUT_ENABLED, Val(enabled));
 }
 
 bool NotationConfiguration::isAutomaticallyPanEnabled() const
@@ -441,7 +439,7 @@ bool NotationConfiguration::isAutomaticallyPanEnabled() const
 
 void NotationConfiguration::setIsAutomaticallyPanEnabled(bool enabled)
 {
-    settings()->setValue(IS_AUTOMATICALLY_PAN_ENABLED, Val(enabled));
+    settings()->setSharedValue(IS_AUTOMATICALLY_PAN_ENABLED, Val(enabled));
     Ms::MScore::panPlayback = enabled;
 }
 
@@ -452,7 +450,7 @@ bool NotationConfiguration::isPlayRepeatsEnabled() const
 
 void NotationConfiguration::setIsPlayRepeatsEnabled(bool enabled)
 {
-    settings()->setValue(IS_PLAY_REPEATS_ENABLED, Val(enabled));
+    settings()->setSharedValue(IS_PLAY_REPEATS_ENABLED, Val(enabled));
     Ms::MScore::playRepeats = enabled;
 }
 
@@ -463,7 +461,7 @@ bool NotationConfiguration::isMetronomeEnabled() const
 
 void NotationConfiguration::setIsMetronomeEnabled(bool enabled)
 {
-    settings()->setValue(IS_METRONOME_ENABLED, Val(enabled));
+    settings()->setSharedValue(IS_METRONOME_ENABLED, Val(enabled));
 }
 
 bool NotationConfiguration::isCountInEnabled() const
@@ -473,7 +471,7 @@ bool NotationConfiguration::isCountInEnabled() const
 
 void NotationConfiguration::setIsCountInEnabled(bool enabled)
 {
-    settings()->setValue(IS_COUNT_IN_ENABLED, Val(enabled));
+    settings()->setSharedValue(IS_COUNT_IN_ENABLED, Val(enabled));
 }
 
 float NotationConfiguration::guiScaling() const
@@ -496,22 +494,6 @@ int NotationConfiguration::notationDivision() const
     return Ms::MScore::division;
 }
 
-std::vector<std::string> NotationConfiguration::toolbarActions(const std::string& toolbarName) const
-{
-    return parseToolbarActions(settings()->value(toolbarSettingsKey(toolbarName)).toString());
-}
-
-void NotationConfiguration::setToolbarActions(const std::string& toolbarName, const std::vector<std::string>& actions)
-{
-    QStringList qactions;
-    for (const std::string& action: actions) {
-        qactions << QString::fromStdString(action);
-    }
-
-    Val value(qactions.join(",").toStdString());
-    settings()->setValue(toolbarSettingsKey(toolbarName), value);
-}
-
 ValCh<Orientation> NotationConfiguration::canvasOrientation() const
 {
     ValCh<Orientation> orientation;
@@ -527,7 +509,7 @@ void NotationConfiguration::setCanvasOrientation(Orientation orientation)
     bool isVertical = orientation == Orientation::Vertical;
     Ms::MScore::setVerticalOrientation(isVertical);
 
-    settings()->setValue(IS_CANVAS_ORIENTATION_VERTICAL_KEY, Val(isVertical));
+    settings()->setSharedValue(IS_CANVAS_ORIENTATION_VERTICAL_KEY, Val(isVertical));
 }
 
 bool NotationConfiguration::isLimitCanvasScrollArea() const
@@ -537,40 +519,7 @@ bool NotationConfiguration::isLimitCanvasScrollArea() const
 
 void NotationConfiguration::setIsLimitCanvasScrollArea(bool limited)
 {
-    settings()->setValue(IS_LIMIT_CANVAS_SCROLL_AREA_KEY, Val(limited));
-}
-
-std::vector<std::string> NotationConfiguration::parseToolbarActions(const std::string& actions) const
-{
-    if (actions.empty()) {
-        return {};
-    }
-
-    std::vector<std::string> result;
-
-    QStringList actionsList = QString::fromStdString(actions).split(",");
-    for (const QString& action: actionsList) {
-        result.push_back(action.toStdString());
-    }
-
-    return result;
-}
-
-Settings::Key NotationConfiguration::toolbarSettingsKey(const std::string& toolbarName) const
-{
-    Settings::Key toolbarKey = TOOLBAR_KEY;
-    toolbarKey.key += toolbarName;
-    return toolbarKey;
-}
-
-bool NotationConfiguration::advanceToNextNoteOnKeyRelease() const
-{
-    return settings()->value(ADVANCE_TO_NEXT_NOTE_ON_KEY_RELEASE).toBool();
-}
-
-void NotationConfiguration::setAdvanceToNextNoteOnKeyRelease(bool value)
-{
-    settings()->setValue(ADVANCE_TO_NEXT_NOTE_ON_KEY_RELEASE, Val(value));
+    settings()->setSharedValue(IS_LIMIT_CANVAS_SCROLL_AREA_KEY, Val(limited));
 }
 
 bool NotationConfiguration::colorNotesOusideOfUsablePitchRange() const
@@ -581,7 +530,7 @@ bool NotationConfiguration::colorNotesOusideOfUsablePitchRange() const
 void NotationConfiguration::setColorNotesOusideOfUsablePitchRange(bool value)
 {
     Ms::MScore::warnPitchRange = value;
-    settings()->setValue(COLOR_NOTES_OUTSIDE_OF_USABLE_PITCH_RANGE, Val(value));
+    settings()->setSharedValue(COLOR_NOTES_OUTSIDE_OF_USABLE_PITCH_RANGE, Val(value));
 }
 
 int NotationConfiguration::delayBetweenNotesInRealTimeModeMilliseconds() const
@@ -591,7 +540,7 @@ int NotationConfiguration::delayBetweenNotesInRealTimeModeMilliseconds() const
 
 void NotationConfiguration::setDelayBetweenNotesInRealTimeModeMilliseconds(int delayMs)
 {
-    settings()->setValue(REALTIME_DELAY, Val(delayMs));
+    settings()->setSharedValue(REALTIME_DELAY, Val(delayMs));
 }
 
 int NotationConfiguration::notePlayDurationMilliseconds() const
@@ -602,5 +551,15 @@ int NotationConfiguration::notePlayDurationMilliseconds() const
 void NotationConfiguration::setNotePlayDurationMilliseconds(int durationMs)
 {
     Ms::MScore::defaultPlayDuration = durationMs;
-    settings()->setValue(NOTE_DEFAULT_PLAY_DURATION, Val(durationMs));
+    settings()->setSharedValue(NOTE_DEFAULT_PLAY_DURATION, Val(durationMs));
+}
+
+void NotationConfiguration::setTemplateModeEnalbed(bool enabled)
+{
+    Ms::MScore::saveTemplateMode = enabled;
+}
+
+void NotationConfiguration::setTestModeEnabled(bool enabled)
+{
+    Ms::MScore::testMode = enabled;
 }

@@ -88,6 +88,8 @@ set(MODULE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/internal/notationconfiguration.h
     ${CMAKE_CURRENT_LIST_DIR}/internal/mscznotationreader.cpp
     ${CMAKE_CURRENT_LIST_DIR}/internal/mscznotationreader.h
+    ${CMAKE_CURRENT_LIST_DIR}/internal/positionswriter.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/internal/positionswriter.h
     ${CMAKE_CURRENT_LIST_DIR}/internal/notationreadersregister.cpp
     ${CMAKE_CURRENT_LIST_DIR}/internal/notationreadersregister.h
     ${CMAKE_CURRENT_LIST_DIR}/internal/notationwritersregister.cpp
@@ -109,6 +111,8 @@ set(MODULE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/internal/inotationselectionrange.h
     ${CMAKE_CURRENT_LIST_DIR}/internal/instrumentsconverter.cpp
     ${CMAKE_CURRENT_LIST_DIR}/internal/instrumentsconverter.h
+    ${CMAKE_CURRENT_LIST_DIR}/internal/scoreorderconverter.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/internal/scoreorderconverter.h
     ${CMAKE_CURRENT_LIST_DIR}/view/inotationcontextmenu.h
     ${CMAKE_CURRENT_LIST_DIR}/view/notationpaintview.cpp
     ${CMAKE_CURRENT_LIST_DIR}/view/notationpaintview.h
@@ -136,10 +140,8 @@ set(MODULE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/view/notationcontextmenu.h
     ${CMAKE_CURRENT_LIST_DIR}/view/notationnavigator.cpp
     ${CMAKE_CURRENT_LIST_DIR}/view/notationnavigator.h
-    ${CMAKE_CURRENT_LIST_DIR}/view/internal/abstractnoteinputbaritem.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/view/internal/abstractnoteinputbaritem.h
-    ${CMAKE_CURRENT_LIST_DIR}/view/internal/actionnoteinputbaritem.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/view/internal/actionnoteinputbaritem.h
+    ${CMAKE_CURRENT_LIST_DIR}/view/noteinputbarcustomiseitem.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/view/noteinputbarcustomiseitem.h
     ${CMAKE_CURRENT_LIST_DIR}/view/internal/undoredomodel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/view/internal/undoredomodel.h
     )

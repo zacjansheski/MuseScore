@@ -35,7 +35,7 @@ static const std::string PLUGINS_DIR("/plugins");
 
 void PluginsConfiguration::init()
 {
-    settings()->setDefaultValue(USER_PLUGINS_PATH, Val(globalConfiguration()->sharePath().toStdString() + "Plugins"));
+    settings()->setDefaultValue(USER_PLUGINS_PATH, Val(globalConfiguration()->appDataPath().toStdString() + "Plugins"));
     settings()->valueChanged(USER_PLUGINS_PATH).onReceive(nullptr, [this](const Val& val) {
         m_pluginsPathChanged.send(val.toString());
     });
@@ -52,7 +52,7 @@ mu::io::paths PluginsConfiguration::availablePluginsPaths() const
 {
     io::paths result;
 
-    result.push_back(globalConfiguration()->dataPath() + PLUGINS_DIR);
+    result.push_back(globalConfiguration()->userAppDataPath() + PLUGINS_DIR);
 
     io::path defaultPluginsPath  = this->defaultPluginsPath();
     result.push_back(defaultPluginsPath);
@@ -76,7 +76,7 @@ mu::ValCh<mu::io::path> PluginsConfiguration::pluginsPath() const
 
 void PluginsConfiguration::setPluginsPath(const io::path& path)
 {
-    settings()->setValue(USER_PLUGINS_PATH, Val(path.toStdString()));
+    settings()->setSharedValue(USER_PLUGINS_PATH, Val(path.toStdString()));
 }
 
 mu::ValCh<CodeKeyList> PluginsConfiguration::installedPlugins() const
@@ -96,7 +96,7 @@ void PluginsConfiguration::setInstalledPlugins(const CodeKeyList& codeKeyList)
         plugins << codeKey;
     }
 
-    settings()->setValue(INSTALLED_PLUGINS, Val::fromQVariant(plugins));
+    settings()->setSharedValue(INSTALLED_PLUGINS, Val::fromQVariant(plugins));
 }
 
 CodeKeyList PluginsConfiguration::parseInstalledPlugins(const mu::Val& val) const

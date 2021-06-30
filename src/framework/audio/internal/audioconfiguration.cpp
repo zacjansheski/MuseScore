@@ -83,7 +83,7 @@ std::string AudioConfiguration::currentAudioApi() const
 
 void AudioConfiguration::setCurrentAudioApi(const std::string& name)
 {
-    settings()->setValue(AUDIO_API_KEY, Val(name));
+    settings()->setSharedValue(AUDIO_API_KEY, Val(name));
 }
 
 int AudioConfiguration::audioChannelsCount() const
@@ -100,7 +100,7 @@ std::vector<io::path> AudioConfiguration::soundFontPaths() const
 {
     std::string pathsStr = settings()->value(USER_SOUNDFONTS_PATH).toString();
     std::vector<io::path> paths = io::path::pathsFromString(pathsStr, ";");
-    paths.push_back(globalConfiguration()->sharePath());
+    paths.push_back(globalConfiguration()->appDataPath());
 
     //! TODO Implement me
     // append extensions directory
@@ -116,7 +116,7 @@ bool AudioConfiguration::isShowControlsInMixer() const
 
 void AudioConfiguration::setIsShowControlsInMixer(bool show)
 {
-    settings()->setValue(SHOW_CONTROLS_IN_MIXER, Val(show));
+    settings()->setSharedValue(SHOW_CONTROLS_IN_MIXER, Val(show));
 }
 
 const SynthesizerState& AudioConfiguration::defaultSynthesizerState() const
@@ -193,7 +193,7 @@ async::Notification AudioConfiguration::synthesizerStateGroupChanged(const std::
 
 io::path AudioConfiguration::stateFilePath() const
 {
-    return globalConfiguration()->dataPath() + "/synthesizer.xml";
+    return globalConfiguration()->userAppDataPath() + "/synthesizer.xml";
 }
 
 bool AudioConfiguration::readState(const io::path& path, SynthesizerState& state) const

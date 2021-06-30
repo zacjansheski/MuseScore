@@ -20,11 +20,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 import QtQuick 2.15
+import QtQuick.Layouts 1.15
 
 import MuseScore.UiComponents 1.0
 import MuseScore.Ui 1.0
 
-Row {
+RowLayout {
     id: root
 
     property alias currentZoomPercentage: zoomInputField.value
@@ -37,10 +38,11 @@ Row {
     signal zoomInRequested()
     signal zoomOutRequested()
 
-    spacing: 4
+    spacing: 0
 
     FlatButton {
         icon: IconCode.ZOOM_IN
+        iconFont: ui.theme.toolbarIconsFont
 
         normalStateColor: "transparent"
 
@@ -50,7 +52,10 @@ Row {
     }
 
     FlatButton {
+        Layout.leftMargin: 4
+
         icon: IconCode.ZOOM_OUT
+        iconFont: ui.theme.toolbarIconsFont
 
         normalStateColor: "transparent"
 
@@ -60,12 +65,15 @@ Row {
     }
 
     Row {
-        height: parent.height
+        Layout.leftMargin: 12
+        Layout.fillHeight: true
 
         spacing: 1
 
         NumberInputField {
             id: zoomInputField
+
+            anchors.verticalCenter: parent.verticalCenter
 
             addLeadingZeros: false
             font: ui.theme.bodyFont
@@ -83,14 +91,17 @@ Row {
     }
 
     FlatButton {
-        width: 20
+        Layout.leftMargin: 4
+        Layout.preferredWidth: 20
 
         icon: IconCode.SMALL_ARROW_DOWN
 
-        normalStateColor: menu.isMenuOpened ? ui.theme.accentColor : "transparent"
+        normalStateColor: menuLoader.isMenuOpened ? ui.theme.accentColor : "transparent"
 
         StyledMenuLoader {
-            id: menu
+            id: menuLoader
+
+            menuAnchorItem: ui.rootItem
 
             onHandleAction: {
                 root.changeZoomRequested(actionIndex)
@@ -98,7 +109,7 @@ Row {
         }
 
         onClicked: {
-            menu.toggleOpened(root.availableZoomList, parent.navigation)
+            menuLoader.toggleOpened(root.availableZoomList, parent.navigation)
         }
     }
 }

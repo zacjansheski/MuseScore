@@ -128,17 +128,11 @@ public:
     virtual std::string notationRevision() const = 0;
     virtual int notationDivision() const = 0;
 
-    virtual std::vector<std::string> toolbarActions(const std::string& toolbarName) const = 0;
-    virtual void setToolbarActions(const std::string& toolbarName, const std::vector<std::string>& actions) = 0;
-
     virtual ValCh<framework::Orientation> canvasOrientation() const = 0;
     virtual void setCanvasOrientation(framework::Orientation orientation) = 0;
 
     virtual bool isLimitCanvasScrollArea() const = 0;
     virtual void setIsLimitCanvasScrollArea(bool limited) = 0;
-
-    virtual bool advanceToNextNoteOnKeyRelease() const = 0;
-    virtual void setAdvanceToNextNoteOnKeyRelease(bool value) = 0;
 
     virtual bool colorNotesOusideOfUsablePitchRange() const = 0;
     virtual void setColorNotesOusideOfUsablePitchRange(bool value) = 0;
@@ -148,6 +142,9 @@ public:
 
     virtual int notePlayDurationMilliseconds() const = 0;
     virtual void setNotePlayDurationMilliseconds(int durationMs) = 0;
+
+    virtual void setTemplateModeEnalbed(bool enabled) = 0;
+    virtual void setTestModeEnabled(bool enabled) = 0;
 };
 }
 

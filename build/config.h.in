@@ -20,8 +20,6 @@
 #ifndef MUSESCORE_CONFIG_H
 #define MUSESCORE_CONFIG_H
 
-#cmakedefine USE_WEBENGINE
-
 #cmakedefine FOR_WINSTORE
 
 #cmakedefine MSCORE_UNSTABLE
@@ -58,6 +56,7 @@
 #cmakedefine BUILD_INSTRUMENTS_MODULE
 #cmakedefine BUILD_INSPECTOR_MODULE
 #cmakedefine BUILD_AUTOBOT_MODULE
+#cmakedefine BUILD_MULTIINSTANCES_MODULE
 #cmakedefine BUILD_VST
 
 #cmakedefine USE_SCORE_ACCESSIBLE_TREE

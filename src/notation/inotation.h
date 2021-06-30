@@ -50,12 +50,14 @@ public:
     virtual Meta metaInfo() const = 0;
     virtual void setMetaInfo(const Meta& meta) = 0;
 
+    virtual instruments::ScoreOrder scoreOrder() const = 0;
+
     virtual INotationPtr clone() const = 0;
 
     virtual void setViewSize(const QSizeF& vs) = 0;
     virtual void setViewMode(const ViewMode& vm) = 0;
     virtual ViewMode viewMode() const = 0;
-    virtual void paint(mu::draw::Painter* painter, const QRectF& frameRect) = 0;
+    virtual void paint(mu::draw::Painter* painter, const RectF& frameRect) = 0;
 
     virtual ValCh<bool> opened() const = 0;
     virtual void setOpened(bool opened) = 0;

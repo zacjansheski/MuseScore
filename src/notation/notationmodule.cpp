@@ -37,6 +37,7 @@
 #include "internal/notationwritersregister.h"
 #include "internal/mscznotationreader.h"
 #include "internal/msczmetareader.h"
+#include "internal/positionswriter.h"
 
 #include "view/notationpaintview.h"
 #include "view/notationswitchlistmodel.h"
@@ -44,7 +45,7 @@
 #include "view/searchpopupmodel.h"
 #include "view/noteinputbarmodel.h"
 #include "view/noteinputbarcustomisemodel.h"
-#include "view/internal/abstractnoteinputbaritem.h"
+#include "view/noteinputbarcustomiseitem.h"
 #include "view/internal/undoredomodel.h"
 #include "view/notationtoolbarmodel.h"
 #include "view/notationnavigator.h"
@@ -94,8 +95,13 @@ void NotationModule::registerExports()
 
     std::shared_ptr<INotationReadersRegister> readers = std::make_shared<NotationReadersRegister>();
     readers->reg({ "mscz", "mscx" }, std::make_shared<MsczNotationReader>());
+
+    std::shared_ptr<INotationWritersRegister> writers = std::make_shared<NotationWritersRegister>();
+    writers->reg({ "sposXML" }, std::make_shared<PositionsWriter>(PositionsWriter::ElementType::SEGMENT));
+    writers->reg({ "mposXML" }, std::make_shared<PositionsWriter>(PositionsWriter::ElementType::MEASURE));
+
     ioc()->registerExport<INotationReadersRegister>(moduleName(), readers);
-    ioc()->registerExport<INotationWritersRegister>(moduleName(), std::make_shared<NotationWritersRegister>());
+    ioc()->registerExport<INotationWritersRegister>(moduleName(), writers);
 }
 
 void NotationModule::resolveImports()
@@ -161,7 +167,7 @@ void NotationModule::registerUiTypes()
     qmlRegisterType<SearchPopupModel>("MuseScore.NotationScene", 1, 0, "SearchPopupModel");
     qmlRegisterType<NoteInputBarModel>("MuseScore.NotationScene", 1, 0, "NoteInputBarModel");
     qmlRegisterType<NoteInputBarCustomiseModel>("MuseScore.NotationScene", 1, 0, "NoteInputBarCustomiseModel");
-    qmlRegisterType<AbstractNoteInputBarItem>("MuseScore.NotationScene", 1, 0, "NoteInputBarItem");
+    qmlRegisterUncreatableType<NoteInputBarCustomiseItem>("MuseScore.NotationScene", 1, 0, "NoteInputBarCustomiseItem", "Cannot create");
     qmlRegisterType<NotationToolBarModel>("MuseScore.NotationScene", 1, 0, "NotationToolBarModel");
     qmlRegisterType<NotationNavigator>("MuseScore.NotationScene", 1, 0, "NotationNavigator");
     qmlRegisterType<UndoRedoModel>("MuseScore.NotationScene", 1, 0, "UndoRedoModel");

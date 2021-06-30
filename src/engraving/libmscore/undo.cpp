@@ -94,6 +94,8 @@
 #include "log.h"
 #define LOG_UNDO() if (0) LOGD()
 
+using namespace mu;
+
 namespace Ms {
 extern Measure* tick2measure(int tick);
 
@@ -1169,9 +1171,18 @@ MapExcerptTracks::MapExcerptTracks(Score* s, QList<int> l)
      *    For the "undo" all staves which value -1 are *not* remapped since
      *    it is assumed this staves are removed later.
      */
+    int maxIndex = 0;
+    for (int i: l) {
+        maxIndex = std::max(i, maxIndex);
+    }
+
+    for (int i = 0; i <= maxIndex; ++i) {
+        rlist.append(-1);
+    }
+
     for (int i = 0; i < l.size(); ++i) {
         if (l[i] >= 0) {
-            rlist.insert(l[i], i);
+            rlist.replace(l[i], i);
         }
     }
     list = l;
@@ -2131,12 +2142,22 @@ void AddExcerpt::redo(EditData*)
 }
 
 //---------------------------------------------------------
+//   RemoveExcerpt
+//---------------------------------------------------------
+
+RemoveExcerpt::RemoveExcerpt(Excerpt* ex)
+    : excerpt(ex)
+{
+    index = excerpt->oscore()->excerpts().indexOf(excerpt);
+}
+
+//---------------------------------------------------------
 //   RemoveExcerpt::undo()
 //---------------------------------------------------------
 
 void RemoveExcerpt::undo(EditData*)
 {
-    excerpt->oscore()->addExcerpt(excerpt);
+    excerpt->oscore()->addExcerpt(excerpt, index);
 }
 
 //---------------------------------------------------------
@@ -2832,7 +2853,7 @@ void MoveTremolo::undo(EditData*)
 
 void ChangeScoreOrder::flip(EditData*)
 {
-    ScoreOrder* s = score->scoreOrder();
+    ScoreOrder s = score->scoreOrder();
     score->setScoreOrder(order);
     order = s;
 }

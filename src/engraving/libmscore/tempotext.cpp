@@ -32,6 +32,8 @@
 #include "undo.h"
 #include "musescoreCore.h"
 
+using namespace mu;
+
 namespace Ms {
 #define MIN_TEMPO 5.0 / 60
 #define MAX_TEMPO 999.0 / 60
@@ -293,8 +295,6 @@ void TempoText::undoChangeProperty(Pid id, const QVariant& v, PropertyFlags ps)
         ScoreElement::undoChangeProperty(id, v, ps);
         if (_followText) {
             updateTempo();
-            // update inspector?
-            MuseScoreCore::mscoreCore->updateInspector();
         }
     } else {
         ScoreElement::undoChangeProperty(id, v, ps);

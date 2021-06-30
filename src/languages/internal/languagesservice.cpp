@@ -38,8 +38,6 @@ using namespace mu::framework;
 using namespace mu::network;
 
 static const QString DEFAULT_LANGUAGE("system");
-static const QString ANALYSING_STATUS = qtrc("languages", "Analysing...");
-static const QString DOWNLOADING_STATUS = qtrc("languages", "Downloading...");
 
 static const QStringList languageFileTypes = {
     "mscore",
@@ -47,11 +45,20 @@ static const QStringList languageFileTypes = {
     "tours"
 };
 
+namespace mu::languages {
+static QString analysingStatusTitle()
+{
+    return qtrc("languages", "Analysing...");
+}
+
+static QString downloadingStatusTitle()
+{
+    return qtrc("languages", "Downloading...");
+}
+}
+
 void LanguagesService::init()
 {
-    fileSystem()->makePath(configuration()->languagesSharePath());
-    fileSystem()->makePath(configuration()->languagesDataPath());
-
     ValCh<QString> languageCode = configuration()->currentLanguageCode();
     loadLanguage(languageCode.val);
 
@@ -219,12 +226,6 @@ void LanguagesService::setCurrentLanguage(const QString& languageCode)
         return;
     }
 
-    for (QTranslator* t: m_translatorList) {
-        qApp->removeTranslator(t);
-        delete t;
-    }
-    m_translatorList.clear();
-
     Ret load = loadLanguage(languageCode);
     if (!load) {
         LOGE() << load.toString();
@@ -261,6 +262,7 @@ RetVal<LanguagesHash> LanguagesService::parseLanguagesConfig(const QByteArray& j
     QJsonParseError err;
     QJsonDocument jsonDoc = QJsonDocument::fromJson(json, &err);
     if (err.error != QJsonParseError::NoError || !jsonDoc.isObject()) {
+        LOGE() << "failed parse, err: " << err.errorString();
         result.ret = make_ret(Err::ErrorParseConfig);
         return result;
     }
@@ -358,7 +360,7 @@ RetVal<LanguagesHash> LanguagesService::correctLanguagesStates(LanguagesHash& la
 
     ValCh<QString> currentLanguageCode = configuration()->currentLanguageCode();
 
-    for (Language& language: languages) {
+    for (Language& language : languages) {
         LanguageStatus::Status status = languageStatus(language);
         if (status != language.status) {
             language.status = status;
@@ -403,9 +405,9 @@ RetVal<QString> LanguagesService::downloadLanguage(const QString& languageCode, 
     QBuffer buff;
     INetworkManagerPtr networkManagerPtr = networkManagerCreator()->makeNetworkManager();
 
-    async::Channel<Progress> downloadChannel = networkManagerPtr->progressChannel();
+    ProgressChannel downloadChannel = networkManagerPtr->progressChannel();
     downloadChannel.onReceive(new async::Asyncable(), [&progressChannel](const Progress& progress) {
-        progressChannel->send(LanguageProgress(DOWNLOADING_STATUS, progress.current, progress.total));
+        progressChannel->send(LanguageProgress(downloadingStatusTitle(), progress.current, progress.total));
     });
 
     Ret getLanguage = networkManagerPtr->get(configuration()->languageFileServerUrl(languageCode), &buff);
@@ -442,10 +444,19 @@ Ret LanguagesService::removeLanguage(const QString& languageCode) const
 
 Ret LanguagesService::loadLanguage(const QString& languageCode)
 {
-    io::paths files = configuration()->languageFilePaths(languageCode);
+    const io::paths files = configuration()->languageFilePaths(languageCode);
+    if (files.empty()) {
+        return make_ret(Err::UnknownError);
+    }
 
-    for (const io::path& filePath: files) {
-        QTranslator* translator = new QTranslator;
+    for (QTranslator* t : m_translatorList) {
+        qApp->removeTranslator(t);
+        delete t;
+    }
+    m_translatorList.clear();
+
+    for (const io::path& filePath : files) {
+        QTranslator* translator = new QTranslator();
         bool ok = translator->load(filePath.toQString());
         if (ok) {
             qApp->installTranslator(translator);
@@ -516,7 +527,7 @@ void LanguagesService::th_refreshLanguages()
 void LanguagesService::th_install(const QString& languageCode, async::Channel<LanguageProgress>* progressChannel,
                                   async::Channel<Ret>* finishChannel)
 {
-    progressChannel->send(LanguageProgress(ANALYSING_STATUS, true));
+    progressChannel->send(LanguageProgress(analysingStatusTitle(), true));
 
     RetVal<QString> download = downloadLanguage(languageCode, progressChannel);
     if (!download.ret) {
@@ -524,11 +535,11 @@ void LanguagesService::th_install(const QString& languageCode, async::Channel<La
         return;
     }
 
-    progressChannel->send(LanguageProgress(ANALYSING_STATUS, true));
+    progressChannel->send(LanguageProgress(analysingStatusTitle(), true));
 
     QString languageArchivePath = download.val;
 
-    Ret unpack = languageUnpacker()->unpack(languageCode, languageArchivePath, configuration()->languagesSharePath().toQString());
+    Ret unpack = languageUnpacker()->unpack(languageCode, languageArchivePath, configuration()->languagesUserAppDataPath());
     if (!unpack) {
         LOGE() << unpack.toString();
         fileSystem()->remove(languageArchivePath);
@@ -545,14 +556,14 @@ void LanguagesService::th_install(const QString& languageCode, async::Channel<La
 void LanguagesService::th_update(const QString& languageCode, async::Channel<LanguageProgress>* progressChannel,
                                  async::Channel<Ret>* finishChannel)
 {
-    progressChannel->send(LanguageProgress(ANALYSING_STATUS, true));
+    progressChannel->send(LanguageProgress(analysingStatusTitle(), true));
 
     RetVal<QString> download = downloadLanguage(languageCode, progressChannel);
     if (!download.ret) {
         finishChannel->send(download.ret);
     }
 
-    progressChannel->send(LanguageProgress(ANALYSING_STATUS, true));
+    progressChannel->send(LanguageProgress(analysingStatusTitle(), true));
 
     QString languageArchivePath = download.val;
 
@@ -561,7 +572,7 @@ void LanguagesService::th_update(const QString& languageCode, async::Channel<Lan
         finishChannel->send(remove);
     }
 
-    Ret unpack = languageUnpacker()->unpack(languageCode, languageArchivePath, configuration()->languagesSharePath().toQString());
+    Ret unpack = languageUnpacker()->unpack(languageCode, languageArchivePath, configuration()->languagesUserAppDataPath());
     if (!unpack) {
         LOGE() << "Error unpack" << unpack.toString();
         finishChannel->send(unpack);

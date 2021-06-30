@@ -29,50 +29,52 @@ NICE-TO-HAVE TODO:
       and SlurSegment::changeAnchor() in slur.cpp as models)
 */
 
+#include "glissando.h"
+
 #include <cmath>
 
-#include "log.h"
+#include "framework/global/log.h"
+#include "framework/global/translation.h"
 
+#include "accidental.h"
 #include "arpeggio.h"
-#include "glissando.h"
 #include "chord.h"
 #include "ledgerline.h"
+#include "measure.h"
 #include "note.h"
 #include "notedot.h"
 #include "score.h"
 #include "scorefont.h"
 #include "segment.h"
 #include "staff.h"
-#include "system.h"
-#include "measure.h"
 #include "style.h"
+#include "system.h"
 #include "xml.h"
-#include "accidental.h"
 
 #include "draw/fontmetrics.h"
 
-using namespace mu::draw;
+using namespace mu;
 
 namespace Ms {
 static const ElementStyle glissandoElementStyle {
-    { Sid::glissandoFontFace,                  Pid::FONT_FACE },
-    { Sid::glissandoFontSize,                  Pid::FONT_SIZE },
-    { Sid::glissandoFontStyle,                 Pid::FONT_STYLE },
-    { Sid::glissandoLineWidth,                 Pid::LINE_WIDTH },
-    { Sid::glissandoText,                      Pid::GLISS_TEXT },
+    { Sid::glissandoFontFace,  Pid::FONT_FACE },
+    { Sid::glissandoFontSize,  Pid::FONT_SIZE },
+    { Sid::glissandoFontStyle, Pid::FONT_STYLE },
+    { Sid::glissandoLineWidth, Pid::LINE_WIDTH },
+    { Sid::glissandoText,      Pid::GLISS_TEXT },
 };
 
-static const qreal GLISS_PALETTE_WIDTH           = 4.0;
-static const qreal GLISS_PALETTE_HEIGHT          = 4.0;
+static constexpr qreal GLISS_PALETTE_WIDTH = 4.0;
+static constexpr qreal GLISS_PALETTE_HEIGHT = 4.0;
 
 const std::array<const char*, 2> Glissando::glissandoTypeNames = {
     QT_TRANSLATE_NOOP("Palette", "Straight glissando"),
     QT_TRANSLATE_NOOP("Palette", "Wavy glissando")
 };
 
-//---------------------------------------------------------
+//=========================================================
 //   GlisandoSegment
-//---------------------------------------------------------
+//=========================================================
 
 //---------------------------------------------------------
 //   layout
@@ -83,7 +85,7 @@ void GlissandoSegment::layout()
     if (staff()) {
         setMag(staff()->staffMag(tick()));
     }
-    QRectF r = QRectF(0.0, 0.0, pos2().x(), pos2().y()).normalized();
+    RectF r = RectF(0.0, 0.0, pos2().x(), pos2().y()).normalized();
     qreal lw = glissando()->lineWidth() * .5;
     setbbox(r.adjusted(-lw, -lw, lw, lw));
 }
@@ -114,7 +116,7 @@ void GlissandoSegment::draw(mu::draw::Painter* painter) const
     if (glissando()->glissandoType() == GlissandoType::STRAIGHT) {
         painter->drawLine(LineF(0.0, 0.0, l, 0.0));
     } else if (glissando()->glissandoType() == GlissandoType::WAVY) {
-        QRectF b = symBbox(SymId::wiggleTrill);
+        RectF b = symBbox(SymId::wiggleTrill);
         qreal a  = symAdvance(SymId::wiggleTrill);
         int n    = static_cast<int>(l / a);          // always round down (truncate) to avoid overlap
         qreal x  = (l - n * a) * 0.5;     // centre line in available space
@@ -122,11 +124,8 @@ void GlissandoSegment::draw(mu::draw::Painter* painter) const
         for (int i = 0; i < n; ++i) {
             ids.push_back(SymId::wiggleTrill);
         }
-        // this is very ugly but fix #68846 for now
-        bool tmp = MScore::pdfPrinting;
-        MScore::pdfPrinting = true;
-        score()->scoreFont()->draw(ids, painter, magS(), QPointF(x, -(b.y() + b.height() * 0.5)), scale);
-        MScore::pdfPrinting = tmp;
+
+        score()->scoreFont()->draw(ids, painter, magS(), PointF(x, -(b.y() + b.height() * 0.5)), scale);
     }
 
     if (glissando()->showText()) {
@@ -136,7 +135,7 @@ void GlissandoSegment::draw(mu::draw::Painter* painter) const
         f.setItalic(glissando()->fontStyle() & FontStyle::Italic);
         f.setUnderline(glissando()->fontStyle() & FontStyle::Underline);
         mu::draw::FontMetrics fm(f);
-        QRectF r = fm.boundingRect(glissando()->text());
+        RectF r = fm.boundingRect(glissando()->text());
 
         // if text longer than available space, skip it
         if (r.width() < l) {
@@ -145,7 +144,7 @@ void GlissandoSegment::draw(mu::draw::Painter* painter) const
             yOffset += _spatium * (glissando()->glissandoType() == GlissandoType::WAVY ? 0.4 : 0.1);
             painter->setFont(f);
             qreal x = (l - r.width()) * 0.5;
-            painter->drawText(QPointF(x, -yOffset), glissando()->text());
+            painter->drawText(PointF(x, -yOffset), glissando()->text());
         }
     }
     painter->restore();
@@ -211,6 +210,11 @@ Glissando::Glissando(const Glissando& g)
     _fontStyle      = g._fontStyle;
 }
 
+QString Glissando::glissandoTypeName() const
+{
+    return qtrc("Palette", glissandoTypeNames[int(glissandoType())]);
+}
+
 //---------------------------------------------------------
 //   createLineSegment
 //---------------------------------------------------------
@@ -236,8 +240,8 @@ void Glissando::layout()
             add(createLineSegment());
         }
         LineSegment* s = frontSegment();
-        s->setPos(QPointF());
-        s->setPos2(QPointF(_spatium * GLISS_PALETTE_WIDTH, -_spatium * GLISS_PALETTE_HEIGHT));
+        s->setPos(PointF());
+        s->setPos2(PointF(_spatium * GLISS_PALETTE_WIDTH, -_spatium * GLISS_PALETTE_HEIGHT));
         s->layout();
         return;
     }
@@ -264,9 +268,9 @@ void Glissando::layout()
     // assume gliss. line goes from centre of initial note centre to centre of ending note:
     // move first segment origin and last segment ending point from notehead origin to notehead centre
     // For TAB: begin at the right-edge of initial note rather than centre
-    QPointF offs1 = (cr1->staff()->isTabStaff(cr1->tick())) ? QPointF(anchor1->bbox().right(), 0.0) : QPointF(
+    PointF offs1 = (cr1->staff()->isTabStaff(cr1->tick())) ? PointF(anchor1->bbox().right(), 0.0) : PointF(
         anchor1->headWidth() * 0.5, 0.0);
-    QPointF offs2 = QPointF(anchor2->headWidth() * 0.5, 0.0);
+    PointF offs2 = PointF(anchor2->headWidth() * 0.5, 0.0);
 
     // AVOID HORIZONTAL LINES
 
@@ -380,16 +384,16 @@ void Glissando::layout()
     }
 
     // compute glissando bbox as the bbox of the last segment, relative to the end anchor note
-    QPointF anchor2PagePos = anchor2->pagePos();
-    QPointF system2PagePos;
+    PointF anchor2PagePos = anchor2->pagePos();
+    PointF system2PagePos;
     IF_ASSERT_FAILED(cr2->segment()->system()) {
         system2PagePos = segm2->pos();
     } else {
         system2PagePos = cr2->segment()->system()->pagePos();
     }
 
-    QPointF anchor2SystPos = anchor2PagePos - system2PagePos;
-    QRectF r = QRectF(anchor2SystPos - segm2->pos(), anchor2SystPos - segm2->pos() - segm2->pos2()).normalized();
+    PointF anchor2SystPos = anchor2PagePos - system2PagePos;
+    RectF r = RectF(anchor2SystPos - segm2->pos(), anchor2SystPos - segm2->pos() - segm2->pos2()).normalized();
     qreal lw = lineWidth() * .5;
     setbbox(r.adjusted(-lw, -lw, lw, lw));
 }

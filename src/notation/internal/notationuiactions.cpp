@@ -35,6 +35,8 @@ static const ActionCode SHOW_FRAMES_CODE("show-frames");
 static const ActionCode SHOW_PAGEBORDERS_CODE("show-pageborders");
 static const ActionCode SHOW_IRREGULAR_CODE("mark-irregular");
 
+static const ActionCode TOGGLE_CONCERT_PITCH_CODE("concert-pitch");
+
 const UiActionList NotationUiActions::m_actions = {
     UiAction("escape",
              mu::context::UiCtxNotationFocused,
@@ -134,16 +136,36 @@ const UiActionList NotationUiActions::m_actions = {
              QT_TRANSLATE_NOOP("action", "Up Octave"),
              QT_TRANSLATE_NOOP("action", "Pitch up by an octave or move text or articulation up")
              ),
-    UiAction("cut",
+    UiAction("double-duration",
              mu::context::UiCtxNotationOpened,
+             QT_TRANSLATE_NOOP("action", "Double Duration"),
+             QT_TRANSLATE_NOOP("action", "Double duration")
+             ),
+    UiAction("half-duration",
+             mu::context::UiCtxNotationOpened,
+             QT_TRANSLATE_NOOP("action", "Half Duration"),
+             QT_TRANSLATE_NOOP("action", "Half duration")
+             ),
+    UiAction("inc-duration-dotted",
+             mu::context::UiCtxNotationOpened,
+             QT_TRANSLATE_NOOP("action", "Increase Duration Dotted"),
+             QT_TRANSLATE_NOOP("action", "Increase duration dotted")
+             ),
+    UiAction("dec-duration-dotted",
+             mu::context::UiCtxNotationOpened,
+             QT_TRANSLATE_NOOP("action", "Decrease Duration Dotted"),
+             QT_TRANSLATE_NOOP("action", "Decrease duration dotted")
+             ),
+    UiAction("cut",
+             mu::context::UiCtxNotationFocused,
              QT_TRANSLATE_NOOP("action", "Cut")
              ),
     UiAction("copy",
-             mu::context::UiCtxNotationOpened,
+             mu::context::UiCtxNotationFocused,
              QT_TRANSLATE_NOOP("action", "Copy")
              ),
     UiAction("paste",
-             mu::context::UiCtxNotationOpened,
+             mu::context::UiCtxNotationFocused,
              QT_TRANSLATE_NOOP("action", "Paste")
              ),
     UiAction("paste-half",
@@ -172,7 +194,7 @@ const UiActionList NotationUiActions::m_actions = {
              QT_TRANSLATE_NOOP("action", "Toggle visibility of elements")
              ),
     UiAction("select-all",
-             mu::context::UiCtxNotationOpened,
+             mu::context::UiCtxNotationFocused,
              QT_TRANSLATE_NOOP("action", "Select All"),
              QT_TRANSLATE_NOOP("action", "Select all")
              ),
@@ -327,13 +349,13 @@ const UiActionList NotationUiActions::m_actions = {
              QT_TRANSLATE_NOOP("action", "Edit score properties")
              ),
     UiAction("undo",
-             mu::context::UiCtxNotationOpened,
+             mu::context::UiCtxNotationFocused,
              QT_TRANSLATE_NOOP("action", "Undo"),
              QT_TRANSLATE_NOOP("action", "Undo last change"),
              IconCode::Code::UNDO
              ),
     UiAction("redo",
-             mu::context::UiCtxNotationOpened,
+             mu::context::UiCtxNotationFocused,
              QT_TRANSLATE_NOOP("action", "Redo"),
              QT_TRANSLATE_NOOP("action", "Redo last undo"),
              IconCode::Code::REDO
@@ -367,6 +389,21 @@ const UiActionList NotationUiActions::m_actions = {
              mu::context::UiCtxNotationOpened,
              QT_TRANSLATE_NOOP("action", "Exchange Voice 3-4"),
              QT_TRANSLATE_NOOP("action", "Exchange voice 3-4")
+             ),
+    UiAction("system-break",
+             mu::context::UiCtxNotationOpened,
+             QT_TRANSLATE_NOOP("action", "Toggle System Break"),
+             QT_TRANSLATE_NOOP("action", "Toggle 'System Break'")
+             ),
+    UiAction("page-break",
+             mu::context::UiCtxNotationOpened,
+             QT_TRANSLATE_NOOP("action", "Toggle Page Break"),
+             QT_TRANSLATE_NOOP("action", "Toggle 'Page Break'")
+             ),
+    UiAction("section-break",
+             mu::context::UiCtxNotationOpened,
+             QT_TRANSLATE_NOOP("action", "Toggle Section Break"),
+             QT_TRANSLATE_NOOP("action", "Toggle 'Section Break'")
              ),
     UiAction("split-measure",
              mu::context::UiCtxNotationOpened,
@@ -732,6 +769,81 @@ const UiActionList NotationUiActions::m_actions = {
              QT_TRANSLATE_NOOP("action", "Eighth Rest"),
              QT_TRANSLATE_NOOP("action", "Note input: Eighth rest")
              ),
+    UiAction("fret-0",
+             mu::context::UiCtxNotationOpened,
+             QT_TRANSLATE_NOOP("action", "Fret 0 (TAB)"),
+             QT_TRANSLATE_NOOP("action", "Add fret 0 on current string (TAB only)")
+             ),
+    UiAction("fret-1",
+             mu::context::UiCtxNotationOpened,
+             QT_TRANSLATE_NOOP("action", "Fret 1 (TAB)"),
+             QT_TRANSLATE_NOOP("action", "Add fret 1 on current string (TAB only)")
+             ),
+    UiAction("fret-2",
+             mu::context::UiCtxNotationOpened,
+             QT_TRANSLATE_NOOP("action", "Fret 2 (TAB)"),
+             QT_TRANSLATE_NOOP("action", "Add fret 2 on current string (TAB only)")
+             ),
+    UiAction("fret-3",
+             mu::context::UiCtxNotationOpened,
+             QT_TRANSLATE_NOOP("action", "Fret 3 (TAB)"),
+             QT_TRANSLATE_NOOP("action", "Add fret 3 on current string (TAB only)")
+             ),
+    UiAction("fret-4",
+             mu::context::UiCtxNotationOpened,
+             QT_TRANSLATE_NOOP("action", "Fret 4 (TAB)"),
+             QT_TRANSLATE_NOOP("action", "Add fret 4 on current string (TAB only)")
+             ),
+    UiAction("fret-5",
+             mu::context::UiCtxNotationOpened,
+             QT_TRANSLATE_NOOP("action", "Fret 5 (TAB)"),
+             QT_TRANSLATE_NOOP("action", "Add fret 5 on current string (TAB only)")
+             ),
+    UiAction("fret-6",
+             mu::context::UiCtxNotationOpened,
+             QT_TRANSLATE_NOOP("action", "Fret 6 (TAB)"),
+             QT_TRANSLATE_NOOP("action", "Add fret 6 on current string (TAB only)")
+             ),
+    UiAction("fret-7",
+             mu::context::UiCtxNotationOpened,
+             QT_TRANSLATE_NOOP("action", "Fret 7 (TAB)"),
+             QT_TRANSLATE_NOOP("action", "Add fret 7 on current string (TAB only)")
+             ),
+    UiAction("fret-8",
+             mu::context::UiCtxNotationOpened,
+             QT_TRANSLATE_NOOP("action", "Fret 8 (TAB)"),
+             QT_TRANSLATE_NOOP("action", "Add fret 8 on current string (TAB only)")
+             ),
+    UiAction("fret-9",
+             mu::context::UiCtxNotationOpened,
+             QT_TRANSLATE_NOOP("action", "Fret 9 (TAB)"),
+             QT_TRANSLATE_NOOP("action", "Add fret 9 on current string (TAB only)")
+             ),
+    UiAction("fret-10",
+             mu::context::UiCtxNotationOpened,
+             QT_TRANSLATE_NOOP("action", "Fret 10 (TAB)"),
+             QT_TRANSLATE_NOOP("action", "Add fret 10 on current string (TAB only)")
+             ),
+    UiAction("fret-11",
+             mu::context::UiCtxNotationOpened,
+             QT_TRANSLATE_NOOP("action", "Fret 11 (TAB)"),
+             QT_TRANSLATE_NOOP("action", "Add fret 11 on current string (TAB only)")
+             ),
+    UiAction("fret-12",
+             mu::context::UiCtxNotationOpened,
+             QT_TRANSLATE_NOOP("action", "Fret 12 (TAB)"),
+             QT_TRANSLATE_NOOP("action", "Add fret 12 on current string (TAB only)")
+             ),
+    UiAction("fret-13",
+             mu::context::UiCtxNotationOpened,
+             QT_TRANSLATE_NOOP("action", "Fret 13 (TAB)"),
+             QT_TRANSLATE_NOOP("action", "Add fret 13 on current string (TAB only)")
+             ),
+    UiAction("fret-14",
+             mu::context::UiCtxNotationOpened,
+             QT_TRANSLATE_NOOP("action", "Fret 14 (TAB)"),
+             QT_TRANSLATE_NOOP("action", "Add fret 14 on current string (TAB only)")
+             ),
     UiAction("add-8va",
              mu::context::UiCtxNotationOpened,
              QT_TRANSLATE_NOOP("action", "Ottava 8va alta"),
@@ -940,12 +1052,18 @@ const UiActionList NotationUiActions::m_actions = {
 };
 
 const UiActionList NotationUiActions::m_noteInputActions = {
-    UiAction("note-input",
+    UiAction(NOTE_INPUT_ACTION_CODE,
              mu::context::UiCtxNotationOpened,
-             QT_TRANSLATE_NOOP("action", "Default (Step time)"),
+             QT_TRANSLATE_NOOP("action", "Note Input"),
              QT_TRANSLATE_NOOP("action", "Enter notes with a mouse or keyboard"),
              IconCode::Code::EDIT,
              Checkable::Yes
+             ),
+    UiAction("note-input-steptime",
+             mu::context::UiCtxNotationOpened,
+             QT_TRANSLATE_NOOP("action", "Default (Step time)"),
+             QT_TRANSLATE_NOOP("action", "Enter notes with a mouse or keyboard"),
+             IconCode::Code::EDIT
              ),
     UiAction("note-input-rhythm",
              mu::context::UiCtxNotationOpened,
@@ -1187,6 +1305,25 @@ const UiActionList NotationUiActions::m_noteInputActions = {
              QT_TRANSLATE_NOOP("action", "Flip direction"),
              IconCode::Code::NOTE_FLIP
              ),
+    UiAction(TOGGLE_CONCERT_PITCH_CODE,
+             mu::context::UiCtxNotationOpened,
+             QT_TRANSLATE_NOOP("action", "Concert Pitch"),
+             QT_TRANSLATE_NOOP("action", "Toggle 'Concert Pitch'"),
+             IconCode::Code::TUNING_FORK,
+             Checkable::Yes
+             ),
+    UiAction("print",
+             mu::context::UiCtxNotationOpened,
+             QT_TRANSLATE_NOOP("action", "Print"),
+             QT_TRANSLATE_NOOP("action", "Print score/part"),
+             IconCode::Code::PRINT
+             ),
+    UiAction("toggle-imagecapture",
+             mu::context::UiCtxNotationOpened,
+             QT_TRANSLATE_NOOP("action", "Image Capture"),
+             QT_TRANSLATE_NOOP("action", "Toggle 'Image Capture' mode"),
+             IconCode::Code::CAMERA
+             )
 };
 
 const UiActionList NotationUiActions::m_scoreConfigActions = {
@@ -1246,22 +1383,27 @@ void NotationUiActions::init()
     });
 
     m_controller->currentNotationChanged().onNotify(this, [this]() {
-        actions::ActionCodeList alist;
-        for (const UiAction& a : m_scoreConfigActions) {
-            alist.push_back(a.code);
+        actions::ActionCodeList actions;
+        for (const UiAction& action : m_scoreConfigActions) {
+            actions.push_back(action.code);
         }
-        m_actionCheckedChanged.send(alist);
+        m_actionCheckedChanged.send(actions);
 
-        m_controller->currentNotationInteraction()->scoreConfigChanged().onReceive(this, [this](ScoreConfigType configType) {
-            static const std::unordered_map<ScoreConfigType, std::string> configActions = {
-                { ScoreConfigType::ShowInvisibleElements, SHOW_INVISIBLE_CODE },
-                { ScoreConfigType::ShowUnprintableElements, SHOW_UNPRINTABLE_CODE },
-                { ScoreConfigType::ShowFrames, SHOW_FRAMES_CODE },
-                { ScoreConfigType::ShowPageMargins, SHOW_PAGEBORDERS_CODE },
-                { ScoreConfigType::MarkIrregularMeasures, SHOW_IRREGULAR_CODE }
-            };
+        if (m_controller->currentNotationInteraction()) {
+            m_controller->currentNotationInteraction()->scoreConfigChanged().onReceive(this, [this](ScoreConfigType configType) {
+                static const std::unordered_map<ScoreConfigType, std::string> configActions = {
+                    { ScoreConfigType::ShowInvisibleElements, SHOW_INVISIBLE_CODE },
+                    { ScoreConfigType::ShowUnprintableElements, SHOW_UNPRINTABLE_CODE },
+                    { ScoreConfigType::ShowFrames, SHOW_FRAMES_CODE },
+                    { ScoreConfigType::ShowPageMargins, SHOW_PAGEBORDERS_CODE },
+                    { ScoreConfigType::MarkIrregularMeasures, SHOW_IRREGULAR_CODE }
+                };
 
-            m_actionCheckedChanged.send({ configActions.at(configType) });
+                m_actionCheckedChanged.send({ configActions.at(configType) });
+            });
+        }
+        m_controller->currentNotationStyleChanged().onNotify(this, [this]() {
+            m_actionCheckedChanged.send({ TOGGLE_CONCERT_PITCH_CODE });
         });
     });
 }
@@ -1323,6 +1465,13 @@ bool NotationUiActions::actionChecked(const UiAction& act) const
         auto noteInput = m_controller->currentNotationNoteInput();
         if (noteInput) {
             return noteInput->isNoteInputMode();
+        }
+    }
+
+    if (act.code == TOGGLE_CONCERT_PITCH_CODE) {
+        auto style = m_controller->currentNotationStyle();
+        if (style) {
+            return style->styleValue(StyleId::concertPitch).toBool();
         }
     }
 
@@ -1444,4 +1593,43 @@ SymbolId NotationUiActions::actionArticulationSymbolId(const ActionCode& actionC
     }
 
     return symbolId;
+}
+
+const mu::ui::ToolConfig& NotationUiActions::defaultNoteInputBarConfig()
+{
+    static ToolConfig config;
+    if (!config.isValid()) {
+        config.items = {
+            { "note-input", true },
+            { "pad-note-1", true },
+            { "pad-note-2", true },
+            { "pad-note-4", true },
+            { "pad-note-8", true },
+            { "pad-note-16", true },
+            { "pad-note-32", true },
+            { "pad-note-64", true },
+            { "", true },
+            { "pad-dot", true },
+            { "", true },
+            { "pad-rest", true },
+            { "", true },
+            { "flat", true },
+            { "nat", true },
+            { "sharp", true },
+            { "tie", true },
+            { "add-slur", true },
+            { "", true },
+            { "add-marcato", true },
+            { "add-sforzato", true },
+            { "add-tenuto", true },
+            { "add-staccato", true },
+            { "", true },
+            { "tuplet", true },
+            { "", true },
+            { "voice-1", true },
+            { "", true },
+            { "flip", true },
+        };
+    }
+    return config;
 }

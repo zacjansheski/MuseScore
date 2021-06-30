@@ -35,6 +35,7 @@ static const Settings::Key RECENT_SCORE_PATHS(module_name, "userscores/recentLis
 static const Settings::Key USER_TEMPLATES_PATH(module_name, "application/paths/myTemplates");
 static const Settings::Key USER_SCORES_PATH(module_name, "application/paths/myScores");
 static const Settings::Key PREFERRED_SCORE_CREATION_MODE_KEY(module_name, "userscores/preferredScoreCreationMode");
+static const Settings::Key NEED_SHOW_WARNING_ABOUT_UNSAVED_SCORE_KEY(module_name, "userscores/unsavedScoreWarning");
 
 const QString UserScoresConfiguration::DEFAULT_FILE_SUFFIX(".mscz");
 
@@ -42,12 +43,12 @@ static const std::string TEMPLATES_PATH("/templates");
 
 void UserScoresConfiguration::init()
 {
-    settings()->setDefaultValue(USER_TEMPLATES_PATH, Val(globalConfiguration()->sharePath().toStdString() + "templates"));
+    settings()->setDefaultValue(USER_TEMPLATES_PATH, Val(mainTemplatesDirPath().toStdString()));
     settings()->valueChanged(USER_TEMPLATES_PATH).onReceive(nullptr, [this](const Val& val) {
         m_templatesPathChanged.send(val.toString());
     });
 
-    settings()->setDefaultValue(USER_SCORES_PATH, Val(globalConfiguration()->sharePath().toStdString() + "Scores"));
+    settings()->setDefaultValue(USER_SCORES_PATH, Val(globalConfiguration()->appDataPath().toStdString() + "Scores"));
     settings()->valueChanged(USER_SCORES_PATH).onReceive(nullptr, [this](const Val& val) {
         m_scoresPathChanged.send(val.toString());
     });
@@ -63,13 +64,15 @@ void UserScoresConfiguration::init()
     io::paths paths = actualRecentScorePaths();
     setRecentScorePaths(paths);
 
+    settings()->setDefaultValue(NEED_SHOW_WARNING_ABOUT_UNSAVED_SCORE_KEY, Val(true));
+
     fileSystem()->makePath(templatesPath().val);
     fileSystem()->makePath(scoresPath().val);
 }
 
 io::path UserScoresConfiguration::mainTemplatesDirPath() const
 {
-    return globalConfiguration()->sharePath() + "templates";
+    return globalConfiguration()->appDataPath() + "templates";
 }
 
 io::paths UserScoresConfiguration::actualRecentScorePaths() const
@@ -106,7 +109,7 @@ void UserScoresConfiguration::setRecentScorePaths(const io::paths& recentScorePa
     }
 
     Val value(paths.join(",").toStdString());
-    settings()->setValue(RECENT_SCORE_PATHS, value);
+    settings()->setSharedValue(RECENT_SCORE_PATHS, value);
 }
 
 io::paths UserScoresConfiguration::parsePaths(const Val& value) const
@@ -116,18 +119,12 @@ io::paths UserScoresConfiguration::parsePaths(const Val& value) const
     }
 
     QStringList paths = value.toQString().split(",");
-    io::paths result;
-
-    for (const QString& path : paths) {
-        result.push_back(path);
-    }
-
-    return result;
+    return io::pathsFromStrings(paths);
 }
 
 io::path UserScoresConfiguration::myFirstScorePath() const
 {
-    return templatesPath().val + "/My_First_Score.mscx";
+    return mainTemplatesDirPath() + "/My_First_Score.mscx";
 }
 
 io::path UserScoresConfiguration::userTemplatesPath() const
@@ -144,9 +141,9 @@ io::paths UserScoresConfiguration::availableTemplatesPaths() const
 {
     io::paths dirs;
 
-    dirs.push_back(globalConfiguration()->dataPath().toStdString() + TEMPLATES_PATH);
+    dirs.push_back(globalConfiguration()->userAppDataPath().toStdString() + TEMPLATES_PATH);
 
-    io::path defaultTemplatesPath  = this->defaultTemplatesPath();
+    io::path defaultTemplatesPath = this->defaultTemplatesPath();
     dirs.push_back(defaultTemplatesPath);
 
     io::path userTemplatesPath = this->userTemplatesPath();
@@ -171,7 +168,7 @@ ValCh<io::path> UserScoresConfiguration::templatesPath() const
 
 void UserScoresConfiguration::setTemplatesPath(const io::path& path)
 {
-    settings()->setValue(USER_TEMPLATES_PATH, Val(path.toStdString()));
+    settings()->setSharedValue(USER_TEMPLATES_PATH, Val(path.toStdString()));
 }
 
 ValCh<io::path> UserScoresConfiguration::scoresPath() const
@@ -185,7 +182,7 @@ ValCh<io::path> UserScoresConfiguration::scoresPath() const
 
 void UserScoresConfiguration::setScoresPath(const io::path& path)
 {
-    settings()->setValue(USER_SCORES_PATH, Val(path.toStdString()));
+    settings()->setSharedValue(USER_SCORES_PATH, Val(path.toStdString()));
 }
 
 io::path UserScoresConfiguration::defaultSavingFilePath(const io::path& fileName) const
@@ -210,5 +207,15 @@ UserScoresConfiguration::PreferredScoreCreationMode UserScoresConfiguration::pre
 
 void UserScoresConfiguration::setPreferredScoreCreationMode(PreferredScoreCreationMode mode)
 {
-    settings()->setValue(PREFERRED_SCORE_CREATION_MODE_KEY, Val(static_cast<int>(mode)));
+    settings()->setSharedValue(PREFERRED_SCORE_CREATION_MODE_KEY, Val(static_cast<int>(mode)));
+}
+
+bool UserScoresConfiguration::needShowWarningAboutUnsavedScore() const
+{
+    return settings()->value(NEED_SHOW_WARNING_ABOUT_UNSAVED_SCORE_KEY).toBool();
+}
+
+void UserScoresConfiguration::setNeedShowWarningAboutUnsavedScore(bool value)
+{
+    settings()->setSharedValue(NEED_SHOW_WARNING_ABOUT_UNSAVED_SCORE_KEY, Val(value));
 }

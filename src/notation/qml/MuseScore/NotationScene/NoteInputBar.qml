@@ -58,7 +58,7 @@ Rectangle {
         id: gridView
         anchors.fill: parent
 
-        sectionRole: "sectionRole"
+        sectionRole: "section"
 
         rowSpacing: 6
         columnSpacing: 6
@@ -77,52 +77,59 @@ Rectangle {
 
         itemDelegate: FlatButton {
             id: btn
+
             property var item: Boolean(itemModel) ? itemModel : null
-            property var hasMenu: Boolean(item) && item.subitemsRole.length !== 0
-
-            accentButton: (Boolean(item) && item.checkedRole) || menuLoader.isMenuOpened
-            normalStateColor: accentButton ? ui.theme.accentColor : "transparent"
-
-            icon: Boolean(item) ? item.iconRole : IconCode.NONE
-
-            toolTipTitle: Boolean(item) ? item.titleRole : ""
-            toolTipDescription: Boolean(item) ? item.descriptionRole : ""
-            toolTipShortcut: Boolean(item) ? item.shortcutRole : ""
-
-            iconFont: ui.theme.toolbarIconsFont
-
-            navigation.panel: keynavSub
-            navigation.name: toolTipTitle
-            navigation.order: Boolean(item) ? item.orderRole : 0
-            isClickOnKeyNavTriggered: false
-            navigation.onTriggered: {
-                if (hasMenu && item.isMenuSecondaryRole) {
-                    btn.pressAndHold()
-                } else {
-                    btn.clicked()
-                }
-            }
-
-            mouseArea.pressAndHoldInterval: 200
+            property var hasMenu: Boolean(item) && item.subitems.length !== 0
 
             width: gridView.cellWidth
             height: gridView.cellWidth
 
-            mouseArea.acceptedButtons: hasMenu && item.isMenuSecondaryRole
+            accentButton: (Boolean(item) && item.checked) || menuLoader.isMenuOpened
+            normalStateColor: accentButton ? ui.theme.accentColor : "transparent"
+
+            icon: Boolean(item) ? item.icon : IconCode.NONE
+            iconFont: ui.theme.toolbarIconsFont
+
+            toolTipTitle: Boolean(item) ? item.title : ""
+            toolTipDescription: Boolean(item) ? item.description : ""
+            toolTipShortcut: Boolean(item) ? item.shortcut : ""
+
+            navigation.panel: keynavSub
+            navigation.name: toolTipTitle
+            navigation.order: Boolean(item) ? item.order : 0
+            isClickOnKeyNavTriggered: false
+            navigation.onTriggered: {
+                if (menuLoader.isMenuOpened || hasMenu) {
+                    toggleMenuOpened()
+                } else {
+                    handleAction()
+                }
+            }
+
+            mouseArea.pressAndHoldInterval: 200
+            mouseArea.acceptedButtons: hasMenu && item.isMenuSecondary
                                        ? Qt.LeftButton | Qt.RightButton
                                        : Qt.LeftButton
+
+            function toggleMenuOpened() {
+                menuLoader.toggleOpened(item.subitems, btn.navigation)
+            }
+
+            function handleAction() {
+                Qt.callLater(noteInputModel.handleAction, item.code)
+            }
 
             onClicked: function (mouse) {
                 if (menuLoader.isMenuOpened // If already menu open, close it
                         || (hasMenu // Or if can open menu
-                            && (!item.isMenuSecondaryRole // And _should_ open menu
+                            && (!item.isMenuSecondary // And _should_ open menu
                                 || mouse.button === Qt.RightButton))) {
-                    menuLoader.toggleOpened(item.subitemsRole, btn.navigation)
+                    toggleMenuOpened()
                     return
                 }
 
                 if (mouse.button === Qt.LeftButton) {
-                    Qt.callLater(noteInputModel.handleAction, item.codeRole)
+                    handleAction()
                 }
             }
 
@@ -131,11 +138,16 @@ Rectangle {
                     return
                 }
 
-                menuLoader.toggleOpened(item.subitemsRole, btn.navigation)
+                toggleMenuOpened()
             }
 
             Canvas {
-                visible: Boolean(btn.item) && btn.item.isMenuSecondaryRole
+                visible: Boolean(btn.item) && btn.item.isMenuSecondary
+
+                property color fillColor: ui.theme.fontPrimaryColor
+                onFillColorChanged: {
+                    requestPaint()
+                }
 
                 width: 4
                 height: 4
@@ -146,7 +158,7 @@ Rectangle {
 
                 onPaint: {
                     const ctx = getContext("2d");
-                    ctx.fillStyle = ui.theme.fontPrimaryColor;
+                    ctx.fillStyle = fillColor;
                     ctx.moveTo(width, 0);
                     ctx.lineTo(width, height);
                     ctx.lineTo(0, height);
@@ -157,7 +169,9 @@ Rectangle {
 
             StyledMenuLoader {
                 id: menuLoader
-                onHandleAction: noteInputModel.handleAction(actionCode, actionIndex)
+                onHandleAction: function(actionCode) {
+                    noteInputModel.handleAction(actionCode)
+                }
             }
         }
     }

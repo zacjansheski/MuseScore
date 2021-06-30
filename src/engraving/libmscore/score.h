@@ -36,12 +36,15 @@
 #include "config.h"
 #include "input.h"
 #include "instrument.h"
+#include "scoreorder.h"
 #include "select.h"
 #include "synthesizerstate.h"
 #include "mscoreview.h"
 #include "spannermap.h"
 #include "layoutbreak.h"
 #include "property.h"
+
+class QMimeData;
 
 namespace mu::score {
 class AccessibleScore;
@@ -105,7 +108,6 @@ class UndoStack;
 class Volta;
 class XmlWriter;
 class Channel;
-class ScoreOrder;
 struct Interval;
 struct TEvent;
 struct LayoutContext;
@@ -230,7 +232,7 @@ struct Position {
     int staffIdx     { -1 };
     int line         { 0 };
     int fret         { FRET_NONE };
-    QPointF pos;
+    mu::PointF pos;
 };
 
 //---------------------------------------------------------
@@ -273,7 +275,7 @@ struct Layer {
 
 enum class UpdateMode {
     DoNothing,
-    Update,             // do screen refresh of QRectF "refresh"
+    Update,             // do screen refresh of RectF "refresh"
     UpdateAll,          // do complete screen refresh
     Layout,             // do partial layout for tick range
 };
@@ -339,7 +341,7 @@ public:
 class UpdateState
 {
 public:
-    QRectF refresh;                 ///< area to update, canvas coordinates
+    mu::RectF refresh;                 ///< area to update, canvas coordinates
     bool _playNote   { false };     ///< play selected note after command
     bool _playChord  { false };     ///< play whole chord for the selected note
     bool _selectionChanged { false };
@@ -503,7 +505,7 @@ private:
                                                 ///< saves will not overwrite the backup file.
     bool _defaultsRead        { false };        ///< defaults were read at MusicXML import, allow export of defaults in convertermode
     bool _isPalette           { false };
-    ScoreOrder* _scoreOrder   { nullptr };      ///< used for score ordering
+    ScoreOrder _scoreOrder;                     ///< used for score ordering
 
     int _mscVersion { MSCVERSION };     ///< version of current loading *.msc file
 
@@ -539,7 +541,6 @@ private:
     void removeChordRest(ChordRest* cr, bool clearSegment);
     void cmdMoveRest(Rest*, Direction);
     void cmdMoveLyrics(Lyrics*, Direction);
-    void cmdIncDecDuration(int nSteps, bool stepDotted = false);
 
     void createMMRest(Measure*, Measure*, const Fraction&);
 
@@ -560,7 +561,6 @@ private:
     void selectAdd(Element* e);
     void selectRange(Element* e, int staffIdx);
 
-    void cmdAddFret(int fret);
     void cmdToggleVisible();
 
     void putNote(const Position&, bool replace);
@@ -649,6 +649,7 @@ public:
     void cmdAddBracket();
     void cmdAddParentheses();
     void cmdAddBraces();
+    void cmdAddFret(int fret);
     void cmdSetBeamMode(Beam::Mode);
     void cmdRemovePart(Part*);
     void cmdAddTie(bool addToChord = false);
@@ -667,6 +668,7 @@ public:
     void cmdHalfDuration() { cmdIncDecDuration(1, false); }
     void cmdIncDurationDotted() { cmdIncDecDuration(-1, true); }
     void cmdDecDurationDotted() { cmdIncDecDuration(1, true); }
+    void cmdIncDecDuration(int nSteps, bool stepDotted = false);
     void cmdToggleLayoutBreak(LayoutBreak::Type);
     void cmdAddMeasureRepeat(Measure*, int numMeasures, int staffIdx);
     bool makeMeasureRepeatGroup(Measure*, int numMeasures, int staffIdx);
@@ -698,8 +700,8 @@ public:
     Staff* staff(int n) const { return ((n >= 0) && (n < _staves.size())) ? _staves.at(n) : nullptr; }
     Staff* staff(const QString& staffId) const;
 
-    Measure* pos2measure(const QPointF&, int* staffIdx, int* pitch, Segment**, QPointF* offset) const;
-    void dragPosition(const QPointF&, int* staffIdx, Segment**, qreal spacingFactor = 0.5) const;
+    Measure* pos2measure(const mu::PointF&, int* staffIdx, int* pitch, Segment**, mu::PointF* offset) const;
+    void dragPosition(const mu::PointF&, int* staffIdx, Segment**, qreal spacingFactor = 0.5) const;
 
     void undoAddElement(Element* element);
     void undoAddCR(ChordRest* element, Measure*, const Fraction& tick);
@@ -791,7 +793,7 @@ public:
     void cmdDeleteSelection();
     void cmdFullMeasureRest();
 
-    void putNote(const QPointF&, bool replace, bool insert);
+    void putNote(const mu::PointF&, bool replace, bool insert);
     void insertChord(const Position&);
     void localInsertChord(const Position&);
     void globalInsertChord(const Position&);
@@ -819,7 +821,7 @@ public:
     virtual inline const CmdState& cmdState() const;
     virtual inline void addLayoutFlags(LayoutFlags);
     virtual inline void setInstrumentsChanged(bool);
-    void addRefresh(const QRectF&);
+    void addRefresh(const mu::RectF&);
 
     void cmdRelayout();
     void cmdToggleAutoplace(bool all);
@@ -907,7 +909,7 @@ public:
     MeasureBase* getNextPrevSectionBreak(MeasureBase*, bool) const;
     Element* getScoreElementOfMeasureBase(MeasureBase*) const;
 
-    void cmd(const QAction*, EditData&);
+    void cmd(const QString&, EditData&);
     int fileDivision(int t) const { return ((qint64)t * MScore::division + _fileDivision / 2) / _fileDivision; }
     void setFileDivision(int t) { _fileDivision = t; }
 
@@ -1019,7 +1021,7 @@ public:
 
     bool defaultsRead() const { return _defaultsRead; }
     void setDefaultsRead(bool b) { _defaultsRead = b; }
-    Text* getText(Tid subtype);
+    Text* getText(Tid subtype) const;
 
     bool isPalette() const { return _isPalette; }
     void setPaletteMode(bool palette) { _isPalette = palette; }
@@ -1028,19 +1030,20 @@ public:
     void setEnableVerticalSpread(bool val);
     qreal maxSystemDistance() const;
 
-    ScoreOrder* scoreOrder() const { return _scoreOrder; }
-    void setScoreOrder(ScoreOrder* order) { _scoreOrder = order; }
+    ScoreOrder scoreOrder() const;
+    void setScoreOrder(ScoreOrder order);
+    void setBracketsAndBarlines();
 
-    void lassoSelect(const QRectF&);
+    void lassoSelect(const mu::RectF&);
     void lassoSelectEnd(bool);
 
-    Page* searchPage(const QPointF&) const;
-    QList<System*> searchSystem(const QPointF& p, const System* preferredSystem = nullptr, qreal spacingFactor = 0.5,
+    Page* searchPage(const mu::PointF&) const;
+    QList<System*> searchSystem(const mu::PointF& p, const System* preferredSystem = nullptr, qreal spacingFactor = 0.5,
                                 qreal preferredSpacingFactor = 1.0) const;
-    Measure* searchMeasure(const QPointF& p, const System* preferredSystem = nullptr, qreal spacingFactor = 0.5,
+    Measure* searchMeasure(const mu::PointF& p, const System* preferredSystem = nullptr, qreal spacingFactor = 0.5,
                            qreal preferredSpacingFactor = 1.0) const;
 
-    bool getPosition(Position* pos, const QPointF&, int voice) const;
+    bool getPosition(Position* pos, const mu::PointF&, int voice) const;
 
     void cmdDeleteTuplet(Tuplet*, bool replaceWithRest);
 #if 0
@@ -1051,6 +1054,7 @@ public:
     void adjustBracketsDel(int sidx, int eidx);
     void adjustBracketsIns(int sidx, int eidx);
     void adjustKeySigs(int sidx, int eidx, KeyList km);
+    KeyList keyList() const;
 
     virtual inline const RepeatList& repeatList() const;
     virtual inline const RepeatList& repeatList2() const;
@@ -1203,7 +1207,7 @@ public:
     bool isSpannerStartEnd(const Fraction& tick, int track) const;
     void removeSpanner(Spanner*);
     void addSpanner(Spanner*);
-    void cmdAddSpanner(Spanner* spanner, const QPointF& pos, bool firstStaffOnly = false);
+    void cmdAddSpanner(Spanner* spanner, const mu::PointF& pos, bool firstStaffOnly = false);
     void cmdAddSpanner(Spanner* spanner, int staffIdx, Segment* startSegment, Segment* endSegment);
     void checkSpanner(const Fraction& startTick, const Fraction& lastTick);
     const std::set<Spanner*> unmanagedSpanners() { return _unmanagedSpanner; }
@@ -1479,10 +1483,10 @@ public:
     Fraction pos(POS pos) const { return _pos[int(pos)]; }
     void setPos(POS pos, Fraction tick);
 
-    void addExcerpt(Excerpt*);
+    void addExcerpt(Excerpt*, int index=-1);
     void removeExcerpt(Excerpt*);
     void deleteExcerpt(Excerpt*);
-    void initExcerpt(Excerpt*);
+    void initExcerpt(Excerpt*, bool);
 
     void setPlaybackScore(Score*);
     Score* playbackScore() { return _playbackScore; }

@@ -26,9 +26,10 @@
 #include "stafftype.h"
 #include "style.h"
 #include "stringdata.h"
-#include "scoreOrder.h"
 #include "utils.h"
 #include "xml.h"
+
+using namespace mu;
 
 namespace Ms {
 QList<InstrumentGroup*> instrumentGroups;
